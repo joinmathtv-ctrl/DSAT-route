@@ -1,83 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>DSAT Practice - Landing</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DSAT Practice — Landing</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
-    .card { border: 1px solid #ccc; background: #fff; padding: 1em; margin: 1em 0; border-radius: 8px; }
-    button { padding: 0.5em 1em; margin-top: 1em; }
-    #app { max-width: 800px; margin: auto; }
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Helvetica,Arial;background:#f6f7fb;margin:0}
+    .wrap{max-width:980px;margin:0 auto;padding:24px}
+    h1{margin:0 0 12px 0}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    input[type=text]{width:320px;max-width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px}
+    button{border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:10px 14px;cursor:pointer}
+    button.primary{background:#111827;color:#fff;border-color:#111827}
+    .muted{color:#64748b}
+    .badge{font-size:12px;border:1px solid #cbd5e1;border-radius:999px;padding:4px 8px}
   </style>
 </head>
 <body>
-<div id="app"></div>
+  <div class="wrap" id="app"></div>
+
 <script>
-let app = document.getElementById("app");
 let sets = [];
 
-function renderLanding() {
-  app.innerHTML = `
-    <h1>DSAT Practice</h1>
-    <p>Select a problem set:</p>
-    <input type="file" id="fileInput" multiple><br><br>
-    <input type="text" id="urlInput" placeholder="Enter JSON URL (e.g. ./questions.json)">
-    <button onclick="loadFromUrl()">Load from URL</button>
-    <div id="setList"></div>
+function landing(){
+  const el = document.getElementById('app');
+  el.innerHTML = `
+    <h1>DSAT Practice — Select a Set</h1>
+    <div class="row" style="margin:10px 0 18px 0">
+      <input type="file" id="fileInput" multiple accept="application/json">
+      <span class="muted">or</span>
+      <input type="text" id="urlInput" placeholder="./questions.json">
+      <button onclick="loadFromUrl()">Load from URL</button>
+    </div>
+    <div id="list" class="grid"></div>
   `;
-  document.getElementById("fileInput").addEventListener("change", e => {
-    Array.from(e.target.files).forEach(file => {
-      let reader = new FileReader();
-      reader.onload = ev => {
-        let data = JSON.parse(ev.target.result);
-        sets.push(data);
-        renderSetList();
-      };
-      reader.readAsText(file);
+  document.getElementById('fileInput').addEventListener('change', (e)=>{
+    Array.from(e.target.files).forEach(f=>{
+      const r = new FileReader();
+      r.onload = ()=>{ try{ const j = JSON.parse(r.result); sets.push(j); renderList(); } catch(err){ alert('Invalid JSON: '+err.message);} };
+      r.readAsText(f,'utf-8');
     });
   });
+  renderList();
 }
-
-function loadFromUrl() {
-  let url = document.getElementById("urlInput").value;
-  fetch(url).then(r => r.json()).then(data => {
-    sets.push(data);
-    renderSetList();
-  }).catch(err => alert("Error loading: "+err));
+function loadFromUrl(){
+  const url = document.getElementById('urlInput').value.trim() || './questions.json';
+  fetch(url, {cache:'no-store'}).then(r=>r.json()).then(j=>{ sets.push(j); renderList(); })
+  .catch(err=>alert('Load failed: '+err));
 }
-
-function renderSetList() {
-  let html = sets.map((s,i) => `
+function renderList(){
+  const L = document.getElementById('list');
+  if(!sets.length){ L.innerHTML = '<div class="muted">No sets yet. Upload files or load from URL.</div>'; return; }
+  L.innerHTML = sets.map((s,i)=>{
+    const m = s.metadata||{};
+    return `<div class="card">
+      <div class="row" style="justify-content:space-between">
+        <h3 style="margin:0">${m.title||'Untitled'}</h3>
+        <span class="badge">${(m.section||'math').toUpperCase()}</span>
+      </div>
+      <div class="muted" style="margin:6px 0">${m.directions||''}</div>
+      <div class="row" style="justify-content:space-between;margin-top:6px">
+        <div class="muted">Modules: ${s.modules?.length||1}</div>
+        <button class="primary" onclick="viewInfo(${i})">View & Start</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function viewInfo(i){
+  const s = sets[i]; const m = s.metadata||{};
+  const el = document.getElementById('app');
+  const times = (m.durationMinutesPerModule||[]).join(', ');
+  el.innerHTML = `
+    <button onclick="landing()">← Back</button>
+    <h2 style="margin:10px 0 6px 0">${m.title||'Untitled Set'}</h2>
+    <div class="muted" style="margin-bottom:8px">${m.section||'math'} • modules: ${s.modules?.length||1} • time per module: ${times||'-'}</div>
     <div class="card">
-      <h3>${s.metadata.title}</h3>
-      <p>Section: ${s.metadata.section} | Modules: ${s.modules.length}</p>
-      <button onclick="viewInfo(${i})">View Info</button>
+      <strong>Directions</strong>
+      <div class="muted" style="margin-top:6px">${m.directions||'(none)'}</div>
     </div>
-  `).join("");
-  document.getElementById("setList").innerHTML = html;
-}
-
-function viewInfo(idx) {
-  let s = sets[idx];
-  let dur = (s.metadata.durationMinutesPerModule||[]).join(", ");
-  app.innerHTML = `
-    <button onclick="renderLanding()">← Back</button>
-    <h2>${s.metadata.title}</h2>
-    <p>Section: ${s.metadata.section}</p>
-    <p>Directions: ${s.metadata.directions}</p>
-    <p>Modules: ${s.modules.length}</p>
-    <p>Duration per module: ${dur} minutes</p>
-    <button onclick="startTest(${idx})">Start Test</button>
+    <div class="row" style="margin-top:12px">
+      <button class="primary" onclick="start(${i})">시험 시작</button>
+    </div>
   `;
 }
-
-function startTest(idx) {
-  let s = sets[idx];
-  window.sessionStorage.setItem("dsat_current_set", JSON.stringify(s));
-  window.location.href = "test.html";
+function start(i){
+  const s = sets[i];
+  sessionStorage.setItem('dsat_current_set', JSON.stringify(s));
+  location.href='test.html';
 }
-
-renderLanding();
+landing();
 </script>
 </body>
 </html>
