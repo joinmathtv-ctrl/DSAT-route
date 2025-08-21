@@ -2,95 +2,52 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DSAT Practice — Landing</title>
+  <title>DSAT Practice</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <style>
-    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Helvetica,Arial;background:#f6f7fb;margin:0}
-    .wrap{max-width:980px;margin:0 auto;padding:24px}
-    h1{margin:0 0 12px 0}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
-    .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px}
-    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    input[type=text]{width:320px;max-width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px}
-    button{border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:10px 14px;cursor:pointer}
-    button.primary{background:#111827;color:#fff;border-color:#111827}
-    .muted{color:#64748b}
-    .badge{font-size:12px;border:1px solid #cbd5e1;border-radius:999px;padding:4px 8px}
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    .question { margin-bottom: 2rem; }
+    .choices button { display: block; margin: 0.3rem 0; }
   </style>
 </head>
 <body>
-  <div class="wrap" id="app"></div>
+  <h1>DSAT Practice — Auto-load</h1>
+  <div id="quiz"></div>
 
-<script>
-let sets = [];
+  <script>
+    async function loadQuestions() {
+      try {
+        const res = await fetch('./questions.json');
+        const data = await res.json();
+        renderQuestions(data);
+      } catch (e) {
+        document.getElementById('quiz').innerHTML =
+          "<p style='color:red'>questions.json 불러오기 실패</p>";
+      }
+    }
 
-function landing(){
-  const el = document.getElementById('app');
-  el.innerHTML = `
-    <h1>DSAT Practice — Select a Set</h1>
-    <div class="row" style="margin:10px 0 18px 0">
-      <input type="file" id="fileInput" multiple accept="application/json">
-      <span class="muted">or</span>
-      <input type="text" id="urlInput" placeholder="./questions.json">
-      <button onclick="loadFromUrl()">Load from URL</button>
-    </div>
-    <div id="list" class="grid"></div>
-  `;
-  document.getElementById('fileInput').addEventListener('change', (e)=>{
-    Array.from(e.target.files).forEach(f=>{
-      const r = new FileReader();
-      r.onload = ()=>{ try{ const j = JSON.parse(r.result); sets.push(j); renderList(); } catch(err){ alert('Invalid JSON: '+err.message);} };
-      r.readAsText(f,'utf-8');
-    });
-  });
-  renderList();
-}
-function loadFromUrl(){
-  const url = document.getElementById('urlInput').value.trim() || './questions.json';
-  fetch(url, {cache:'no-store'}).then(r=>r.json()).then(j=>{ sets.push(j); renderList(); })
-  .catch(err=>alert('Load failed: '+err));
-}
-function renderList(){
-  const L = document.getElementById('list');
-  if(!sets.length){ L.innerHTML = '<div class="muted">No sets yet. Upload files or load from URL.</div>'; return; }
-  L.innerHTML = sets.map((s,i)=>{
-    const m = s.metadata||{};
-    return `<div class="card">
-      <div class="row" style="justify-content:space-between">
-        <h3 style="margin:0">${m.title||'Untitled'}</h3>
-        <span class="badge">${(m.section||'math').toUpperCase()}</span>
-      </div>
-      <div class="muted" style="margin:6px 0">${m.directions||''}</div>
-      <div class="row" style="justify-content:space-between;margin-top:6px">
-        <div class="muted">Modules: ${s.modules?.length||1}</div>
-        <button class="primary" onclick="viewInfo(${i})">View & Start</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-function viewInfo(i){
-  const s = sets[i]; const m = s.metadata||{};
-  const el = document.getElementById('app');
-  const times = (m.durationMinutesPerModule||[]).join(', ');
-  el.innerHTML = `
-    <button onclick="landing()">← Back</button>
-    <h2 style="margin:10px 0 6px 0">${m.title||'Untitled Set'}</h2>
-    <div class="muted" style="margin-bottom:8px">${m.section||'math'} • modules: ${s.modules?.length||1} • time per module: ${times||'-'}</div>
-    <div class="card">
-      <strong>Directions</strong>
-      <div class="muted" style="margin-top:6px">${m.directions||'(none)'}</div>
-    </div>
-    <div class="row" style="margin-top:12px">
-      <button class="primary" onclick="start(${i})">시험 시작</button>
-    </div>
-  `;
-}
-function start(i){
-  const s = sets[i];
-  sessionStorage.setItem('dsat_current_set', JSON.stringify(s));
-  location.href='test.html';
-}
-landing();
-</script>
+    function renderQuestions(data) {
+      const container = document.getElementById('quiz');
+      (data.questions || []).forEach((q, idx) => {
+        const div = document.createElement('div');
+        div.className = "question";
+        div.innerHTML = `
+          <h3>Q${idx+1}. ${marked.parseInline(q.question||'')}</h3>
+          <div class="choices">
+            ${(q.choices||[]).map((c,i)=>
+              `<button onclick="alert('선택: ${c.label}')">
+                ${c.label}. ${marked.parseInline(c.text||'')}
+              </button>`).join("")}
+          </div>`;
+        container.appendChild(div);
+      });
+      MathJax.typeset();
+    }
+
+    loadQuestions();
+  </script>
 </body>
 </html>
