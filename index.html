@@ -1,177 +1,83 @@
-
-<!doctype html>
-<html lang="ko">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DSAT Practice — Auto-load (clean)</title>
-<style>
-  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Helvetica,Arial;margin:0;background:#fafafa;color:#111827}
-  .wrap{max-width:900px;margin:24px auto;padding:0 16px}
-  h1{font-size:20px;margin:0 0 12px}
-  .notice{display:none;padding:10px 12px;border-radius:10px;margin-bottom:12px;border:1px solid #fde68a;background:#fffbeb;color:#92400e}
-  .notice.error{border-color:#fecaca;background:#fef2f2;color:#991b1b}
-  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px}
-  .top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px}
-  .muted{color:#6b7280}
-  .timer{font-variant-numeric:tabular-nums}
-  .choices{display:grid;gap:10px;margin-top:12px}
-  .opt{display:flex;gap:10px;align-items:center;border:1px solid #cbd5e1;border-radius:12px;padding:12px;cursor:pointer}
-  .opt.sel{outline:2px solid #2563eb;outline-offset:2px}
-  .bub{min-width:26px;height:26px;border:2px solid #cbd5e1;border-radius:999px;display:grid;place-items:center;font-weight:700;font-size:12px}
-  .controls{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
-  .btn{border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:8px 12px;cursor:pointer}
-  .pill{padding:6px 10px;border:1px solid #cbd5e1;border-radius:9999px}
-  .map{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-  .cell{width:36px;height:30px;border:1px solid #cbd5e1;border-radius:8px;display:grid;place-items:center;cursor:pointer}
-  .cell.answered{background:#e5e7f0}.cell.flagged{outline:2px solid #d97706;outline-offset:2px}.cell.cur{outline:2px solid #111827;outline-offset:2px}
-  .hidden{display:none}
-  .explain{border:1px dashed #cbd5e1;border-radius:10px;padding:10px;margin-top:10px;background:#fafafa}
-</style>
+  <meta charset="UTF-8">
+  <title>DSAT Practice - Landing</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
+    .card { border: 1px solid #ccc; background: #fff; padding: 1em; margin: 1em 0; border-radius: 8px; }
+    button { padding: 0.5em 1em; margin-top: 1em; }
+    #app { max-width: 800px; margin: auto; }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>DSAT Practice — Auto-load</h1>
-  <div id="note" class="notice"></div>
-
-  <div class="card" id="qView">
-    <div class="top">
-      <div><strong id="setTitle">-</strong> · <span id="secName" class="muted">-</span> · <span class="muted">Module <span id="modIdx">1</span></span></div>
-      <div class="muted timer" id="timer">--:--</div>
-    </div>
-    <div id="prompt"></div>
-    <div id="choices" class="choices"></div>
-    <div class="controls">
-      <div>
-        <button class="btn" id="prevBtn">← Prev</button>
-        <button class="btn" id="nextBtn">Next →</button>
-        <button class="btn" id="mapBtn">Map</button>
-      </div>
-      <div>
-        <span class="pill" id="status">미응답</span>
-        <button class="btn" id="submitBtn" style="color:#b91c1c;border-color:#ef4444">Submit</button>
-      </div>
-    </div>
-    <div class="map" id="palette"></div>
-  </div>
-
-  <div class="card hidden" id="result">
-    <div><strong>결과</strong> — <span id="meta" class="muted"></span></div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0">
-      <div class="card" style="padding:10px"><div class="muted">원점수</div><div id="raw"></div></div>
-      <div class="card" style="padding:10px"><div class="muted">정/오/미</div><div id="brk"></div></div>
-      <div class="card" style="padding:10px"><div class="muted">시간</div><div id="tm"></div></div>
-    </div>
-    <button class="btn" id="toggleExplain">해설 보기</button>
-    <div id="explainWrap" class="hidden"></div>
-  </div>
-</div>
-
-<!-- MathJax -->
-<script>window.MathJax={tex:{inlineMath:[['\\(','\\)'],['$','$']]},svg:{fontCache:'global'}};</script>
-<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
-
+<div id="app"></div>
 <script>
-(async function(){
-  const $=s=>document.querySelector(s);
-  const state={meta:{title:'',section:'math',duration:35}, qs:[], cur:0, ans:{}, flagged:new Set(), remain:0, timer:null};
-  const fmt=s=>{s=Math.max(0,Math.floor(s));const m=Math.floor(s/60),r=s%60;return String(m).padStart(2,'0')+':'+String(r).padStart(2,'0')};
+let app = document.getElementById("app");
+let sets = [];
 
-  const sample={"metadata":{"title":"Sample Math Module 1","section":"math","directions":"Sample","durationMinutesPerModule":[35]},"modules":[{"module":1,"questions":[{"id":"m1q1","type":"mcq","prompt":"The table shows selected values from the function \\(f\\).<br><table border='1' cellpadding='6' style='border-collapse:collapse;margin-top:8px'><tr><th>x</th><th>f(x)</th></tr><tr><td>-1</td><td>\\(\\tfrac{1}{50}\\)</td></tr><tr><td>0</td><td>1</td></tr><tr><td>1</td><td>50</td></tr><tr><td>2</td><td>2500</td></tr></table>Which of the following is the best description of function \\(f\\)?","choices":["Increasing linear","Decreasing linear","Increasing exponential","Decreasing exponential"],"answer":2,"rationale":"값이 빠르게 증가하므로 지수함수."}]}]};
-
-  function showNote(msg,type='warn'){
-    const n=$("#note"); n.textContent=msg; n.className='notice'+(type==='error'?' error':''); n.style.display='block';
-  }
-  function hideNote(){ const n=$("#note"); n.style.display='none'; }
-
-  async function autoload(){
-    let loaded=false;
-    try{
-      const res = await fetch('./questions.json', {cache:'no-store'});
-      if(!res.ok) throw new Error('HTTP '+res.status);
-      const data = await res.json();
-      apply(data);
-      loaded=true;
-    }catch(e){
-      apply(sample);
-      const proto = location.protocol;
-      if(proto==='file:'){
-        showNote("questions.json을 불러오지 못했습니다. 로컬 파일을 직접 열면(CORS) 차단될 수 있어요. 같은 폴더에서 간단한 로컬 서버로 열어주세요.");
-      }else{
-        showNote("서버에서 questions.json을 찾지 못해 내장 샘플로 대체했습니다.");
-      }
-      // convert to softer info after 2s
-      setTimeout(()=>{ $("#note").className='notice'; }, 2000);
-    } finally {
-      if(loaded){ hideNote(); }
-    }
-  }
-
-  function apply(payload){
-    state.meta.title = payload.metadata?.title || 'Practice';
-    state.meta.section = payload.metadata?.section || 'math';
-    const mod = payload.modules?.[0];
-    state.qs = mod?.questions || [];
-    state.cur=0; state.ans={}; state.flagged=new Set();
-    state.remain=(payload.metadata?.durationMinutesPerModule?.[0]||35)*60;
-    $('#setTitle').textContent = state.meta.title;
-    $('#secName').textContent = state.meta.section==='math'?'Math':'R&W';
-    $('#modIdx').textContent = 1;
-    renderQ(); startTimer();
-  }
-
-  function renderPalette(){
-    const pal=$("#palette"); pal.innerHTML='';
-    state.qs.forEach((q,i)=>{
-      const d=document.createElement('div'); d.className='cell';
-      const a=state.ans[q.id]; if(a && a.value!=='' && a.value!=null) d.classList.add('answered');
-      if(state.flagged.has(q.id)) d.classList.add('flagged'); if(i===state.cur) d.classList.add('cur');
-      d.textContent=i+1; d.onclick=()=>{state.cur=i; renderQ();}; pal.appendChild(d);
+function renderLanding() {
+  app.innerHTML = `
+    <h1>DSAT Practice</h1>
+    <p>Select a problem set:</p>
+    <input type="file" id="fileInput" multiple><br><br>
+    <input type="text" id="urlInput" placeholder="Enter JSON URL (e.g. ./questions.json)">
+    <button onclick="loadFromUrl()">Load from URL</button>
+    <div id="setList"></div>
+  `;
+  document.getElementById("fileInput").addEventListener("change", e => {
+    Array.from(e.target.files).forEach(file => {
+      let reader = new FileReader();
+      reader.onload = ev => {
+        let data = JSON.parse(ev.target.result);
+        sets.push(data);
+        renderSetList();
+      };
+      reader.readAsText(file);
     });
-  }
-  function renderQ(){
-    const q=state.qs[state.cur]; if(!q) return;
-    $('#prompt').innerHTML = q.prompt; // allow LaTeX+HTML
-    MathJax?.typesetPromise?.();
-    const ch=$("#choices"); ch.innerHTML='';
-    if(q.type==='mcq'){
-      q.choices.forEach((c,i)=>{
-        const d=document.createElement('div'); d.className='opt';
-        const b=document.createElement('div'); b.className='bub'; b.textContent=String.fromCharCode(65+i);
-        const t=document.createElement('div'); t.textContent=c;
-        d.appendChild(b); d.appendChild(t);
-        if(state.ans[q.id]?.value===i) d.classList.add('sel');
-        d.onclick=()=>{state.ans[q.id]={type:'mcq',value:i}; renderQ(); renderPalette();};
-        ch.appendChild(d);
-      });
-    }
-    $('#status').textContent = state.flagged.has(q.id)?'플래그됨':(state.ans[q.id]?'응답됨':'미응답');
-    $('#timer').textContent = fmt(state.remain);
-    renderPalette();
-  }
-  function startTimer(){ if(state.timer) return; state.timer=setInterval(()=>{state.remain--; $('#timer').textContent=fmt(state.remain); if(state.remain<=0){ clearInterval(state.timer); submit(true);} },1000); }
-  function score(){ let c=0,w=0,b=0,rows=[]; for(const q of state.qs){ const a=state.ans[q.id]; let ok=false, ua='', ca=''; if(q.type==='mcq'){ ua=(a&&a.value!=null)?String.fromCharCode(65+a.value):''; ca=(q.answer!=null)?String.fromCharCode(65+q.answer):''; ok=a&&a.value==q.answer; } if(!a||(!ua&&ua!==0)) b++; else if(ok) c++; else w++; rows.push({i:rows.length+1, user:ua, correct:ca, ok, rat:q.rationale||''}); } return {c,w,b,rows}; }
-  function submit(auto=false){
-    clearInterval(state.timer);
-    const s=score();
-    $('#qView').classList.add('hidden'); $('#result').classList.remove('hidden');
-    $('#meta').textContent = `${state.meta.title} · ${state.meta.section==='math'?'Math':'R&W'} · Module 1`;
-    $('#raw').textContent = `${s.c} / ${state.qs.length}`;
-    $('#brk').textContent = `${s.c} / ${s.w} / ${s.b}`;
-    $('#tm').textContent = fmt((state.meta.duration||35)*60 - state.remain);
-    const ex=$("#explainWrap"); ex.innerHTML=''; s.rows.forEach(r=>{ const div=document.createElement('div'); div.className='explain'; div.innerHTML=`<strong>Q${r.i}</strong> · 내 답: ${r.user||'-'} / 정답: ${r.correct||'-'} — ${r.ok?'<span style="color:#16a34a">정답</span>':'<span style="color:#dc2626">오답</span>'}<br>${r.rat}`; ex.appendChild(div); });
-    if(auto) showNote('시간 종료로 자동 제출되었습니다.');
-  }
+  });
+}
 
-  // Events
-  $('#prevBtn').onclick=()=>{state.cur=Math.max(0,state.cur-1); renderQ();};
-  $('#nextBtn').onclick=()=>{state.cur=Math.min(state.qs.length-1,state.cur+1); renderQ();};
-  $('#mapBtn').onclick=()=>document.getElementById('palette').scrollIntoView({behavior:'smooth',block:'center'});
-  $('#submitBtn').onclick=()=>{ if(confirm('제출할까요?')) submit(false); };
-  $('#toggleExplain').onclick=()=>$('#explainWrap').classList.toggle('hidden');
+function loadFromUrl() {
+  let url = document.getElementById("urlInput").value;
+  fetch(url).then(r => r.json()).then(data => {
+    sets.push(data);
+    renderSetList();
+  }).catch(err => alert("Error loading: "+err));
+}
 
-  await autoload();
-})();
+function renderSetList() {
+  let html = sets.map((s,i) => `
+    <div class="card">
+      <h3>${s.metadata.title}</h3>
+      <p>Section: ${s.metadata.section} | Modules: ${s.modules.length}</p>
+      <button onclick="viewInfo(${i})">View Info</button>
+    </div>
+  `).join("");
+  document.getElementById("setList").innerHTML = html;
+}
+
+function viewInfo(idx) {
+  let s = sets[idx];
+  let dur = (s.metadata.durationMinutesPerModule||[]).join(", ");
+  app.innerHTML = `
+    <button onclick="renderLanding()">← Back</button>
+    <h2>${s.metadata.title}</h2>
+    <p>Section: ${s.metadata.section}</p>
+    <p>Directions: ${s.metadata.directions}</p>
+    <p>Modules: ${s.modules.length}</p>
+    <p>Duration per module: ${dur} minutes</p>
+    <button onclick="startTest(${idx})">Start Test</button>
+  `;
+}
+
+function startTest(idx) {
+  let s = sets[idx];
+  window.sessionStorage.setItem("dsat_current_set", JSON.stringify(s));
+  window.location.href = "test.html";
+}
+
+renderLanding();
 </script>
 </body>
 </html>

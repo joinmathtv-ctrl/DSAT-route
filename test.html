@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DSAT Test</title>
+</head>
+<body>
+<h1>DSAT Test Screen</h1>
+<p>This is a placeholder for the full test interface.</p>
+<script>
+let data = JSON.parse(window.sessionStorage.getItem("dsat_current_set")||"{}");
+document.write("<pre>"+JSON.stringify(data.metadata,null,2)+"</pre>");
+</script>
+</body>
+</html>
