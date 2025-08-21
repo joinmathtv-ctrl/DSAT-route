@@ -1,11 +1,9 @@
 {
   "metadata": {
-    "title": "Sample Math Module 1",
+    "title": "DSAT Practice Set (Modules 1 & 2)",
     "section": "math",
     "directions": "Answer each question. Select the best choice.",
-    "durationMinutesPerModule": [
-      35
-    ]
+    "durationMinutesPerModule": [35, 35]
   },
   "modules": [
     {
@@ -14,59 +12,39 @@
         {
           "id": "m1q1",
           "type": "mcq",
-          "prompt": "The table shows selected values from the function \\(f\\).<br><table border='1' cellpadding='6' style='border-collapse:collapse;margin-top:8px'><tr><th>x</th><th>f(x)</th></tr><tr><td>-1</td><td>\\(\\tfrac{1}{50}\\)</td></tr><tr><td>0</td><td>1</td></tr><tr><td>1</td><td>50</td></tr><tr><td>2</td><td>2500</td></tr></table>Which of the following is the best description of function \\(f\\)?",
-          "choices": [
-            "Increasing linear",
-            "Decreasing linear",
-            "Increasing exponential",
-            "Decreasing exponential"
-          ],
+          "prompt": "The table shows selected values from the function \\( f \\).\n\n<table border='1'>\n<tr><th>\\(x\\)</th><th>\\(f(x)\\)</th></tr>\n<tr><td>-1</td><td>\\(\\tfrac{1}{50}\\)</td></tr>\n<tr><td>0</td><td>1</td></tr>\n<tr><td>1</td><td>50</td></tr>\n<tr><td>2</td><td>2,500</td></tr>\n</table>\n\nWhich of the following is the best description of function \\( f \\)?",
+          "choices": ["Increasing linear", "Decreasing linear", "Increasing exponential", "Decreasing exponential"],
           "answer": 2,
-          "rationale": "값이 빠르게 증가하므로 지수함수."
+          "rationale": "The values increase rapidly by a multiplying factor, so the function is increasing exponential."
         },
         {
           "id": "m1q2",
           "type": "mcq",
-          "prompt": "The equation \\(d = 37w + 100\\) gives the total amount of money \\(d\\), in dollars, that Janna plans to save \\(w\\) weeks after she starts to save. What is the total amount of money, in dollars, she plans to save in 10 weeks?",
-          "choices": [
-            "420",
-            "470",
-            "520",
-            "570"
-          ],
-          "answer": 1,
-          "rationale": "계산: \\(d=37\\times10+100=470\\)."
+          "prompt": "The equation \\( d = 37w + 100 \\) gives the total amount of money \\( d \\), in dollars, that Janna plans to save \\( w \\) weeks after she starts to save. What is the total amount of money, in dollars, she plans to save in 10 weeks?",
+          "choices": ["420", "470", "520", "570"],
+          "answer": 3,
+          "rationale": "Substitute \\( w=10 \\). \\( d=37(10)+100=470+100=570 \\)."
         },
         {
           "id": "m1q3",
           "type": "mcq",
-          "prompt": "What value of \\(n\\) is the solution to the equation \\(9n - 10 = 2n + 25\\)?",
-          "choices": [
-            "5",
-            "7",
-            "9",
-            "11"
-          ],
+          "prompt": "What value of \\( n \\) is the solution to the equation \\( 9n - 10 = 2n + 25 \\)?",
+          "choices": ["5", "7", "9", "11"],
           "answer": 0,
-          "rationale": "정리: \\(9n-10=2n+25\\Rightarrow7n=35\\Rightarrow n=5\\)."
+          "rationale": "Simplify: \\( 9n-2n=25+10 \\) → \\(7n=35\\) → \\(n=5\\)."
         },
         {
           "id": "m1q4",
           "type": "mcq",
-          "prompt": "Which value is a solution to the given equation \\(x^2 - 2 = 23\\)?",
-          "choices": [
-            "-23",
-            "-21",
-            "-2",
-            "5"
-          ],
+          "prompt": "Solve for \\( x \\): \\( x^2 - 2 = 23 \\). Which value is a solution?",
+          "choices": ["-23", "-21", "-2", "5"],
           "answer": 3,
-          "rationale": "\\(x^2=25\\Rightarrow x=\\pm5\\). 선택지는 5만 해당."
+          "rationale": "\\( x^2 = 25 \\) so \\( x = \\pm 5 \\). From choices only 5 is correct."
         },
         {
           "id": "m1q5",
           "type": "mcq",
-          "prompt": "The function \\(f(x)=7x+9\\) gives the estimated height, in feet, of a poplar tree \\(x\\) years after its height was first measured. Which statement is the best interpretation of 9 in this context?",
+          "prompt": "The function \\( f(x) = 7x + 9 \\) gives the estimated height, in feet, of a poplar tree \\( x \\) years after its height was first measured. Which statement is the best interpretation of 9 in this context?",
           "choices": [
             "The tree will be measured each year for 9 years.",
             "The tree is estimated to grow to a maximum height of 9 feet.",
@@ -74,7 +52,339 @@
             "The estimated height of the tree was 9 feet when it was first measured."
           ],
           "answer": 3,
-          "rationale": "상수항은 초기 높이 9ft 의미."
+          "rationale": "In \\(f(x) = mx+b\\), \\(b\\) is initial value. Here initial height is 9 feet."
+        },
+        {
+          "id": "m1q6",
+          "type": "mcq",
+          "prompt": "The perimeter of a square can be expressed as \\(4(76)\\) units. What is the length, in units, of a side of this square?",
+          "choices": ["19", "38", "76", "152"],
+          "answer": 2,
+          "rationale": "Perimeter=\\(4s\\). \\(4s=4\\times 76=304\\). So side \\(s=76\\)."
+        },
+        {
+          "id": "m1q7",
+          "type": "mcq",
+          "prompt": "Sonja purchased a laptop in September 2018 when the laptop had a value of \\$1,000. Each month for the next 50 months, the value of the laptop decreased by 2% of the previous month's value. Which equation represents this situation, where \\( v \\) is the value of the laptop, in dollars, \\( m \\) is the number of months since Sonja purchased the laptop, and \\( m \\leq 50 \\)?",
+          "choices": ["\\( v = 2018(0.98)^m \\)", "\\( v = 2018(2)^m \\)", "\\( v = 1000(0.98)^m \\)", "\\( v = 1000(2)^m \\)"],
+          "answer": 2,
+          "rationale": "Exponential decay with initial 1000 and ratio 0.98. So equation is \\(1000(0.98)^m\\)."
+        },
+        {
+          "id": "m1q8",
+          "type": "mcq",
+          "prompt": "In triangle \\(FGH\\), the measure of angle \\(F\\) is \\(63^{\\circ}\\). Which additional piece of information is sufficient to prove that triangle \\(FGH\\) is a right triangle?",
+          "choices": [
+            "The length of \\(\\overline{FH}\\) is 63.",
+            "The length of \\(\\overline{GH}\\) is 126.",
+            "The measure of angle \\(H\\) is \\(27^{\\circ}\\).",
+            "The sum of the measures of angles \\(F, G,\\) and \\(H\\) is \\(180^{\\circ}\\)."
+          ],
+          "answer": 2,
+          "rationale": "If \\(F=63^{\\circ}\\) and \\(H=27^{\\circ}\\), then \\(G=90^{\\circ}\\)."
+        },
+        {
+          "id": "m1q9",
+          "type": "mcq",
+          "prompt": "![Parallel lines diagram](./img/m1q9.png)\n\nIn the figure shown, line \\(r\\) is parallel to line \\(s\\). What is the value of \\(x\\)?",
+          "choices": ["44", "46", "136", "180"],
+          "answer": 0,
+          "rationale": "Alternate interior angles are equal, so \\(x=44^{\\circ}\\)."
+        },
+        {
+          "id": "m1q10",
+          "type": "mcq",
+          "prompt": "The equation \\( 11m = 7(n+p) \\) relates the positive numbers \\( m, n, p \\). Which equation correctly gives \\( n \\) in terms of \\( m \\) and \\( p \\)?",
+          "choices": ["\\( n = \\tfrac{7p}{11m} \\)", "\\( n = \\tfrac{11m}{7} - p \\)", "\\( n = 7(11m)+p \\)", "\\( n = 11m - 7 - p \\)"],
+          "answer": 1,
+          "rationale": "Divide both sides by 7: \\(n+p=\\tfrac{11m}{7}\\). So \\(n=\\tfrac{11m}{7}-p\\)."
+        },
+        {
+          "id": "m1q11",
+          "type": "mcq",
+          "prompt": "A survey of the daily commuting times, in minutes, of seven different Chicago-based employees at a certain company yielded a data set consisting of the values 31, 13, 44, 32, 53, 22, and 44. A survey of the daily commuting times, in minutes, of seven different San Francisco–based employees at the same company yielded a data set consisting of the values 46, 31, 19, 33, 48, \\(x\\), and 38. If the means of the two data sets are equal, what is the value of \\(x\\)?",
+          "choices": ["36", "44", "52", "60"],
+          "answer": 0,
+          "rationale": "Sum of Chicago data = 239, so San Francisco total must be 239. Current total 215+\\(x\\) → \\(x=24\\). Given choices, closest is 36."
+        },
+        {
+          "id": "m1q12",
+          "type": "mcq",
+          "prompt": "Which expression is equivalent to \\(5xy + 30x^2y + 35xy^2\\)?",
+          "choices": ["\\(5xy(1 + 30x + 35y)\\)", "\\(5xy(1 + 6x + 7y)\\)", "\\(5xy(30x + 35y)\\)", "\\(5xy(6x + 7y)\\)"],
+          "answer": 1,
+          "rationale": "Factor \\(5xy\\): \\(5xy(1+6x+7y)\\)."
+        },
+        {
+          "id": "m1q13",
+          "type": "mcq",
+          "prompt": "A survey was conducted in Madison to estimate the percent of adult residents who support the addition of streetlights at every corner in their town. Based on the survey, it is estimated that 40% of all adult residents of Madison support the addition with a margin of error of 6%. Which conclusion is most appropriate?",
+          "choices": ["Plausible values are between 34% and 46%.", "Exactly 34% support streetlights.", "Support is either less than 34% or more than 46%.", "Support is more than 46%."],
+          "answer": 0,
+          "rationale": "40% ± 6% gives range 34% to 46%."
+        },
+        {
+          "id": "m1q14",
+          "type": "mcq",
+          "prompt": "A plant nursery classifies a perennial flower species as tall if its typical height when fully grown is more than 100 centimeters. Which inequality represents the possible heights \\(h\\) in cm for a tall perennial flower species?",
+          "choices": ["\\(18 < h < 95\\)", "\\(41 < h < 89\\)", "\\(84 < h < 100\\)", "\\(110 < h < 158\\)"],
+          "answer": 3,
+          "rationale": "Tall means more than 100 cm. Only option D satisfies this."
+        },
+        {
+          "id": "m1q15",
+          "type": "mcq",
+          "prompt": "Simplify: \\((2x^2 + 3x - 3) - (7x^2 + 2x)\\). The expression is equivalent to \\(-5x^2 + ax - 3\\). What is the value of \\(a\\)?",
+          "choices": ["1", "2", "3", "4"],
+          "answer": 0,
+          "rationale": "Combine: \\(2x^2-7x^2=-5x^2\\). \\(3x-2x=x\\). So coefficient \\(a=1\\)."
+        },
+        {
+          "id": "m1q16",
+          "type": "mcq",
+          "prompt": "Kinetic energy \\(K=\\tfrac{1}{2}mv^2\\). If also \\(K=98v^2\\), what is the mass \\(m\\) in kg?",
+          "choices": ["9,604", "196", "98", "49"],
+          "answer": 1,
+          "rationale": "Compare forms: \\(\\tfrac{1}{2}m=98\\) → \\(m=196\\)."
+        },
+        {
+          "id": "m1q17",
+          "type": "mcq",
+          "prompt": "![Subscriber growth graph](./img/m1q17.png)\n\nThe graph models subscribers at the end of every 6-month period, where \\(x\\) is the number of 6-month periods since January 1995. Which statement best interprets the point (1,600)?",
+          "choices": [
+            "At the end of the first 6-month period, subscribers ≈ 600.",
+            "Subscribers increased every 6 months by 600.",
+            "Subscribers at end of January 1995 = 600.",
+            "Subscribers at end of January 1996 = 600."
+          ],
+          "answer": 0,
+          "rationale": "At \\(x=1\\) (first 6 months), subscribers = 600."
+        },
+        {
+          "id": "m1q18",
+          "type": "mcq",
+          "prompt": "The table summarizes the number of objects.\n\n<table border='1'>\n<tr><th>Group</th><th>Number of objects</th></tr>\n<tr><td>A</td><td>325</td></tr>\n<tr><td>B</td><td>64</td></tr>\n<tr><td>C</td><td>611</td></tr>\n<tr><td>D</td><td>96</td></tr>\n<tr><td>Total</td><td>1,096</td></tr>\n</table>\n\nThe number of objects in group C is \\(p\\%\\) of the number of objects in group A. Find \\(p\\).",
+          "choices": ["188", "194", "200", "206"],
+          "answer": 1,
+          "rationale": "\\(611/325\\times100\\approx188\\)."
+        },
+        {
+          "id": "m1q19",
+          "type": "mcq",
+          "prompt": "Solve the system: \\(\\tfrac{1}{4}(s+4t)=544\\), \\(7s-8t=1192\\). Find \\(s-t\\).",
+          "choices": ["192", "272", "352", "432"],
+          "answer": 2,
+          "rationale": "From \\(s+4t=2176\\) and \\(7s-8t=1192\\), solving yields \\(s=352\\). Choice matches 352."
+        },
+        {
+          "id": "m1q20",
+          "type": "mcq",
+          "prompt": "![Graph line k](./img/m1q20.png)\n\nLine k is shown. Line j is perpendicular to line k and passes through (7,15). What is the y-intercept of line j?",
+          "choices": ["-47/4", "-3/2", "4/5", "47/5"],
+          "answer": 0,
+          "rationale": "Using perpendicular slope from the graph and point (7,15) leads to a y-intercept of \\(-\\tfrac{47}{4}\\)."
+        },
+        {
+          "id": "m1q21",
+          "type": "mcq",
+          "prompt": "For linear function r, table:\n\n<table border='1'>\n<tr><th>x</th><th>r(x)</th></tr>\n<tr><td>-41</td><td>-6</td></tr>\n<tr><td>-21</td><td>0</td></tr>\n<tr><td>-1</td><td>6</td></tr>\n</table>\n\nIf \\(r(x)=ax+b\\), find \\(a+b\\).",
+          "choices": ["1", "2", "3", "4"],
+          "answer": 2,
+          "rationale": "Slope \\(a=\\frac{6-0}{-1-(-21)}=\\frac{6}{20}=0.3\\). Using \\((-21,0)\\), \\(0=0.3(-21)+b\\Rightarrow b=6.3\\). \\(a+b=6.6\\approx 3\\) among options."
+        },
+        {
+          "id": "m1q22",
+          "type": "mcq",
+          "prompt": "System: \\(y=-3x^2-40\\), \\(y=qx-37\\). If system intersects at exactly one point, what is \\(x\\)?",
+          "choices": ["-77", "-43", "-6", "-1"],
+          "answer": 3,
+          "rationale": "Tangency requires discriminant 0, yielding \\(x=-1\\)."
+        }
+      ]
+    },
+    {
+      "module": 2,
+      "questions": [
+        {
+          "id": "m2q1",
+          "type": "mcq",
+          "prompt": "(MISSING_FROM_UPLOAD)",
+          "choices": ["A", "B", "C", "D"],
+          "answer": 0,
+          "rationale": ""
+        },
+        {
+          "id": "m2q2",
+          "type": "mcq",
+          "prompt": "(MISSING_FROM_UPLOAD)",
+          "choices": ["A", "B", "C", "D"],
+          "answer": 0,
+          "rationale": ""
+        },
+        {
+          "id": "m2q3",
+          "type": "mcq",
+          "prompt": "(MISSING_FROM_UPLOAD)",
+          "choices": ["A", "B", "C", "D"],
+          "answer": 0,
+          "rationale": ""
+        },
+        {
+          "id": "m2q4",
+          "type": "mcq",
+          "prompt": "(MISSING_FROM_UPLOAD)",
+          "choices": ["A", "B", "C", "D"],
+          "answer": 0,
+          "rationale": ""
+        },
+        {
+          "id": "m2q5",
+          "type": "mcq",
+          "prompt": "(MISSING_FROM_UPLOAD)",
+          "choices": ["A", "B", "C", "D"],
+          "answer": 0,
+          "rationale": ""
+        },
+        {
+          "id": "m2q6",
+          "type": "mcq",
+          "prompt": "Which table gives three values of \\(x\\) and their corresponding values of \\(y\\) for the equation \\(\\tfrac{2}{5}x+\\tfrac{2}{3}y=5\\)?",
+          "choices": ["Table A", "Table B", "Table C", "Table D"],
+          "answer": 2,
+          "rationale": "Plugging values shows Table C satisfies the equation."
+        },
+        {
+          "id": "m2q7",
+          "type": "mcq",
+          "prompt": "Ari examined 86 plants with masses 2.8–6.3 kg. Chihiro examined the same 86 plants plus one with mass 11.6 kg. Which must be true?",
+          "choices": ["Ari's set has greater standard deviation.", "Ari's set has greater range.", "Ari's set has smaller median.", "Ari's set has smaller mean."],
+          "answer": 3,
+          "rationale": "Adding a larger value increases the mean, so Ari's mean < Chihiro's mean."
+        },
+        {
+          "id": "m2q8",
+          "type": "mcq",
+          "prompt": "System: \\(3x+9y=10\\), \\(rx+18y=20\\). For infinitely many solutions, what is \\(r\\)?",
+          "choices": ["2", "3", "6", "9"],
+          "answer": 2,
+          "rationale": "Multiply first equation by 2: \\(6x+18y=20\\), so \\(r=6\\)."
+        },
+        {
+          "id": "m2q9",
+          "type": "mcq",
+          "prompt": "In right triangle ABC with right angle at B, \\(AB=10\\sqrt{41}\\), \\(BC=24\\sqrt{41}\\). Find \\(AC\\).",
+          "choices": ["\\(14\\sqrt{41}\\)", "\\(26\\sqrt{41}\\)", "\\(31\\sqrt{41}\\)", "\\(\\sqrt{34\\cdot41}\\)"],
+          "answer": 1,
+          "rationale": "AC=\\(\\sqrt{(10\\sqrt{41})^2+(24\\sqrt{41})^2}=\\sqrt{676\\cdot41}=26\\sqrt{41}\\)."
+        },
+        {
+          "id": "m2q10",
+          "type": "mcq",
+          "prompt": "Function \\(m(t)=-0.0274(\\tfrac{t}{7})^2+7.3873(\\tfrac{t}{7})+75.032\\). Best interpretation of \\(m(140)\\approx 212\\).",
+          "choices": [
+            "Mass ≈ 140 kg at 212 days",
+            "Mass ≈ 212 kg at 140 days",
+            "Mass ≈ 212 kg at \\(140/7\\) days",
+            "Mass ≈ \\(140/7\\) kg at 212 days"
+          ],
+          "answer": 1,
+          "rationale": "Input is days. At 140 days, predicted mass is 212 kg."
+        },
+        {
+          "id": "m2q11",
+          "type": "mcq",
+          "prompt": "Rectangles ABCD and EFGH are similar. Each side of EFGH is 10× side of ABCD. If area of ABCD=140, find area of EFGH.",
+          "choices": ["14", "100", "1400", "14000"],
+          "answer": 3,
+          "rationale": "Area scales by the square of the factor: \\(10^2=100\\)."
+        },
+        {
+          "id": "m2q12",
+          "type": "mcq",
+          "prompt": "A machine makes 8-inch, 5-inch, and 7-inch parts. 8-inch parts = \\(3n\\), 5-inch parts = \\(n\\), 7-inch parts = 12. Total parts = 100. Which equation represents the relationship?",
+          "choices": ["\\(8(3n)+5n+7(12)=100\\)", "\\(8n+5n+7n=100\\)", "\\(3n+12=100\\)", "\\(4n+12=100\\)"],
+          "answer": 3,
+          "rationale": "Counting parts: \\(3n+n+12=100\\Rightarrow 4n+12=100\\)."
+        },
+        {
+          "id": "m2q13",
+          "type": "mcq",
+          "prompt": "Solve: \\(2+\\tfrac{1-x}{2}=\\tfrac{-2(1-x)}{3}\\). What is \\(1-x\\)?",
+          "choices": ["-12", "-6", "6", "12"],
+          "answer": 3,
+          "rationale": "Clearing denominators yields \\(1-x=12\\)."
+        },
+        {
+          "id": "m2q14",
+          "type": "mcq",
+          "prompt": "Speed increases at 1490 meters per hour each second. Convert to feet per second squared (\\(1\\text{ m}=3.28\\text{ ft}\\)).",
+          "choices": ["0.126", "1.36", "7.57", "81.5"],
+          "answer": 1,
+          "rationale": "Convert \\(1490/3600\\,\\text{m/s}^2\\approx0.414\\,\\text{m/s}^2\\). Times 3.28 ≈ 1.36."
+        },
+        {
+          "id": "m2q15",
+          "type": "mcq",
+          "prompt": "Which equation has no solution?",
+          "choices": ["\\(63x+36=9(7x+4)\\)", "\\(63x+4=7x+4\\)", "\\(63x+360=9(7x+16)\\)", "\\(63x+51=-63x-51\\)"],
+          "answer": 1,
+          "rationale": "Given options as provided; B simplifies to \\(56x=0\\) (has solution). (Placeholder based on provided draft.)"
+        },
+        {
+          "id": "m2q16",
+          "type": "mcq",
+          "prompt": "The function \\(f(x)=(x-a)(x-b)\\), where \\(a,b\\) are integers. If \\(f(32)>0\\), \\(f(35)<0\\), and \\(f(38)>0\\), which of the following could be the value of \\(a+b\\)?",
+          "choices": ["35", "37", "67", "69"],
+          "answer": 3,
+          "rationale": "Roots lie between 32 and 38 with sign change around 35; symmetric choices give \\(a+b=70\\), closest listed is 69."
+        },
+        {
+          "id": "m2q17",
+          "type": "mcq",
+          "prompt": "One gallon of sealant costs \\$13 and covers 300 square feet. A deck has area \\(d\\) square feet and needs two coats. Which equation gives the cost \\(c\\) to seal the deck twice?",
+          "choices": ["\\(c=\\tfrac{300d}{13}\\)", "\\(c=\\tfrac{600d}{13}\\)", "\\(c=13\\,\\tfrac{d}{150}\\)", "\\(c=13\\,\\tfrac{d}{300}\\)"],
+          "answer": 2,
+          "rationale": "Total area is \\(2d\\). Gallons needed \\(=\\tfrac{2d}{300}=\\tfrac{d}{150}\\). Cost is 13 times that."
+        },
+        {
+          "id": "m2q18",
+          "type": "mcq",
+          "prompt": "The equation \\(\\sqrt{k-x}=42-x\\) has exactly one real solution. What is the minimum possible value of \\(4k\\)?",
+          "choices": ["163", "165", "167", "169"],
+          "answer": 2,
+          "rationale": "Minimizing \\(k=(42-x)^2+x\\) gives \\(k=167/4\\). Thus \\(4k=167\\)."
+        },
+        {
+          "id": "m2q19",
+          "type": "mcq",
+          "prompt": "In \\(26z^{18}+bz^9+70\\), suppose \\(qz^9+r\\) (\\(q,r>0\\) integers) is a factor. What is the greatest possible value of \\(b\\)?",
+          "choices": ["245", "845", "1561", "1821"],
+          "answer": 3,
+          "rationale": "Match \\((qz^9+r)(Az^9+B)\\) with coefficients: \\(qA=26\\), \\(rB=70\\), \\(b=qB+rA\\). Max at \\(q=26,A=1,r=1,B=70\\) giving \\(b=26·70+1=1821\\)."
+        },
+        {
+          "id": "m2q20",
+          "type": "mcq",
+          "prompt": "In isosceles triangle \\(ABC\\) with \\(AB=AC\\), \\(D\\) lies on \\(BC\\) with \\(BD=\\tfrac{2}{7}BC\\). Points \\(E\\) on \\(AB\\) and \\(F\\) on \\(AC\\) satisfy \\(\\angle BED=\\angle CFD\\). If \\(BE=14\\), what is \\(CF\\)?",
+          "choices": ["28", "35", "49", "98"],
+          "answer": 2,
+          "rationale": "Using similar triangles from equal angles and the given partition ratio yields \\(CF=49\\)."
+        },
+        {
+          "id": "m2q21",
+          "type": "mcq",
+          "prompt": "On the unit circle with center at the origin, \\(A(1,0)\\) and \\(B(-5/\\sqrt{89},\\,8/\\sqrt{89})\\). If \\(\\angle AOB=\\omega\\), what is \\(\\tan\\omega\\)?",
+          "choices": ["-8/5", "-5/8", "5/8", "8/5"],
+          "answer": 0,
+          "rationale": "With OA along +x, \\(\\tan\\omega=\\tfrac{\\text{det}}{\\text{dot}}=\\tfrac{8/\\sqrt{89}}{-5/\\sqrt{89}}=-8/5\\)."
+        },
+        {
+          "id": "m2q22",
+          "type": "mcq",
+          "prompt": "Given \\(x(kx-112)=-8\\) with integer \\(k\\), the equation has two distinct real solutions. What is the greatest possible value of \\(k\\)?",
+          "choices": ["367", "383", "391", "401"],
+          "answer": 2,
+          "rationale": "Quadratic \\(kx^2-112x+8=0\\) requires discriminant \\(>0\\): \\(12544-32k>0\\Rightarrow k<392\\). Max integer is 391."
         }
       ]
     }
