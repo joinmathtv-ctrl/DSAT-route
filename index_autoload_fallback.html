@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>DSAT Practice (Auto-load + Fallback)</title>
+<style>
+  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Helvetica,Arial;margin:0}
+  .app{max-width:900px;margin:32px auto;padding:0 16px}
+  .card{border:1px solid #e5e7eb;border-radius:12px;padding:16px;background:#fff}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .muted{color:#6b7280}
+  .choice{display:flex;gap:12px;align-items:flex-start;border:1px solid #cbd5e1;border-radius:12px;padding:12px;margin-top:10px;cursor:pointer}
+  .choice.selected{outline:2px solid #2563eb;outline-offset:2px}
+  .bubble{min-width:28px;height:28px;border:2px solid #cbd5e1;border-radius:999px;display:grid;place-items:center;font-weight:700;font-size:12px}
+  .map{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+  .mapcell{width:36px;height:32px;border:1px solid #cbd5e1;border-radius:8px;display:grid;place-items:center;cursor:pointer}
+  .mapcell.answered{background:#e2e8f0}.mapcell.current{outline:2px solid #111827;outline-offset:2px}
+  .hidden{display:none}
+  .error{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:10px;border-radius:8px;margin-bottom:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <h2>DSAT Practice — Auto-load</h2>
+  <div id="err" class="error hidden"></div>
+  <div id="q" class="card">
+    <div class="row" style="justify-content:space-between">
+      <div class="row"><strong id="title">Loading…</strong><span id="meta" class="muted"></span></div>
+      <div class="muted" id="timer">--:--</div>
+    </div>
+    <div id="prompt" style="margin-top:10px;line-height:1.7">문항 불러오는 중…</div>
+    <div id="choices"></div>
+    <div class="row" style="justify-content:space-between;margin-top:12px">
+      <div class="row"><button id="prev">Prev</button><button id="next">Next</button></div>
+      <button id="submit">Submit</button>
+    </div>
+    <div class="map" id="palette"></div>
+  </div>
+
+  <div id="result" class="card hidden">
+    <div><strong>결과</strong> <span class="muted" id="resmeta"></span></div>
+    <div style="margin:10px 0">원점수: <strong id="score">0/0</strong></div>
+    <button id="restart">다시 풀기</button>
+    <div id="explain"></div>
+  </div>
+</div>
+
+<!-- MathJax for LaTeX -->
+<script>
+  window.MathJax = {tex:{inlineMath:[['\\(','\\)'],['$','$']]}, svg:{fontCache:'global'}};
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<script>
+(async function(){
+  const err = document.getElementById('err');
+  function showErr(msg){
+    err.textContent = msg;
+    err.classList.remove('hidden');
+  }
+  const FALLBACK = {"metadata": {"title": "Sample Math Module 1", "section": "math", "directions": "Answer each question. Select the best choice.", "durationMinutesPerModule": [35]}, "modules": [{"module": 1, "questions": [{"id": "m1q1", "type": "mcq", "prompt": "The table shows selected values from the function \\(f\\).<br><table border='1' cellpadding='6' style='border-collapse:collapse;margin-top:8px'><tr><th>x</th><th>f(x)</th></tr><tr><td>-1</td><td>\\(\\tfrac{1}{50}\\)</td></tr><tr><td>0</td><td>1</td></tr><tr><td>1</td><td>50</td></tr><tr><td>2</td><td>2500</td></tr></table>Which of the following is the best description of function \\(f\\)?", "choices": ["Increasing linear", "Decreasing linear", "Increasing exponential", "Decreasing exponential"], "answer": 2, "rationale": "값이 빠르게 증가하므로 지수함수."}, {"id": "m1q2", "type": "mcq", "prompt": "The equation \\(d = 37w + 100\\) gives the total amount of money \\(d\\), in dollars, that Janna plans to save \\(w\\) weeks after she starts to save. What is the total amount of money, in dollars, she plans to save in 10 weeks?", "choices": ["420", "470", "520", "570"], "answer": 1, "rationale": "계산: \\(d=37\\times10+100=470\\)."}, {"id": "m1q3", "type": "mcq", "prompt": "What value of \\(n\\) is the solution to the equation \\(9n - 10 = 2n + 25\\)?", "choices": ["5", "7", "9", "11"], "answer": 0, "rationale": "정리: \\(9n-10=2n+25\\Rightarrow7n=35\\Rightarrow n=5\\)."}, {"id": "m1q4", "type": "mcq", "prompt": "Which value is a solution to the given equation \\(x^2 - 2 = 23\\)?", "choices": ["-23", "-21", "-2", "5"], "answer": 3, "rationale": "\\(x^2=25\\Rightarrow x=\\pm5\\). 선택지는 5만 해당."}, {"id": "m1q5", "type": "mcq", "prompt": "The function \\(f(x)=7x+9\\) gives the estimated height, in feet, of a poplar tree \\(x\\) years after its height was first measured. Which statement is the best interpretation of 9 in this context?", "choices": ["The tree will be measured each year for 9 years.", "The tree is estimated to grow to a maximum height of 9 feet.", "The estimated height of the tree increased by 9 feet each year.", "The estimated height of the tree was 9 feet when it was first measured."], "answer": 3, "rationale": "상수항은 초기 높이 9ft 의미."}]}]};
+
+  async function loadQuestions(){
+    try{
+      const res = await fetch('./questions.json', {cache:'no-store'});
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const data = await res.json();
+      return data;
+    }catch(e){
+      showErr('questions.json을 불러오지 못했습니다. 로컬 파일로 직접 열면(CORS) 차단될 수 있어요. '
+              +'해결: (1) 같은 폴더에 questions.json이 있는지 확인, (2) 간단한 로컬 서버로 열기, '
+              +'(3) 지금은 내장 샘플로 자동 대체됩니다.');
+      return FALLBACK;
+    }
+  }
+
+  const data = await loadQuestions();
+  const m = data.modules[0];
+  const meta = data.metadata || {};
+  let idx = 0;
+  const answers = {};
+
+  document.getElementById('title').textContent = meta.title || 'Practice';
+  document.getElementById('meta').textContent = ' · ' + (meta.section==='math'?'Math':'R&W') + ' · Module ' + m.module;
+
+  function renderPalette(){
+    const pal = document.getElementById('palette');
+    pal.innerHTML = '';
+    m.questions.forEach((q,i)=>{
+      const d = document.createElement('div');
+      d.className = 'mapcell';
+      if(answers[q.id]!=null) d.classList.add('answered');
+      if(i===idx) d.classList.add('current');
+      d.textContent = i+1;
+      d.onclick = () => { idx=i; renderQ(); };
+      pal.appendChild(d);
+    });
+  }
+
+  function renderQ(){
+    const q = m.questions[idx];
+    document.getElementById('prompt').innerHTML = q.prompt;
+    const ch = document.getElementById('choices'); ch.innerHTML='';
+    q.choices.forEach((c,i)=>{
+      const div = document.createElement('div'); div.className='choice';
+      const b = document.createElement('div'); b.className='bubble'; b.textContent=String.fromCharCode(65+i);
+      const t = document.createElement('div'); t.textContent = c;
+      div.appendChild(b); div.appendChild(t);
+      if(answers[q.id]===i) div.classList.add('selected');
+      div.onclick = ()=>{ answers[q.id]=i; renderQ(); renderPalette(); };
+      ch.appendChild(div);
+    });
+    MathJax?.typesetPromise?.();
+  }
+
+  function score(){
+    let c=0,w=0,b=0; const rows=[];
+    for(const q of m.questions){
+      const a = answers[q.id];
+      const ua = (a!=null)? String.fromCharCode(65+a):'';
+      const ca = (q.answer!=null)? String.fromCharCode(65+q.answer):'';
+      const ok = a!=null && a===q.answer;
+      if(a==null) b++; else if(ok) c++; else w++;
+      rows.push({id:q.id,user:ua,correct:ca,ok,rat:q.rationale||''});
+    }
+    return {c,w,b,rows};
+  }
+
+  document.getElementById('prev').onclick = ()=>{ idx=Math.max(0,idx-1); renderQ(); renderPalette(); };
+  document.getElementById('next').onclick = ()=>{ idx=Math.min(m.questions.length-1,idx+1); renderQ(); renderPalette(); };
+  document.getElementById('submit').onclick = ()=>{
+    const s = score();
+    document.getElementById('q').classList.add('hidden');
+    document.getElementById('result').classList.remove('hidden');
+    document.getElementById('resmeta').textContent = ' ' + (meta.title||'') + ' · Module ' + m.module;
+    document.getElementById('score').textContent = s.c + '/' + m.questions.length;
+    const ex = document.getElementById('explain'); ex.innerHTML='';
+    s.rows.forEach((r,i)=>{
+      const d = document.createElement('div');
+      d.style.marginTop='8px'; d.style.border='1px dashed #cbd5e1'; d.style.padding='8px'; d.style.borderRadius='8px';
+      d.innerHTML = '<strong>Q'+(i+1)+'</strong> — 내 답: '+(r.user||'-')+' / 정답: '+(r.correct||'-')+' — '+(r.ok?'✔️':'❌')+'<br>'+r.rat;
+      ex.appendChild(d);
+    });
+    MathJax?.typesetPromise?.();
+  };
+  document.getElementById('restart').onclick = ()=> location.reload();
+
+  renderQ(); renderPalette();
+})();
+</script>
+</body>
+</html>

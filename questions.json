@@ -1,0 +1,82 @@
+{
+  "metadata": {
+    "title": "Sample Math Module 1",
+    "section": "math",
+    "directions": "Answer each question. Select the best choice.",
+    "durationMinutesPerModule": [
+      35
+    ]
+  },
+  "modules": [
+    {
+      "module": 1,
+      "questions": [
+        {
+          "id": "m1q1",
+          "type": "mcq",
+          "prompt": "The table shows selected values from the function \\(f\\).<br><table border='1' cellpadding='6' style='border-collapse:collapse;margin-top:8px'><tr><th>x</th><th>f(x)</th></tr><tr><td>-1</td><td>\\(\\tfrac{1}{50}\\)</td></tr><tr><td>0</td><td>1</td></tr><tr><td>1</td><td>50</td></tr><tr><td>2</td><td>2500</td></tr></table>Which of the following is the best description of function \\(f\\)?",
+          "choices": [
+            "Increasing linear",
+            "Decreasing linear",
+            "Increasing exponential",
+            "Decreasing exponential"
+          ],
+          "answer": 2,
+          "rationale": "값이 빠르게 증가하므로 지수함수."
+        },
+        {
+          "id": "m1q2",
+          "type": "mcq",
+          "prompt": "The equation \\(d = 37w + 100\\) gives the total amount of money \\(d\\), in dollars, that Janna plans to save \\(w\\) weeks after she starts to save. What is the total amount of money, in dollars, she plans to save in 10 weeks?",
+          "choices": [
+            "420",
+            "470",
+            "520",
+            "570"
+          ],
+          "answer": 1,
+          "rationale": "계산: \\(d=37\\times10+100=470\\)."
+        },
+        {
+          "id": "m1q3",
+          "type": "mcq",
+          "prompt": "What value of \\(n\\) is the solution to the equation \\(9n - 10 = 2n + 25\\)?",
+          "choices": [
+            "5",
+            "7",
+            "9",
+            "11"
+          ],
+          "answer": 0,
+          "rationale": "정리: \\(9n-10=2n+25\\Rightarrow7n=35\\Rightarrow n=5\\)."
+        },
+        {
+          "id": "m1q4",
+          "type": "mcq",
+          "prompt": "Which value is a solution to the given equation \\(x^2 - 2 = 23\\)?",
+          "choices": [
+            "-23",
+            "-21",
+            "-2",
+            "5"
+          ],
+          "answer": 3,
+          "rationale": "\\(x^2=25\\Rightarrow x=\\pm5\\). 선택지는 5만 해당."
+        },
+        {
+          "id": "m1q5",
+          "type": "mcq",
+          "prompt": "The function \\(f(x)=7x+9\\) gives the estimated height, in feet, of a poplar tree \\(x\\) years after its height was first measured. Which statement is the best interpretation of 9 in this context?",
+          "choices": [
+            "The tree will be measured each year for 9 years.",
+            "The tree is estimated to grow to a maximum height of 9 feet.",
+            "The estimated height of the tree increased by 9 feet each year.",
+            "The estimated height of the tree was 9 feet when it was first measured."
+          ],
+          "answer": 3,
+          "rationale": "상수항은 초기 높이 9ft 의미."
+        }
+      ]
+    }
+  ]
+}
