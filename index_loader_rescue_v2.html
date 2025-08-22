@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DSAT Loader Rescue — v2</title>
+<style>
+  :root{--line:#e5e7eb;--muted:#64748b;--accent:#2563eb}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Helvetica,Arial;margin:0;background:#f8fafc;color:#0f172a}
+  .wrap{max-width:900px;margin:0 auto;padding:20px}
+  h1{font-size:22px;margin:10px 0 6px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 12px;cursor:pointer}
+  button.primary{border-color:var(--accent);color:#fff;background:var(--accent)}
+  input[type=text]{border:1px solid var(--line);border-radius:10px;padding:10px;width:100%}
+  .muted{color:var(--muted);font-size:13px}
+  pre{background:#0b1020;color:#e5e7eb;padding:12px;border-radius:10px;overflow:auto}
+  .ok{color:#16a34a}
+  .err{color:#dc2626}
+  .tbl{font-size:14px;border-collapse:collapse}
+  .tbl th,.tbl td{border:1px solid #d1d5db;padding:6px 8px}
+  .foot{margin-top:12px;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>DSAT Loader Rescue — v2</h1>
+  <div class="card">
+    <div class="row">
+      <button id="btnDefault">기본 로드(./questions.json)</button>
+      <button id="btnSets">보조 로드(./sets/questions.json)</button>
+      <input id="url" type="text" placeholder="직접 URL 또는 상대경로 입력 (예: ./my.json)" style="flex:1 1 320px">
+      <button id="btnURL">URL 로드</button>
+      <label class="row" style="gap:8px">
+        <input id="nocache" type="checkbox" checked> <span class="muted">캐시 방지</span>
+      </label>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <input id="file" type="file" accept=".json,application/json">
+      <button id="btnFile">파일에서 로드</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <strong>미리보기</strong> <span id="meta" class="muted"></span>
+    <pre id="preview" style="max-height:300px"></pre>
+    <div class="row">
+      <button id="btnStart" class="primary" disabled>이 세트로 시작 (index.html로 이동)</button>
+      <button id="btnClear">초기화</button>
+    </div>
+    <div id="status" class="muted"></div>
+  </div>
+
+  <div class="card">
+    <strong>도움말</strong>
+    <ul>
+      <li>index.html과 같은 폴더의 <code>questions.json</code>을 불러오거나, 경로/URL/파일 업로드로 로드합니다.</li>
+      <li>로드 실패 시 HTTP 상태/파싱 오류 메시지를 아래에 표시합니다.</li>
+      <li>시작 버튼은 로딩된 세트를 <code>localStorage</code>에 저장하고 <code>index.html</code>로 이동합니다.</li>
+    </ul>
+    <table class="tbl">
+      <tr><th>키</th><th>값</th></tr>
+      <tr><td>localStorage key</td><td><code>DSAT_LOADED_JSON</code></td></tr>
+      <tr><td>캐시 방지</td><td>URL 뒤에 <code>?v=timestamp</code>를 자동 추가</td></tr>
+      <tr><td>index.html</td><td>동일 루트 폴더에 있어야 합니다.</td></tr>
+    </table>
+    <div class="foot">v2 • 2025-08-22 03:51:03</div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const preview = $('#preview');
+const meta = $('#meta');
+const statusBox = $('#status');
+const nocache = $('#nocache');
+let loadedObj = null;
+let loadedSrc = null;
+
+function setStatus(msg, ok=false){
+  statusBox.innerHTML = ok ? "<span class='ok'>"+msg+"</span>" : "<span class='err'>"+msg+"</span>";
+}
+
+async function fetchJSON(path){
+  try{
+    let url = path;
+    if(nocache.checked){
+      const sep = url.includes('?') ? '&' : '?';
+      url = url + sep + 'v=' + Date.now();
+    }
+    const res = await fetch(url, {cache:'no-store'});
+    if(!res.ok){
+      throw new Error('HTTP '+res.status+' '+res.statusText);
+    }
+    const obj = await res.json();
+    return {ok:true, obj, src:path};
+  }catch(e){
+    return {ok:false, err:String(e), src:path};
+  }
+}
+
+function showPreview(obj, src){
+  loadedObj = obj;
+  loadedSrc = src;
+  meta.textContent = ' — source: ' + src;
+  preview.textContent = JSON.stringify(obj, null, 2);
+  $('#btnStart').disabled = false;
+  setStatus('로드 성공', true);
+}
+
+$('#btnDefault').onclick = async () => {
+  setStatus('로딩 중…');
+  const r = await fetchJSON('./questions.json');
+  if(r.ok) showPreview(r.obj, r.src);
+  else setStatus('기본 로드 실패: '+r.err);
+};
+
+$('#btnSets').onclick = async () => {
+  setStatus('로딩 중…');
+  const r = await fetchJSON('./sets/questions.json');
+  if(r.ok) showPreview(r.obj, r.src);
+  else setStatus('보조 로드 실패: '+r.err);
+};
+
+$('#btnURL').onclick = async () => {
+  const path = $('#url').value.trim();
+  if(!path){ setStatus('경로 또는 URL을 입력하세요.'); return; }
+  setStatus('로딩 중…');
+  const r = await fetchJSON(path);
+  if(r.ok) showPreview(r.obj, r.src);
+  else setStatus('URL 로드 실패: '+r.err);
+};
+
+$('#btnFile').onclick = async () => {
+  const f = $('#file').files[0];
+  if(!f){ setStatus('JSON 파일을 선택하세요.'); return; }
+  try{
+    const text = await f.text();
+    const obj = JSON.parse(text);
+    showPreview(obj, '(local file) '+f.name);
+  }catch(e){
+    setStatus('파일 파싱 실패: '+e);
+  }
+};
+
+$('#btnStart').onclick = () => {
+  if(!loadedObj){ setStatus('먼저 세트를 로드하세요.'); return; }
+  try{
+    localStorage.setItem('DSAT_LOADED_JSON', JSON.stringify(loadedObj));
+    location.href = './index.html';
+  }catch(e){
+    setStatus('시작 실패: '+e);
+  }
+};
+
+$('#btnClear').onclick = () => {
+  preview.textContent = '';
+  meta.textContent = '';
+  statusBox.textContent = '';
+  $('#btnStart').disabled = true;
+  loadedObj = null;
+  loadedSrc = null;
+  $('#url').value='';
+  $('#file').value='';
+};
+</script>
+</body>
+</html>
