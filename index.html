@@ -407,12 +407,12 @@ function submitModule() {
 
 /* ===== URL Loader ===== */
 document.getElementById('btnLoad').addEventListener('click', ()=>{
-  const url = document.getElementById('urlInput').value.trim() || './questions_fixed.json?v='+Date.now();
+  const url = document.getElementById('urlInput').value.trim() || './questions.json?v='+Date.now();
   loadSet(url);
 });
 
 // auto-load default
-loadSet('./questions_fixed.json?v='+Date.now());
+loadSet('./questions.json?v='+Date.now());
 </script>
 </body>
 </html>
