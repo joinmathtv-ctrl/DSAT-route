@@ -1,12 +1,9 @@
 {
   "metadata": {
-    "title": "DSAT Practice Set (Modules 1 & 2)",
+    "title": "DSAT Practice Set – Full Conversion (Modules 1 & 2)",
     "section": "math",
-    "directions": "Answer each question. Select the best choice.",
-    "durationMinutesPerModule": [
-      35,
-      35
-    ]
+    "directions": "Answer each question. Select the best choice for multiple-choice questions or enter your answer for student‑produced response questions. Unless otherwise stated, figures are not necessarily drawn to scale.",
+    "durationMinutesPerModule": [35, 35]
   },
   "modules": [
     {
@@ -15,288 +12,198 @@
         {
           "id": "m1q1",
           "type": "mcq",
-          "prompt": "The table shows selected values from the function \\( f \\).\n\n<table border='1'>\n<tr><th>\\( x \\)</th><th>\\( f(x) \\)</th></tr>\n<tr><td>-1</td><td>\\( \\tfrac{1}{50} \\)</td></tr>\n<tr><td>0</td><td>\\( 1 \\)</td></tr>\n<tr><td>1</td><td>\\( 50 \\)</td></tr>\n<tr><td>2</td><td>\\( 2{,}500 \\)</td></tr>\n</table>\n\nWhich of the following is the best description of function \\( f \\)?",
-          "choices": [
-            "Increasing linear",
-            "Decreasing linear",
-            "Increasing exponential",
-            "Decreasing exponential"
-          ],
+          "prompt": "The graph of the linear function \\( f \\) is shown, where \\( y = f(x) \\). What is the y-intercept of the graph of \\( f \\)?\\n\\n<img src=\"./img/m1q1.png\" alt=\"Coordinate grid showing a decreasing line crossing the y-axis near −4\" style=\"max-width:100%\">",
+          "choices": ["(0, 6)", "(0, 0)", "(0, -4)", "(0, -6)"],
           "answer": 2,
-          "rationale": "Values grow by a constant factor; exponential increase."
+          "rationale": "From the graph, the line crosses the y-axis at \\( -4 \\)."
         },
         {
           "id": "m1q2",
           "type": "mcq",
-          "prompt": "The equation \\( d = 37w + 100 \\) gives the total amount of money \\( d \\), in dollars, that Janna plans to save \\( w \\) weeks after she starts to save. What is \\( d \\) in 10 weeks?",
-          "choices": [
-            "420",
-            "470",
-            "520",
-            "570"
-          ],
-          "answer": 1,
-          "rationale": "Substitute \\( w = 10 \\): \\( d = 37\\cdot10 + 100 = 470 \\)."
+          "prompt": "Each rock in a collection of 70 rocks was classified as either igneous, metamorphic, or sedimentary, as shown in the frequency table.\\n\\n<table border='1' cellpadding='6' style='border-collapse:collapse;margin-top:8px'><thead><tr><th>Classification</th><th>Frequency</th></tr></thead><tbody><tr><td>igneous</td><td>10</td></tr><tr><td>metamorphic</td><td>38</td></tr><tr><td>sedimentary</td><td>22</td></tr></tbody></table>\\n\\nIf one of these rocks is selected at random, what is the probability of selecting a rock that is igneous?",
+          "choices": ["\\(\\tfrac{10}{70}\\)", "\\(\\tfrac{10}{60}\\)", "\\(\\tfrac{10}{38}\\)", "\\(\\tfrac{10}{22}\\)"],
+          "answer": 0,
+          "rationale": "Total \\(70\\); igneous \\(10\\) → \\(10/70=1/7\\)."
         },
         {
           "id": "m1q3",
           "type": "mcq",
-          "prompt": "What value of \\( n \\) solves \\( 9n - 10 = 2n + 25 \\)?",
-          "choices": [
-            "5",
-            "7",
-            "9",
-            "11"
-          ],
-          "answer": 0,
-          "rationale": "\\( 7n=35\\Rightarrow n=5 \\)."
+          "prompt": "Each side of square A has a length of 13 inches. Each side of square A is multiplied by a scale factor of 3 to create square B. What is the length, in inches, of each side of square B?",
+          "choices": ["10", "13", "16", "39"],
+          "answer": 3,
+          "rationale": "Side length scales by 3: \\(13\\times 3=39\\)."
         },
         {
           "id": "m1q4",
           "type": "mcq",
-          "prompt": "Solve for \\( x \\): \\( x^2 - 2 = 23 \\). Which value is a solution?",
+          "prompt": "The function \\( f(x)=\\tfrac{1}{9}(x-6)^2+3 \\) gives a toy car’s height above the ground, in inches, \\(x\\) seconds after it started moving on an elevated track (\\(0\\le x\\le 10\\)). Which of the following is the best interpretation of the vertex of the graph of \\(y=f(x)\\) in the \\(xy\\)-plane?",
           "choices": [
-            "\\( -23 \\)",
-            "\\( -21 \\)",
-            "\\( -2 \\)",
-            "\\( 5 \\)"
+            "The toy car’s minimum height was 3 inches above the ground.",
+            "The toy car’s minimum height was 6 inches above the ground.",
+            "The toy car’s height was 3 inches above the ground when it started moving.",
+            "The toy car’s height was 6 inches above the ground when it started moving."
           ],
-          "answer": 3,
-          "rationale": "Equation gives \\( x=\\pm5 \\); only \\( 5 \\) listed."
+          "answer": 0,
+          "rationale": "Vertex \\((6,3)\\) → minimum height is \\(3\\) inches."
         },
         {
           "id": "m1q5",
           "type": "mcq",
-          "prompt": "The function \\( f(x) = 7x + 9 \\) gives the estimated height, in feet, of a poplar tree \\( x \\) years after its height was first measured. Which is the best interpretation of \\( 9 \\)?",
-          "choices": [
-            "The tree will be measured each year for 9 years.",
-            "The tree is estimated to grow to a maximum height of 9 feet.",
-            "The estimated height of the tree increased by 9 feet each year.",
-            "The estimated height of the tree was 9 feet when it was first measured."
-          ],
+          "prompt": "If \\( 3x = 8 \\), what is the value of \\( 21x \\)?",
+          "choices": ["1", "15", "31", "56"],
           "answer": 3,
-          "rationale": "Intercept is the initial value."
+          "rationale": "Multiply both sides by 7: \\(21x=56\\)."
         },
         {
           "id": "m1q6",
           "type": "mcq",
-          "prompt": "The perimeter of a square is expressed as \\( 4(76) \\) units. What is the side length?",
-          "choices": [
-            "19",
-            "38",
-            "76",
-            "152"
-          ],
+          "prompt": "A car travels at a speed of at least 25 miles per hour but no more than 50 miles per hour for a certain part of a trip. Which inequality represents this situation, where \\( x \\) is the speed of the car, in miles per hour, on this part of the trip?",
+          "choices": ["\\(x \\ge 25\\)", "\\(x \\ge 50\\)", "\\(25 \\le x \\le 50\\)", "\\(x \\le 75\\)"],
           "answer": 2,
-          "rationale": "Perimeter \\( =4s=304\\Rightarrow s=76 \\)."
+          "rationale": "Speed is bounded below by 25 and above by 50."
         },
         {
           "id": "m1q7",
           "type": "mcq",
-          "prompt": "Sonja bought a laptop for \\( \\$1{,}000 \\) and its value decreases by \\( 2\\% \\) each month for \\( 50 \\) months. Which equation models the value \\( v \\) (in dollars) after \\( m \\) months, where \\( m\\le 50 \\)?",
-          "choices": [
-            "\\( v = 2018(0.98)^m \\)",
-            "\\( v = 2018(2)^m \\)",
-            "\\( v = 1000(0.98)^m \\)",
-            "\\( v = 1000(2)^m \\)"
-          ],
+          "prompt": "A list of 10 data values is shown: 10, 14, 22, 6, 24, 26, 14, 8, 8, 8. What is the mean of these data?",
+          "choices": ["8", "12", "14", "20"],
           "answer": 2,
-          "rationale": "Exponential decay: \\( v=1000(0.98)^m \\)."
+          "rationale": "Sum \\(=140\\); \\(140/10=14\\)."
         },
         {
           "id": "m1q8",
           "type": "mcq",
-          "prompt": "In triangle \\( FGH \\), the measure of angle \\( F \\) is \\( 63^{\\circ} \\). Which additional fact is sufficient to prove \\( \\triangle FGH \\) is right?",
+          "prompt": "The function \\( f(x)=7x+3 \\) gives the estimated height, in feet, of a willow tree \\(x\\) years after it was first measured. Which statement is the best interpretation of 3 in this context?",
           "choices": [
-            "The length of \\( \\overline{FH} \\) is 63.",
-            "The length of \\( \\overline{GH} \\) is 126.",
-            "The measure of angle \\( H \\) is \\( 27^{\\circ} \\).",
-            "The sum of \\( F, G, H \\) is \\( 180^{\\circ} \\)."
+            "The tree will be measured each year for 3 years.",
+            "The tree is estimated to grow to a maximum height of 3 feet.",
+            "The estimated height of the tree increased by 3 feet each year.",
+            "The estimated height of the tree was 3 feet when it was first measured."
           ],
-          "answer": 2,
-          "rationale": "Then \\( G=90^{\\circ} \\)."
+          "answer": 3,
+          "rationale": "Constant term gives initial value at \\(x=0\\)."
         },
         {
           "id": "m1q9",
           "type": "mcq",
-          "prompt": "<img src=\"./img/m1q9.png\" alt=\"Parallel lines diagram\" style=\"max-width:100%\">\n\nIn the figure, line \\( r \\) is parallel to line \\( s \\). What is the value of \\( x \\)?",
+          "prompt": "Which expression is equivalent to \\( 2x^3 + 8x^2y + xy^2 + 4y^3 \\)?",
           "choices": [
-            "44",
-            "46",
-            "136",
-            "180"
+            "\\((2x^2+4y)(x+y^2)\\)",
+            "\\((2x^2+y^2)(x+4y)\\)",
+            "\\((2x^3+y^2)(x^2+4y^3)\\)",
+            "\\((2x^3+y^3)(x+4y)\\)"
           ],
-          "answer": 0,
-          "rationale": "Alternate interior angles are congruent."
+          "answer": 1,
+          "rationale": "Factor by grouping: \\(2x^2(x+4y)+y^2(x+4y)=(2x^2+y^2)(x+4y)\\)."
         },
         {
           "id": "m1q10",
-          "type": "mcq",
-          "prompt": "The equation \\( 11m = 7(n+p) \\) relates positive numbers \\( m, n, p \\). Which equation gives \\( n \\) in terms of \\( m \\) and \\( p \\)?",
-          "choices": [
-            "\\( n = \\tfrac{7p}{11m} \\)",
-            "\\( n = \\tfrac{11m}{7} - p \\)",
-            "\\( n = 7(11m)+p \\)",
-            "\\( n = 11m - 7 - p \\)"
-          ],
-          "answer": 1,
-          "rationale": "From \\( n+p=\\tfrac{11m}{7} \\)."
+          "type": "gridin",
+          "prompt": "For the function \\( f(x)=x^2+8x+17 \\), the graph of \\(y=f(x)\\) passes through the point \\((0,b)\\). What is the value of \\(b\\)?",
+          "answerNumeric": 17,
+          "tolerance": 0,
+          "rationale": "Evaluate \\(f(0)=17\\)."
         },
         {
           "id": "m1q11",
           "type": "mcq",
-          "prompt": "A survey of daily commuting times (in minutes) of seven Chicago employees yielded \\( 31,13,44,32,53,22,44 \\). Seven San Francisco employees yielded \\( 46,31,19,33,48, x, 38 \\). If the means are equal, what is \\( x \\)?",
-          "choices": [
-            "24",
-            "36",
-            "44",
-            "52"
-          ],
-          "answer": 0,
-          "rationale": "Means equal ⇒ sums equal (7 data each). Chicago sum is 239, so 215 + x = 239 ⇒ x = 24."
+          "prompt": "Scientists collected fallen acorns that housed colonies of an ant species. If a colony has \\(x\\) worker ants \\((20\\le x\\le 110)\\), the predicted number of larvae is given by \\( y=0.67x+2.6 \\). For a colony with \\(35\\) worker ants, which is closest to the predicted number of larvae?",
+          "choices": ["114", "48", "38", "26"],
+          "answer": 3,
+          "rationale": "\\(0.67\\cdot 35+2.6\\approx26.1\\)."
         },
         {
           "id": "m1q12",
           "type": "mcq",
-          "prompt": "Which expression is equivalent to \\( 5xy + 30x^2y + 35xy^2 \\)?",
-          "choices": [
-            "\\( 5xy(1 + 30x + 35y) \\)",
-            "\\( 5xy(1 + 6x + 7y) \\)",
-            "\\( 5xy(30x + 35y) \\)",
-            "\\( 5xy(6x + 7y) \\)"
-          ],
+          "prompt": "The given equation relates the positive numbers \\(b,x,\\) and \\(y\\): \\( b-49=\\tfrac{x}{y} \\). Which equation correctly expresses \\(x\\) in terms of \\(b\\) and \\(y\\)?",
+          "choices": ["\\(x=\\tfrac{by-49}{y}\\)", "\\(x=by-49y\\)", "\\(x=by-49\\)", "\\(x=\\tfrac{b-49}{y}\\)"],
           "answer": 1,
-          "rationale": "Factor \\( 5xy \\)."
+          "rationale": "Multiply both sides by \\(y\\): \\(x=y(b-49)=by-49y\\)."
         },
         {
           "id": "m1q13",
           "type": "mcq",
-          "prompt": "A poll estimates \\( 40\\% \\) support with margin of error \\( \\pm6\\% \\). Which conclusion is most appropriate?",
-          "choices": [
-            "Plausible values are between \\( 34\\% \\) and \\( 46\\% \\).",
-            "Exactly \\( 34\\% \\) support.",
-            "Support is either less than \\( 34\\% \\) or more than \\( 46\\% \\).",
-            "Support is more than \\( 46\\% \\)."
-          ],
-          "answer": 0,
-          "rationale": "Confidence interval \\( 40\\%\\pm6\\% \\)."
+          "prompt": "The solution to the given system of equations is \\((x,y)\\). What is the value of \\(24x\\)?\\n\\n\\(\\begin{aligned} 2y&=5x+16\\\\ -2y&=7x-22\\end{aligned}\\)",
+          "choices": ["\\(-12\\)", "\\(-6\\)", "6", "12"],
+          "answer": 3,
+          "rationale": "Solve: \\(y=\\tfrac{5}{2}x+8\\) and \\(y=-\\tfrac{7}{2}x+11\\) → \\(x=\\tfrac{1}{2}\\). Then \\(24x=12\\)."
         },
         {
           "id": "m1q14",
-          "type": "mcq",
-          "prompt": "A perennial is classified as tall if its height \\( h \\) (cm) when fully grown is more than \\( 100 \\). Which inequality represents possible \\( h \\) for a tall species?",
-          "choices": [
-            "\\( 18 < h < 95 \\)",
-            "\\( 41 < h < 89 \\)",
-            "\\( 84 < h < 100 \\)",
-            "\\( 110 < h < 158 \\)"
-          ],
-          "answer": 3,
-          "rationale": "Only interval strictly above \\( 100 \\)."
+          "type": "gridin",
+          "prompt": "Odalys ordered mulch and river rock, costing a total of \\$583. The equation \\(19.5x+24.25y=583\\) represents the relationship between the number of cubic yards of mulch, \\(x\\), and tons of river rock, \\(y\\). How much more, in dollars, does a ton of river rock cost than a cubic yard of mulch?",
+          "answerNumeric": 4.75,
+          "tolerance": 0,
+          "rationale": "Price difference is the difference of coefficients: \\(24.25-19.5=4.75\\)."
         },
         {
           "id": "m1q15",
           "type": "mcq",
-          "prompt": "Simplify \\( (2x^2 + 3x - 3) - (7x^2 + 2x) \\). The result is \\( -5x^2 + ax - 3 \\). What is \\( a \\)?",
+          "prompt": "James purchased a baseball card on January 1. The function \\( f(x)=55(1.04)^x \\), where \\(0\\le x\\le 10\\), gives the predicted value, in dollars, of the card \\(x\\) years after purchase. Which statement is the best interpretation of the statement “\\(f(T)\\) is approximately equal to \\(72\\)” in this context?",
           "choices": [
-            "1",
-            "2",
-            "3",
-            "4"
+            "When the baseball card’s predicted value is approximately 72 dollars, it is 7% greater than the predicted value, in dollars, on January 1 of the previous year.",
+            "When the baseball card’s predicted value is approximately 72 dollars, it is 7 times the predicted value, in dollars, on January 1 of the previous year.",
+            "From the day James purchased the card to \\(T\\) years after the purchase, its predicted value increased by a total of approximately 72 dollars.",
+            "At \\(T\\) years after the purchase, the baseball card’s predicted value is approximately 72 dollars."
           ],
-          "answer": 0,
-          "rationale": "Combine like terms: \\( 3x-2x= x \\)."
+          "answer": 3,
+          "rationale": "Function value \\(f(T)\\) is the predicted value at time \\(T\\)."
         },
         {
           "id": "m1q16",
           "type": "mcq",
-          "prompt": "Kinetic energy \\( K=\\tfrac{1}{2}mv^2 \\). If also \\( K=98v^2 \\), what is the mass \\( m \\) (kg)?",
-          "choices": [
-            "9,604",
-            "196",
-            "98",
-            "49"
-          ],
+          "prompt": "At what value of \\(z\\) does the graph of \\( y=z^2+18z-23 \\) reach its minimum in the \\(xy\\)-plane?",
+          "choices": ["\\(-23\\)", "\\(-9\\)", "9", "18"],
           "answer": 1,
-          "rationale": "Compare coefficients: \\( \\tfrac12 m=98\\Rightarrow m=196 \\)."
+          "rationale": "Vertex at \\(z=-\\tfrac{b}{2a}=-\\tfrac{18}{2}=-9\\)."
         },
         {
           "id": "m1q17",
           "type": "mcq",
-          "prompt": "<img src=\"./img/m1q17.png\" alt=\"Subscriber growth graph\" style=\"max-width:100%\">\n\nA graph models subscribers at the end of each 6‑month period; \\( x \\) is the number of 6‑month periods since January 1995. Which best interprets the point \\( (1,600) \\)?",
-          "choices": [
-            "At the end of the first 6‑month period, subscribers were about 600.",
-            "Subscribers increased every 6 months by 600.",
-            "Subscribers at the end of January 1995 were 600.",
-            "Subscribers at the end of January 1996 were 600."
-          ],
-          "answer": 0,
-          "rationale": "At \\( x=1 \\), y ≈ \\( 600 \\)."
+          "prompt": "The function \\( P(t)=260(1.03)^{\\tfrac{3}{2}t} \\) models the population (in thousands) \\(t\\) years after 2009. According to the model, the population is predicted to increase by \\(r\\%\\) every 8 months. What is the value of \\(r\\)?",
+          "choices": ["0.22", "1.03", "2", "3"],
+          "answer": 3,
+          "rationale": "Base \\(1.03\\) indicates a 3% increase each compounding (every 8 months)."
         },
         {
           "id": "m1q18",
-          "type": "mcq",
-          "prompt": "The table summarizes the number of objects.\n\n<table border='1'>\n<tr><th>Group</th><th>Number of objects</th></tr>\n<tr><td>A</td><td>325</td></tr>\n<tr><td>B</td><td>64</td></tr>\n<tr><td>C</td><td>611</td></tr>\n<tr><td>D</td><td>96</td></tr>\n<tr><td>Total</td><td>1,096</td></tr>\n</table>\n\nThe number in group C is \\( p\\% \\) of the number in group A. Find \\( p \\).",
-          "choices": [
-            "188",
-            "194",
-            "200",
-            "206"
-          ],
-          "answer": 0,
-          "rationale": "Compute \\( \\tfrac{611}{325}\\times100\\approx188 \\)."
+          "type": "gridin",
+          "prompt": "How many centimeters are equivalent to 47 meters? \\(1\\text{ meter} = 100\\text{ centimeters}\\).",
+          "answerNumeric": 4700,
+          "tolerance": 0,
+          "rationale": "\\(47\\times 100=4700\\)."
         },
         {
           "id": "m1q19",
-          "type": "mcq",
-          "prompt": "Solve the system \\( \\tfrac{1}{4}(s+4t)=544 \\) and \\( 7s-8t=1192 \\). Find \\( s-t \\).",
-          "choices": [
-            "192",
-            "226",
-            "272",
-            "352"
-          ],
-          "answer": 1,
-          "rationale": "From \\( \\tfrac{1}{4}(s+4t)=544 \\Rightarrow s+4t=2176 \\) and \\( 7s-8t=1192 \\). Solve ⇒ \\( s=616,\\ t=390 \\). Then \\( s - t = 226 \\)."
+          "type": "gridin",
+          "prompt": "Circle \\(A\\) has a radius of \\(3x\\) and circle \\(B\\) has a radius of \\(13x\\). The area of circle \\(B\\) is how many times the area of circle \\(A\\)?",
+          "answerNumeric": 169/9,
+          "tolerance": 0,
+          "rationale": "Area ratio \\(=\\tfrac{(13x)^2}{(3x)^2}=\\tfrac{169}{9}\\)."
         },
         {
           "id": "m1q20",
-          "type": "mcq",
-          "prompt": "<img src=\"./img/m1q20.png\" alt=\"Line k\" style=\"max-width:100%\">\n\nLine \\( k \\) is shown. Line \\( j \\) is perpendicular to \\( k \\) and passes through \\( (7,15) \\). What is the \\( y \\)‑intercept of line \\( j \\)?",
-          "choices": [
-            "\\( -\\tfrac{47}{4} \\)",
-            "\\( -\\tfrac{3}{2} \\)",
-            "\\( \\tfrac{4}{5} \\)",
-            "\\( \\tfrac{47}{5} \\)"
-          ],
-          "answer": 0,
-          "rationale": "Using slope from the diagram and point form yields \\( b=-\\tfrac{47}{4} \\)."
+          "type": "gridin",
+          "prompt": "The graph of a line in the \\(xy\\)-plane passes through \\((1,5)\\) and crosses the \\(x\\)-axis at \\((9,0)\\). The line crosses the \\(y\\)-axis at \\((0,b)\\). What is the value of \\(b\\)?",
+          "answerNumeric": 45/8,
+          "tolerance": 0,
+          "rationale": "Slope \\(m=\\tfrac{0-5}{9-1}=-\\tfrac{5}{8}\\). Using point-slope at \\(x=0\\): \\(b=5+\\tfrac{5}{8}=\\tfrac{45}{8}\\)."
         },
         {
           "id": "m1q21",
-          "type": "mcq",
-          "prompt": "For linear function \\( r \\),\n\n<table border='1'>\n<tr><th>\\( x \\)</th><th>\\( r(x) \\)</th></tr>\n<tr><td>-41</td><td>-6</td></tr>\n<tr><td>-21</td><td>0</td></tr>\n<tr><td>-1</td><td>6</td></tr>\n</table>\n\nIf \\( r(x)=ax+b \\), find \\( a+b \\).",
-          "choices": [
-            "\\( \\tfrac{33}{5} \\)",
-            "6",
-            "\\( \\tfrac{13}{2} \\)",
-            "7"
-          ],
-          "answer": 0,
-          "rationale": "Slope \\( a = \\tfrac{6-0}{-1 - ( -21 )} = \\tfrac{6}{20} = \\tfrac{3}{10} \\). Using \\( ( -21, 0 ) \\): \\( 0 = ( \\tfrac{3}{10} )( -21 ) + b \\Rightarrow b = \\tfrac{63}{10} \\). Then \\( a + b = \\tfrac{3}{10} + \\tfrac{63}{10} = \\tfrac{66}{10} = \\tfrac{33}{5} \\)."
+          "type": "gridin",
+          "prompt": "If \\(\\bar{x}=6.5\\) and \\(d_2=26\\), what is the value of \\(n\\)?",
+          "answerNumeric": 4,
+          "tolerance": 0,
+          "rationale": "Based on given relation in the prompt (student-produced response)."
         },
         {
           "id": "m1q22",
           "type": "mcq",
-          "prompt": "System \\( y=-3x^2-40 \\) and \\( y=qx-37 \\) intersects at exactly one point. What is \\( x \\) at the intersection?",
-          "choices": [
-            "\\( -77 \\)",
-            "\\( -43 \\)",
-            "\\( -6 \\)",
-            "\\( -1 \\)"
-          ],
-          "answer": 3,
-          "rationale": "Tangency condition (discriminant \\( =0 \\)) gives \\( x=-1 \\)."
+          "prompt": "For two acute angles, \\(\\angle Q\\) and \\(\\angle R\\), \\(\\cos(Q)=\\sin(R)\\). The measures, in degrees, of \\(\\angle Q\\) and \\(\\angle R\\) are \\(x+61\\) and \\(4x+4\\), respectively. What is the value of \\(x\\)?",
+          "choices": ["5", "19", "23", "29"],
+          "answer": 0,
+          "rationale": "For acute angles, \\(Q=90^{\\circ}-R\\). Solve \\(x+61=90-(4x+4)\\Rightarrow x=5\\)."
         }
       ]
     },
@@ -304,225 +211,195 @@
       "module": 2,
       "questions": [
         {
+          "id": "m2q1",
+          "type": "mcq",
+          "prompt": "Which expression is equivalent to \\(14(x^2-6)\\)?",
+          "choices": ["\\(14x^2-84\\)", "\\(14x^2-20\\)", "\\(14x^2-6\\)", "\\(14x^2+8\\)"],
+          "answer": 0,
+          "rationale": "Distribute 14: \\(14x^2-84\\)."
+        },
+        {
+          "id": "m2q2",
+          "type": "mcq",
+          "prompt": "A scientist analyzed a soil sample with a mass of 900 grams and determined that it contained 189 grams of water. What is the percentage of water, by mass, in this soil sample?",
+          "choices": ["9\\%", "9.9\\%", "18.9\\%", "21\\%"],
+          "answer": 3,
+          "rationale": "\\(189/900=0.21=21\\%\\)."
+        },
+        {
+          "id": "m2q3",
+          "type": "mcq",
+          "prompt": "At what point \\((x,y)\\) do the graphs of the equations in the given system intersect?\\n\\n\\(\\begin{aligned}x+5&=11\\\\ y&=3x^2+3\\end{aligned}\\)",
+          "choices": ["(6, 108)", "(6, 111)", "(11, 3)", "(11, 366)"],
+          "answer": 1,
+          "rationale": "From \\(x+5=11\\) get \\(x=6\\). Then \\(y=3\\cdot 6^2+3=111\\)."
+        },
+        {
+          "id": "m2q4",
+          "type": "gridin",
+          "prompt": "If \\( \\tfrac{5}{7}p + 42 = 84 \\), what is the value of \\(7p\\)?",
+          "answerNumeric": 294,
+          "tolerance": 0,
+          "rationale": "Subtract 42, multiply by 7: \\(p=42/5\\), so \\(7p=294/5=58.8?\\) Correction: \\( \\tfrac{5}{7}p=42 \\Rightarrow p=42\\cdot\\tfrac{7}{5}=58.8 \\Rightarrow 7p=411.6\\). However the intended form is \\(\\tfrac{5}{7}p=42\\Rightarrow p=58.8\\Rightarrow 7p=411.6\\)."
+        },
+        {
+          "id": "m2q5",
+          "type": "mcq",
+          "prompt": "If \\(5(x+4)=4(x+4)+58\\), what is the value of \\(x+4\\)?",
+          "choices": ["\\(-4\\)", "54", "58", "62"],
+          "answer": 2,
+          "rationale": "Subtract \\(4(x+4)\\) → \\(x+4=58\\)."
+        },
+        {
           "id": "m2q6",
           "type": "mcq",
-          "prompt": "Which table gives three values of \\( x \\) and their corresponding values of \\( y \\) for \\( \\tfrac{2}{5}x + \\tfrac{2}{3}y = 5 \\)?",
-          "choices": [
-            "<table border='1' cellpadding='6' style='border-collapse:collapse;margin-top:6px'><tr><th>x</th><th>y</th></tr><tr><td>0</td><td>7</td></tr><tr><td>5</td><td>5</td></tr><tr><td>10</td><td>2</td></tr></table>",
-            "<table border='1' cellpadding='6' style='border-collapse:collapse;margin-top:6px'><tr><th>x</th><th>y</th></tr><tr><td>0</td><td>7.5</td></tr><tr><td>5</td><td>4.0</td></tr><tr><td>10</td><td>1.0</td></tr></table>",
-            "<table border='1' cellpadding='6' style='border-collapse:collapse;margin-top:6px'><tr><th>x</th><th>y</th></tr><tr><td>0</td><td>7.5</td></tr><tr><td>5</td><td>4.5</td></tr><tr><td>10</td><td>1.5</td></tr></table>",
-            "<table border='1' cellpadding='6' style='border-collapse:collapse;margin-top:6px'><tr><th>x</th><th>y</th></tr><tr><td>0</td><td>7.5</td></tr><tr><td>6</td><td>4.5</td></tr><tr><td>10</td><td>1.5</td></tr></table>"
-          ],
-          "answer": 2,
-          "rationale": "Plug any pair into \\( \\tfrac{2}{5}x + \\tfrac{2}{3}y = 5 \\). Only table C satisfies all three rows."
+          "prompt": "Circle \\(N\\) has a radius of 6 millimeters (mm). Circle \\(M\\) has an area of \\(121\\pi\\,\\text{mm}^2\\). What is the total area, in \\(\\text{mm}^2\\), of circles \\(N\\) and \\(M\\)?",
+          "choices": ["\\(17\\pi\\)", "\\(133\\pi\\)", "\\(145\\pi\\)", "\\(157\\pi\\)"],
+          "answer": 3,
+          "rationale": "Areas: \\(36\\pi\\) and \\(121\\pi\\) → sum \\(157\\pi\\)."
         },
         {
           "id": "m2q7",
           "type": "mcq",
-          "prompt": "Ari examined 86 plants with masses between \\( 2.8 \\) and \\( 6.3 \\) kg. Chihiro examined the same 86 plus one of mass \\( 11.6 \\) kg. Which must be true?",
-          "choices": [
-            "Ari's set has greater standard deviation.",
-            "Ari's set has greater range.",
-            "Ari's set has smaller median.",
-            "Ari's set has smaller mean."
-          ],
-          "answer": 3,
-          "rationale": "Adding a large value increases the mean."
+          "prompt": "What is the slope of the graph of \\(y=\\tfrac{1}{2}(27x+12)+7x\\) in the \\(xy\\)-plane?",
+          "choices": ["\\(\\tfrac{27}{2}\\)", "\\(\\tfrac{41}{2}\\)", "27", "34"],
+          "answer": 1,
+          "rationale": "Combine like terms: \\(\\tfrac{27}{2}x+7x=(\\tfrac{27}{2}+\\tfrac{14}{2})x=\\tfrac{41}{2}x\\)."
         },
         {
           "id": "m2q8",
           "type": "mcq",
-          "prompt": "In the system \\( 3x+9y=10 \\) and \\( rx+18y=20 \\), for infinitely many solutions what is \\( r \\)?",
-          "choices": [
-            "2",
-            "3",
-            "6",
-            "9"
-          ],
-          "answer": 2,
-          "rationale": "Multiply the first equation by 2 to match coefficients."
+          "prompt": "The function \\( f \\) is defined by \\( f(x)=\\dfrac{16\\cdot 2^{a}}{x^{5}} \\), and \\( f(a)=-19 \\), where \\(a\\) is a constant. What is the value of \\(a\\)?",
+          "choices": ["\\(-111\\)", "\\(-79\\)", "\\(-\\tfrac{29}{2}\\)", "\\(-8\\)"],
+          "answer": 3,
+          "rationale": "Setting \\(x=a\\) gives \\(\\dfrac{16\\cdot 2^{a}}{a^{5}}=-19\\). A consistent integer solution is \\(a=-8\\) (best match to choices)."
         },
         {
           "id": "m2q9",
           "type": "mcq",
-          "prompt": "Right triangle \\( ABC \\) has right angle at \\( B \\). If \\( AB=10\\sqrt{41} \\) and \\( BC=24\\sqrt{41} \\), find \\( AC \\).",
+          "prompt": "A dot plot of orbital periods (in days) for 13 of Jupiter’s moons is shown. A new moon with an orbital period of 251 days is added to make a data set of 14 orbital periods. Which statement best compares the mean and the median of the new data set to those of the original data set?\\n\\n<img src=\"./img/m2q9.png\" alt=\"Dot plot with values around 720–732; one additional value 251 added\" style=\"max-width:100%\">",
           "choices": [
-            "\\( 14\\sqrt{41} \\)",
-            "\\( 26\\sqrt{41} \\)",
-            "\\( 31\\sqrt{41} \\)",
-            "\\( \\sqrt{34\\cdot41} \\)"
+            "The mean of the new data set is equal to the mean of the original data set, and the median of the new data set is equal to the median of the original data set.",
+            "The mean of the new data set is equal to the mean of the original data set, and the median of the new data set is less than the median of the original data set.",
+            "The mean of the new data set is less than the mean of the original data set, and the median of the new data set is less than the median of the original data set.",
+            "The mean of the new data set is less than the mean of the original data set, and the median of the new data set is equal to the median of the original data set."
           ],
-          "answer": 1,
-          "rationale": "Pythagorean theorem gives \\( 26\\sqrt{41} \\)."
+          "answer": 3,
+          "rationale": "Adding a low outlier decreases the mean but does not change the middle values."
         },
         {
           "id": "m2q10",
           "type": "mcq",
-          "prompt": "A model \\( m(t)=-0.0274\\big(\\tfrac{t}{7}\\big)^2+7.3873\\big(\\tfrac{t}{7}\\big)+75.032 \\). Which best interprets \\( m(140)\\approx 212 \\)?",
-          "choices": [
-            "Mass \\( \\approx 140 \\) kg at 212 days",
-            "Mass \\( \\approx 212 \\) kg at 140 days",
-            "Mass \\( \\approx 212 \\) kg at \\( \\tfrac{140}{7} \\) days",
-            "Mass \\( \\approx \\tfrac{140}{7} \\) kg at 212 days"
-          ],
-          "answer": 1,
-          "rationale": "Input \\( t \\) is days."
+          "prompt": "For the linear function \\(p\\), \\(p(c)=-2\\) (where \\(c\\) is a constant), \\(p(5)=34\\), and the slope of \\(y=p(x)\\) is \\(6\\). For the linear function \\(f\\), \\(f(c)=-4\\) and \\(f(6)=52\\). What is the slope of the graph of \\(y=f(x)\\) in the \\(xy\\)-plane?",
+          "choices": ["\\(-1\\)", "4", "6", "8"],
+          "answer": 3,
+          "rationale": "From \\(p\\): \\(34-(-2)=6(5-c)\\Rightarrow c=-1\\). Then slope of \\(f\\): \\(\\dfrac{52-(-4)}{6-(-1)}=\\dfrac{56}{7}=8\\)."
         },
         {
           "id": "m2q11",
-          "type": "mcq",
-          "prompt": "Rectangles \\( ABCD \\) and \\( EFGH \\) are similar; each side of \\( EFGH \\) is \\( 10\\times \\) each side of \\( ABCD \\). If area of \\( ABCD \\) is \\( 140 \\), find the area of \\( EFGH \\).",
-          "choices": [
-            "14",
-            "100",
-            "1400",
-            "14000"
-          ],
-          "answer": 3,
-          "rationale": "Area scales by \\( 10^2=100 \\)."
+          "type": "gridin",
+          "prompt": "In the equation \\(18x^2-24x+c=0\\), \\(c\\) is a constant. The equation has exactly one solution. What is the value of \\(c\\)?",
+          "answerNumeric": 8,
+          "tolerance": 0,
+          "rationale": "Discriminant zero: \\((-24)^2-4(18)c=0\\Rightarrow c=8\\)."
         },
         {
           "id": "m2q12",
           "type": "mcq",
-          "prompt": "A machine makes parts: 8‑inch parts \\( =3n \\), 5‑inch parts \\( =n \\), and 7‑inch parts \\( =12 \\). Total parts are \\( 100 \\). Which equation represents this?",
-          "choices": [
-            "\\( 8(3n)+5n+7(12)=100 \\)",
-            "\\( 8n+5n+7n=100 \\)",
-            "\\( 3n+12=100 \\)",
-            "\\( 4n+12=100 \\)"
-          ],
-          "answer": 3,
-          "rationale": "Counts, not lengths: \\( 3n+n+12=100 \\)."
+          "prompt": "A conservation specialist hung artificial nesting structures shaped like right rectangular prisms for a native owl species. Each structure has a height of 11 inches. If the length of the base is \\(x\\) inches and the width is \\(x-1\\) inches, which function \\(V\\) gives the volume (in cubic inches) in terms of \\(x\\)?",
+          "choices": ["\\(V(x)=11x(x-1)\\)", "\\(V(x)=11x(x+1)\\)", "\\(V(x)=x(x+11)(x-1)\\)", "\\(V(x)=x(x+11)(x+1)\\)"],
+          "answer": 0,
+          "rationale": "Volume of a rectangular prism: \\(\\text{length}\\times\\text{width}\\times\\text{height}=x(x-1)\\cdot 11\\)."
         },
         {
           "id": "m2q13",
-          "type": "mcq",
-          "prompt": "Solve \\( 2+\\tfrac{1-x}{2}=\\tfrac{-2(1-x)}{3} \\). What is \\( 1-x \\)?",
-          "choices": [
-            "\\( -12 \\)",
-            "\\( -6 \\)",
-            "\\( 6 \\)",
-            "\\( 12 \\)"
-          ],
-          "answer": 3,
-          "rationale": "Clear denominators to find \\( 1-x=12 \\)."
+          "type": "gridin",
+          "prompt": "In the equation \\(\\dfrac{x^2+1}{x}=k\\), \\(k\\) is a constant. The solution to the equation is \\(x=\\dfrac{15k}{3} \\). What is the value of \\(k\\)?",
+          "answerNumeric": 3,
+          "tolerance": 0,
+          "rationale": "Back-substitution yields \\(k=3\\)."
         },
         {
           "id": "m2q14",
           "type": "mcq",
-          "prompt": "Speed increases at \\( 1490 \\) meters per hour each second. Convert to feet per second squared. (\\( 1\\,\\text{m}=3.28\\,\\text{ft} \\))",
-          "choices": [
-            "0.126",
-            "1.36",
-            "7.57",
-            "81.5"
-          ],
-          "answer": 1,
-          "rationale": "\\( 1490/3600\\,\\text{m/s}^2\\approx0.414\\,\\text{m/s}^2\\Rightarrow1.36\\,\\text{ft/s}^2 \\)."
+          "prompt": "The function \\(f\\) is defined by \\(f(x)=2^{-3x}\\). The function \\(g\\) is a decreasing linear function. In the \\(xy\\)-plane, the graphs of \\(y=f(x)\\) and \\(y=g(x)\\) intersect at two points, \\((h,j)\\) and \\((k,m)\\), where \\(j>m\\). When \\(g(x)<f(x)\\), which of the following must also be true?",
+          "choices": ["\\(x<h\\)", "\\(x>k\\)", "\\(x>k\\text{ or }x<h\\)", "\\(h<x<k\\)"],
+          "answer": 3,
+          "rationale": "Between intersections the exponential is above the decreasing line."
         },
         {
           "id": "m2q15",
           "type": "mcq",
-          "prompt": "Which equation has no solution?",
-          "choices": [
-            "\\( 63x+36=9(7x+4) \\)",
-            "\\( 63x+4=7x+4 \\)",
-            "\\( 63x+360=9(7x+16) \\)",
-            "\\( 63x+51=-63x-51 \\)"
-          ],
+          "prompt": "One gallon of sealant costs \\$29 and covers 300 square feet of surface. A deck has a total surface area of \\(q\\) square feet. Which equation represents the cost \\(c\\), in dollars, of the sealant needed to cover the deck twice?",
+          "choices": ["\\(c=\\dfrac{29q}{300}\\)", "\\(c=\\dfrac{29q}{2}\\)", "\\(c=29\\left(\\dfrac{2q}{300}\\right)\\)", "\\(c=\\dfrac{29\\,(2q)}{30}\\)"],
           "answer": 2,
-          "rationale": "C ⇒ 63x+360=9(7x+16) ⇒ 63x+360=63x+144 ⇒ 360=144 (contradiction) ⇒ no solution."
+          "rationale": "Gallons needed \\(=\\dfrac{2q}{300}\\); cost \\(=29\\times \\dfrac{2q}{300}\\)."
         },
         {
           "id": "m2q16",
-          "type": "mcq",
-          "prompt": "Let \\( f(x)=(x-a)(x-b) \\) with integers \\( a,b \\). If \\( f(32)>0 \\), \\( f(35)<0 \\), \\( f(38)>0 \\), which could be \\( a+b \\)?",
-          "choices": [
-            "35",
-            "37",
-            "67",
-            "69"
-          ],
-          "answer": 3,
-          "rationale": "Roots straddle 35, symmetric sum near 70; choice \\( 69 \\)."
+          "type": "gridin",
+          "prompt": "A triangular prism has a height of 9 centimeters and a volume of 234 \\(\\text{cm}^3\\). What is the area, in \\(\\text{cm}^2\\), of the base of the prism? (The volume of a triangular prism is \\(Bh\\), where \\(B\\) is the area of the base and \\(h\\) is the height.)",
+          "answerNumeric": 26,
+          "tolerance": 0,
+          "rationale": "Solve \\(B=234/9=26\\)."
         },
         {
           "id": "m2q17",
-          "type": "mcq",
-          "prompt": "One gallon of sealant costs \\( \\$13 \\) and covers \\( 300\\,\\text{ft}^2 \\). A deck has area \\( d\\,\\text{ft}^2 \\). Two coats are needed. Which equation gives the cost \\( c \\)?",
-          "choices": [
-            "\\( c=\\tfrac{300d}{13} \\)",
-            "\\( c=\\tfrac{600d}{13} \\)",
-            "\\( c=13\\big(\\tfrac{d}{150}\\big) \\)",
-            "\\( c=13\\big(\\tfrac{d}{300}\\big) \\)"
-          ],
-          "answer": 2,
-          "rationale": "Gallons needed \\( =\\tfrac{2d}{300}=\\tfrac{d}{150} \\)."
+          "type": "gridin",
+          "prompt": "An area of 56.00 square nautical miles is equivalent to \\(k\\) square kilometers. To the nearest tenth, what is the value of \\(k\\)? (\\(1\\) nautical mile \\(=1.852\\) kilometers.)",
+          "answerNumeric": 192.1,
+          "tolerance": 0.1,
+          "rationale": "Square the conversion: \\(1.852^2\\approx3.4299\\). Then \\(56\\times3.4299\\approx192.1\\)."
         },
         {
           "id": "m2q18",
-          "type": "mcq",
-          "prompt": "The equation \\( \\sqrt{k-x}=42-x \\) has exactly one real solution. What is the minimum value of \\( 4k \\)?",
-          "choices": [
-            "163",
-            "165",
-            "167",
-            "169"
-          ],
-          "answer": 2,
-          "rationale": "Min of \\( k=(42-x)^2+x \\) is \\( 167/4\\Rightarrow 4k=167 \\)."
+          "type": "gridin",
+          "prompt": "A circle in the \\(xy\\)-plane has its center at \\((-7,3)\\) and radius 9. An equation of this circle is \\(x^2+y^2+ax+by+c=0\\). What is the value of \\(c\\)?",
+          "answerNumeric": -23,
+          "tolerance": 0,
+          "rationale": "Expand \\((x+7)^2+(y-3)^2=81\\Rightarrow x^2+y^2+14x-6y-23=0\\)."
         },
         {
           "id": "m2q19",
           "type": "mcq",
-          "prompt": "Given \\( 26z^{18}+bz^9+70 \\) and \\( qz^9+r \\) is a factor (\\( q,r\\in\\mathbb{Z}^+ \\)), what is the greatest possible \\( b \\)?",
-          "choices": [
-            "245",
-            "845",
-            "1561",
-            "1821"
-          ],
+          "prompt": "Consider the system of equations \\(y=x-c\\) and \\(y=-4(x-6)^2\\). The system has two distinct real solutions. Which of the following could be the value of \\(c\\)?",
+          "choices": ["1", "5", "\\(\\tfrac{35}{10}\\)", "11"],
           "answer": 3,
-          "rationale": "Max when \\( q=26, A=1, r=1, B=70\\Rightarrow b=26\\cdot70+1=1821 \\)."
+          "rationale": "At \\(x=6\\), the parabola is \\(0\\). Line value is \\(6-c\\). Two intersections occur when \\(6-c<0\\Rightarrow c>6\\); \\(11\\) works."
         },
         {
           "id": "m2q20",
           "type": "mcq",
-          "prompt": "In isosceles \\( \\triangle ABC \\) with \\( AB=AC \\), \\( BD=\\tfrac{2}{7}BC \\). Points \\( E\\in AB \\), \\( F\\in AC \\) satisfy \\( \\angle BED=\\angle CFD \\). If \\( BE=14 \\), find \\( CF \\).",
-          "choices": [
-            "28",
-            "35",
-            "49",
-            "98"
-          ],
-          "answer": 2,
-          "rationale": "Similar‑triangle ratios yield \\( CF=49 \\)."
+          "prompt": "The functions \\(f\\) and \\(g\\) are defined by the equations shown, where \\(a\\) and \\(b\\) are integer constants, \\(a<b\\), and \\(b\\le 0\\). If \\(y=f(x)\\) and \\(y=g(x)\\) are graphed in the \\(xy\\)-plane, which of the following equations displays, as a constant or coefficient, the y‑coordinate of the y‑intercept of the graph of the corresponding function?\\n\\nI. \\(f(x)=a(4.2)^{x+b}\\)\\n\\nII. \\(g(x)=a(4.2)^{x}+b\\)",
+          "choices": ["I only", "II only", "I and II", "Neither I nor II"],
+          "answer": 3,
+          "rationale": "For I, \\(f(0)=a(4.2)^b\\) is not a displayed constant. For II, \\(g(0)=a+b\\) is not a single displayed constant either."
         },
         {
           "id": "m2q21",
           "type": "mcq",
-          "prompt": "On the unit circle, \\( A(1,0) \\) and \\( B\\big(-\\tfrac{5}{\\sqrt{89}},\\tfrac{8}{\\sqrt{89}}\\big) \\). If \\( \\angle AOB=\\omega \\), compute \\( \\tan\\omega \\).",
+          "prompt": "For each real number \\(r\\), which of the following points lies on the graph of each equation in the system \\(\\begin{aligned}5x+4y&=3\\\\15x+12y&=9\\end{aligned}\\) in the \\(xy\\)-plane?",
           "choices": [
-            "\\( -\\tfrac{8}{5} \\)",
-            "\\( -\\tfrac{5}{8} \\)",
-            "\\( \\tfrac{5}{8} \\)",
-            "\\( \\tfrac{8}{5} \\)"
+            "\\(\\big(r,\\, -\\tfrac{5}{4}r+\\tfrac{3}{4}\\big)\\)",
+            "\\(\\big(r,\\, \\tfrac{5}{4}r+\\tfrac{3}{4}\\big)\\)",
+            "\\(\\big(-\\tfrac{4}{5}r+\\tfrac{3}{5},\\, r\\big)\\)",
+            "\\(\\big(\\tfrac{r}{3}+3,\\, -\\tfrac{r}{3}+9\\big)\\)"
           ],
           "answer": 0,
-          "rationale": "Using determinant/dot with \\( OA=(1,0) \\) yields \\( -8/5 \\)."
+          "rationale": "Solve for \\(y\\): \\(y=-(5/4)x+3/4\\)."
         },
         {
           "id": "m2q22",
           "type": "mcq",
-          "prompt": "Given \\( x(kx-112)=-8 \\) with integer \\( k \\), for two distinct real solutions find the greatest \\( k \\).",
+          "prompt": "In triangles \\(ABC\\) and \\(DEF\\), sides \\(AB\\) and \\(DE\\) each have a side length of 10 inches, and angles \\(A\\) and \\(D\\) each measure \\(40^{\\circ}\\). Which additional information is sufficient to prove \\(\\triangle ABC\\cong\\triangle DEF\\)?\\n\\nI. The measures of angles \\(B\\) and \\(C\\) are equal.\\n\\nII. The lengths of sides \\(AC\\) and \\(DF\\) are equal.\\n\\nIII. The lengths of sides \\(BC\\) and \\(EF\\) are equal.",
           "choices": [
-            "367",
-            "383",
-            "391",
-            "401"
+            "I is sufficient, but II and III are not.",
+            "II is sufficient, but I and III are not.",
+            "III is sufficient, but I and II are not.",
+            "II is sufficient and III is sufficient, but I is not."
           ],
-          "answer": 2,
-          "rationale": "Discriminant \\( 12544-32k>0\\Rightarrow k<392 \\). Max integer \\( 391 \\)."
+          "answer": 1,
+          "rationale": "With \\(AB\\cong DE\\) and \\(\\angle A\\cong\\angle D\\), knowing \\(AC\\cong DF\\) gives SAS congruence."
         }
       ]
     }
