@@ -93,7 +93,7 @@
         {
           "id": "m1q7",
           "type": "mcq",
-          "prompt": "A list of \\( 10 \\) data values is shown:<br>\\n\\( 10,\\,14,\\,22,\\,6,\\,24,\\,26,\\,14,\\,8,\\,8,\\,8 \\)<br>What is the mean of these data?",
+          "prompt": "A list of \\( 10 \\) data values is shown:<br>\\( 10,\\,14,\\,22,\\,6,\\,24,\\,26,\\,14,\\,8,\\,8,\\,8 \\)<br>What is the mean of these data?",
           "choices": [
             "\\( 8 \\)",
             "\\( 12 \\)",
@@ -132,7 +132,7 @@
         {
           "id": "m1q10",
           "type": "gridin",
-          "prompt": "For the function \\( f(x)=x^2+8x+17 \\), the graph of \\( y=f(x) \\) passes through the point \\( (0,\\,b) \\). What is the value of \\( b \\)?",
+          "prompt": "For the function \\( f(x)=x^2+8x+17 \\), the graph of \\( y=f(x) \\) in the \\( xy \\)-plane passes through the point \\( (0,\\,b) \\). What is the value of \\( b \\)?",
           "answerNumeric": 17,
           "tolerance": 0,
           "altNumeric": [
@@ -157,7 +157,7 @@
         {
           "id": "m1q12",
           "type": "mcq",
-          "prompt": "The given equation relates the positive numbers \\( b \\), \\( x \\), and \\( y \\): \\( b-49=\\tfrac{x}{y} \\). Which equation correctly expresses \\( x \\) in terms of \\( b \\) and \\( y \\)?",
+          "prompt": "The given equation relates the positive numbers \\( b \\), \\( x \\), and \\( y \\):<br>\\( b-49=\\tfrac{x}{y} \\). Which equation correctly expresses \\( x \\) in terms of \\( b \\) and \\( y \\)?",
           "choices": [
             "\\( x=\\tfrac{by-49}{y} \\)",
             "\\( x=by-49y \\)",
@@ -170,7 +170,7 @@
         {
           "id": "m1q13",
           "type": "mcq",
-          "prompt": "The solution to the given system of equations is \\( (x, y) \\). What is the value of \\( 24x \\)?<br>\\n\\( \\begin{aligned} 2y&=5x+16 \\\\\\\\ -2y&=7x-22 \\end{aligned} \\)",
+          "prompt": "The solution to the given system of equations is \\( (x, y) \\). What is the value of \\( 24x \\)?<br>\\( \\begin{aligned} 2y&=5x+16 \\\\\\\\ -2y&=7x-22 \\end{aligned} \\)",
           "choices": [
             "\\( -12 \\)",
             "\\( -6 \\)",
@@ -199,8 +199,8 @@
           "choices": [
             "When the baseball card’s predicted value is approximately \\( 72 \\) dollars, it is \\( 7\\% \\) greater than the predicted value, in dollars, on January \\( 1 \\) of the previous year.",
             "When the baseball card’s predicted value is approximately \\( 72 \\) dollars, it is \\( 7 \\) times the predicted value, in dollars, on January \\( 1 \\) of the previous year.",
-            "From the day James purchased the baseball card to \\( T \\) years after James purchased the card, its predicted value increased by a total of approximately \\( 72 \\) dollars.",
-            "At \\( T \\) years after James purchased the baseball card, its predicted value is approximately \\( 72 \\) dollars."
+            "From the day James purchased the baseball card to \\( 7 \\) years after James purchased the card, its predicted value increased by a total of approximately \\( 72 \\) dollars.",
+            " \\( 7 \\) years after James purchased the baseball card, its predicted value is approximately \\( 72 \\) dollars."
           ],
           "answer": 3,
           "rationale": "By definition, \\( f(T) \\) is the predicted value at time \\( T \\)."
@@ -221,7 +221,7 @@
         {
           "id": "m1q17",
           "type": "mcq",
-          "prompt": "The function \\( P(t)=260(1.03)^{(t/\\\\tfrac{8}{12})} \\) models the population, in thousands, of a certain city \\( t \\) years after \\( 2009 \\). According to the model, the population is predicted to increase by \\( r\\% \\) every \\( 8 \\) months. What is the value of \\( r \\)?",
+          "prompt": "The function \\( P(t)=260(1.03)^{(\\\\tfrac{3t}{2})} \\) models the population, in thousands, of a certain city \\( t \\) years after \\( 2009 \\). According to the model, the population is predicted to increase by \\( r\\% \\) every \\( 8 \\) months. What is the value of \\( r \\)?",
           "choices": [
             "\\( 0.22 \\)",
             "\\( 1.03 \\)",
@@ -270,7 +270,7 @@
         {
           "id": "m1q21",
           "type": "gridin",
-          "prompt": "If \\( \\\\bar{x} = 6.5 \\) and \\( d_2 = 26 \\), what is the value of \\( n \\)?",
+          "prompt": "If \\( \\\\tfrac{2a}{b} = 6.5 \\) and \\( \\\\tfrac{a}{bn} = 26 \\), what is the value of \\( n \\)?",
           "answerNumeric": 4,
           "tolerance": 0,
           "altNumeric": [
@@ -315,18 +315,18 @@
           "type": "mcq",
           "prompt": "A scientist analyzed a soil sample with a mass of \\( 900 \\) grams and determined that it contained \\( 189 \\) grams of water. What is the percentage of water, by mass, in this soil sample?",
           "choices": [
-            "\\( 9\\\\% \\)",
-            "\\( 9.9\\\\% \\)",
-            "\\( 18.9\\\\% \\)",
-            "\\( 21\\\\% \\)"
+            "\\( 9 % \\)",
+            "\\( 9.9 % \\)",
+            "\\( 18.9 % \\)",
+            "\\( 21 % \\)"
           ],
           "answer": 3,
-          "rationale": "\\( 189/900=0.21=21\\\\% \\)."
+          "rationale": "\\( 189/900=0.21=21 % \\)."
         },
         {
           "id": "m2q3",
           "type": "mcq",
-          "prompt": "At what point \\( (x, y) \\) do the graphs of the equations in the given system intersect?<br>\\n\\( \\\\begin{aligned} x+5&=11 \\\\\\\\ y&=3x^2+3 \\\\end{aligned} \\)",
+          "prompt": "At what point \\( (x, y) \\) do the graphs of the equations in the given system intersect?<br>\\( \\\\begin{aligned} x+5&=11 \\\\\\\\ y&=3x^2+3 \\\\end{aligned} \\)",
           "choices": [
             "\\( (6,\\,108) \\)",
             "\\( (6,\\,111) \\)",
@@ -339,14 +339,14 @@
         {
           "id": "m2q4",
           "type": "gridin",
-          "prompt": "If \\( \\tfrac{5}{7}p + 42 = 84 \\), what is the value of \\( 7p \\)?",
-          "answerNumeric": 294,
+          "prompt": "If \\( \\tfrac{6}{7}p + 42 = 84 \\), what is the value of \\( 7p \\)?",
+          "answerNumeric": 343,
           "tolerance": 0,
           "altNumeric": [
-            294,
-            "294"
+            343,
+            "343"
           ],
-          "rationale": "Subtract \\( 42 \\): \\( \\tfrac{5}{7}p=42 \\Rightarrow p=42\\\\cdot\\\\tfrac{7}{5}=58.8 \\). Then \\( 7p=7\\\\cdot 58.8=294 \\)."
+          "rationale": "Subtract \\( 42 \\): \\( \\tfrac{6}{7}p=42 \\Rightarrow p=42\\\\cdot\\\\tfrac{7}{6}=49 \\). Then \\( 7p=7\\\\cdot 49=343 \\)."
         },
         {
           "id": "m2q5",
@@ -364,7 +364,7 @@
         {
           "id": "m2q6",
           "type": "mcq",
-          "prompt": "Circle \\( N \\) has a radius of \\( 6 \\) millimeters \\( (\\\\text{mm}) \\). Circle \\( M \\) has an area of \\( 121\\\\pi\\\\,\\\\text{mm}^2 \\). What is the total area, in \\( \\\\text{mm}^2 \\), of circles \\( N \\) and \\( M \\)?",
+          "prompt": "Circle \\( N \\) has a radius of \\( 6 \\) millimeters \\( (\\\\text {mm}) \\). Circle \\( M \\) has an area of \\( 121\\\\pi\\\\,\\\\text {mm}^2 \\). What is the total area, in \\( \\\\text {mm}^2 \\), of circles \\( N \\) and \\( M \\)?",
           "choices": [
             "\\( 17\\\\pi \\)",
             "\\( 133\\\\pi \\)",
