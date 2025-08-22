@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DSAT Practice — Grid-In Flexible + Newline Fix</title>
+  <title>DSAT Practice — Grid-In Flexible Patch</title>
   <style>
     :root{--line:#e5e7eb;--muted:#94a3b8;--accent:#2563eb}
     body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Helvetica,Arial;background:#f6f7fb;margin:0}
@@ -24,12 +24,13 @@
     .pill{border:1px solid #cbd5e1;border-radius:999px;padding:6px 10px}
     .rationale{border:1px dashed #cbd5e1;border-radius:10px;padding:10px;margin:8px 0;background:#fafafa}
     img{max-width:100%;height:auto}
+    .warn{background:#fff7ed;border:1px solid #f59e0b;color:#92400e;border-radius:8px;padding:8px 12px;margin:8px 0}
     .err{background:#fef2f2;border:1px solid #ef4444;color:#991b1b;border-radius:8px;padding:8px 12px;margin:8px 0}
   </style>
 </head>
 <body>
 <div class="appbar">
-  <div id="headL">DSAT Test (Grid-In Flexible + Newline Fix)</div>
+  <div id="headL">DSAT Test (Grid-In Flexible Patch)</div>
   <div class="timer" id="timer">--:--</div>
   <div id="headR">
     <button id="btnDirections">Directions ▾</button>
@@ -87,8 +88,9 @@
   </div>
 </div>
 
+<!-- MathJax for LaTeX -->
 <script>
-  window.MathJax = {tex:{inlineMath:[['\\\\(','\\\\)'],['$','$']]}, svg:{fontCache:'global'}};
+  window.MathJax = {tex:{inlineMath:[['\\(','\\)'],['$','$']]}, svg:{fontCache:'global'}};
 </script>
 <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
@@ -99,15 +101,6 @@ let state = { q:[], answers:{}, flagged:new Set(), current:0, remaining:0, timer
 
 function fmt(s){ s=Math.max(0,Math.floor(s)); const m=Math.floor(s/60), r=s%60; return String(m).padStart(2,'0')+':'+String(r).padStart(2,'0'); }
 function showError(msg){ const e=document.getElementById('error'); e.textContent=msg; e.classList.remove('hidden'); }
-
-function formatPrompt(s){
-  if(s==null) return '';
-  s = String(s);
-  s = s.replace(/\\n/g, '<br>');
-  s = s.replace(/\\r\\n|\\r|\\n/g, '<br>');
-  s = s.replace(/WnWn/g,'<br><br>').replace(/(^|[\\s>])Wn([<\\s]|$)/g,'$1<br>$2');
-  return s;
-}
 
 async function boot(){
   try{
@@ -162,15 +155,14 @@ function renderPalette(){
 function renderQuestion(){
   const q = state.q[state.current]; if(!q) return;
   document.getElementById('qIndex').textContent = state.current+1;
-  document.getElementById('prompt').innerHTML = formatPrompt(q.prompt || (q.question||''));
+  document.getElementById('prompt').innerHTML = q.prompt || (q.question||''); // legacy
   const ch = document.getElementById('choices'); const gi = document.getElementById('gridin'); const giIn = document.getElementById('gridinInput');
   ch.innerHTML=''; gi.classList.add('hidden');
   if(q.type==='mcq' || q.choices){
     (q.choices||[]).forEach((c,i)=>{
       const item = document.createElement('div'); item.className='choice';
       const b = document.createElement('div'); b.className='bubble'; b.textContent = String.fromCharCode(65+i);
-      const text = (typeof c==='string')? c : (c.text || '');
-      const t = document.createElement('div'); t.innerHTML = formatPrompt(text);
+      const t = document.createElement('div'); t.innerHTML = (typeof c==='string')? c : (c.text || '');
       item.appendChild(b); item.appendChild(t);
       const sel = state.answers[q.id]?.value;
       if(sel===i) item.classList.add('selected');
@@ -187,18 +179,25 @@ function renderQuestion(){
 }
 function isAnswered(id){ const a = state.answers[id]; if(!a) return false; return a.type==='mcq' ? a.value!=null : String(a.value||'').trim()!==''; }
 
+/* === Flexible Grid-In Grading Patch === */
+
+/* 1) 문자열 → 숫자 파싱(분수 "a/b" 지원, 콤마 제거) */
 function parseNumberLike(s) {
   if (s == null) return NaN;
   s = String(s).trim();
-  const frac = s.match(/^\\s*([+-]?\\d+)\\s*\\/\\s*([+-]?\\d+)\\s*$/);
+  // fraction a/b
+  const frac = s.match(/^\s*([+-]?\d+)\s*\/\s*([+-]?\d+)\s*$/);
   if (frac) {
     const n = Number(frac[1]), d = Number(frac[2]);
     if (Number.isFinite(n) && Number.isFinite(d) && d !== 0) return n / d;
     return NaN;
   }
+  // normal number (allow commas)
   const v = Number(s.replace(/,/g, ''));
   return Number.isFinite(v) ? v : NaN;
 }
+
+/* 2) 허용 숫자 집합 구성(기본값 + altNumeric + range) */
 function buildAcceptedNumerics(q) {
   const arr = [];
   if (q.answerNumeric !== undefined) arr.push(q.answerNumeric);
@@ -206,24 +205,34 @@ function buildAcceptedNumerics(q) {
   return arr.map(x => typeof x === 'number' ? x : parseNumberLike(x))
             .filter(v => Number.isFinite(v));
 }
+
+/* 3) 주관식 정답 판정 */
 function isCorrectGridIn(q, userRaw) {
   const tol = typeof q.tolerance === 'number' ? q.tolerance : 0;
   const uNum = parseNumberLike(userRaw);
+
+  // 3-a) 숫자 비교(기본/대체)
   const nums = buildAcceptedNumerics(q);
   if (Number.isFinite(uNum)) {
     for (const v of nums) {
       if (Math.abs(uNum - v) <= tol) return true;
     }
+    // 3-b) 구간 허용(range)
     if (q.range && Number.isFinite(q.range.min) && Number.isFinite(q.range.max)) {
       if (uNum >= q.range.min && uNum <= q.range.max) return true;
     }
   }
+
+  // 3-c) 문자열 그대로 허용(예: "45/8", 단위 포함값 등)
   if (Array.isArray(q.altStrings)) {
     const raw = String(userRaw).trim();
     if (q.altStrings.some(s => String(s).trim() === raw)) return true;
   }
+
   return false;
 }
+
+/* === /Flexible Grid-In Grading Patch === */
 
 function score(){
   let c=0,w=0,b=0; const rows=[];
@@ -236,6 +245,7 @@ function score(){
       ca = (ans!=null)? String.fromCharCode(65+ans):'';
       ok = a && a.value==ans;
     }else{
+      // gridin — use flexible grading
       ua = a? String(a.value).trim():'';
       const caNum = (q.answerNumeric!==undefined) ? q.answerNumeric : null;
       if (caNum!==null && Number.isFinite(caNum)) {
