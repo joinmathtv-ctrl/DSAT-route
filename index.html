@@ -1,310 +1,77 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DSAT Practice — Grid-In Flexible Patch</title>
+  <meta charset="UTF-8">
+  <title>Digital SAT Practice</title>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <style>
-    :root{--line:#e5e7eb;--muted:#94a3b8;--accent:#2563eb}
-    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Helvetica,Arial;background:#f6f7fb;margin:0}
-    .wrap{max-width:980px;margin:0 auto;padding:16px}
-    .appbar{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);padding:10px 16px;display:flex;justify-content:space-between;align-items:center}
-    .timer{font-variant-numeric:tabular-nums;font-weight:800}
-    .qbox{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:12px}
-    .square{width:36px;height:36px;border:1px solid var(--muted);border-radius:8px;display:grid;place-items:center;font-weight:700}
-    .choices{display:grid;gap:12px;margin-top:12px}
-    .choice{display:flex;gap:12px;align-items:flex-start;border:1px solid #cbd5e1;border-radius:12px;padding:12px;cursor:pointer;background:#fff}
-    .choice:hover{background:#f8fafc;border-color:#94a3b8}
-    .choice.selected{outline:2px solid var(--accent);outline-offset:2px}
-    .bubble{min-width:28px;height:28px;border:2px solid #c7ccd4;border-radius:999px;display:grid;place-items:center;font-weight:700;font-size:12px}
-    .map{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
-    .mapcell{width:36px;height:32px;border:1px solid #cbd5e1;border-radius:8px;display:grid;place-items:center;cursor:pointer;background:#fff}
-    .mapcell.answered{background:#e2e8f0}.mapcell.flagged{outline:2px solid #d97706;outline-offset:2px}.mapcell.current{outline:2px solid #111827;outline-offset:2px}
-    .hidden{display:none}
-    .pill{border:1px solid #cbd5e1;border-radius:999px;padding:6px 10px}
-    .rationale{border:1px dashed #cbd5e1;border-radius:10px;padding:10px;margin:8px 0;background:#fafafa}
-    img{max-width:100%;height:auto}
-    .warn{background:#fff7ed;border:1px solid #f59e0b;color:#92400e;border-radius:8px;padding:8px 12px;margin:8px 0}
-    .err{background:#fef2f2;border:1px solid #ef4444;color:#991b1b;border-radius:8px;padding:8px 12px;margin:8px 0}
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .question { margin-bottom: 25px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; }
+    .choices { margin-top: 10px; }
+    .choices label { display: block; margin: 4px 0; }
+    img { max-width: 100%; height: auto; display: block; margin: 8px 0; }
+    table { border-collapse: collapse; margin-top: 8px; }
+    table, th, td { border: 1px solid #444; padding: 6px; }
   </style>
 </head>
 <body>
-<div class="appbar">
-  <div id="headL">DSAT Test (Grid-In Flexible Patch)</div>
-  <div class="timer" id="timer">--:--</div>
-  <div id="headR">
-    <button id="btnDirections">Directions ▾</button>
-  </div>
-</div>
-
-<div class="wrap">
-  <div id="error" class="err hidden"></div>
-
-  <div id="dirCard" class="qbox hidden">
-    <strong>Directions</strong>
-    <div id="dirText" style="margin-top:6px" class="muted"></div>
-  </div>
-
-  <div id="qView" class="qbox hidden">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <div style="display:flex;gap:8px;align-items:center"><div class="square" id="qIndex">1</div>
-        <div class="pill" id="metaPill">Math • Module 1</div></div>
-      <div class="pill" id="statusPill">미응답</div>
-    </div>
-    <div id="prompt" style="line-height:1.7;margin-top:10px">Loading…</div>
-    <div id="choices" class="choices"></div>
-    <div id="gridin" class="hidden">
-      <label class="muted">정답 입력 (분수 a/b, 소수, 여러 형식 허용)</label>
-      <input type="text" id="gridinInput" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:10px" placeholder="예: 45/8 또는 5.625">
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
-      <div>
-        <button id="btnPrev">← Prev</button>
-        <button id="btnNext">Next →</button>
-        <button id="btnFlag">Flag</button>
-        <button id="btnMap">Map</button>
-      </div>
-      <div>
-        <button id="btnSubmit" style="border:1px solid #ef4444;color:#b91c1c;background:#fff;border-radius:8px;padding:8px 12px">Submit</button>
-      </div>
-    </div>
-    <div id="palette" class="map"></div>
-  </div>
-
-  <div id="resultView" class="qbox hidden">
-    <div><strong>결과</strong> <span id="resultMeta" class="muted"></span></div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:10px 0">
-      <div class="qbox"><div class="muted">원점수</div><div id="scoreLab" style="font-size:22px;font-weight:800">0 / 0</div></div>
-      <div class="qbox"><div class="muted">정/오/미</div><div id="breakLab" style="font-size:22px;font-weight:800">0 / 0 / 0</div></div>
-      <div class="qbox"><div class="muted">소요시간</div><div id="timeLab" style="font-size:22px;font-weight:800">00:00</div></div>
-    </div>
-    <div class="row">
-      <button id="btnExplain">해설 보기</button>
-      <button id="btnCSV">CSV 내보내기</button>
-      <button id="btnNextModule" class="">다음 모듈 시작</button>
-      <button id="btnRestart">처음으로</button>
-    </div>
-    <div id="explainWrap" class="hidden"></div>
-  </div>
-</div>
-
-<!-- MathJax for LaTeX -->
-<script>
-  window.MathJax = {tex:{inlineMath:[['\\(','\\)'],['$','$']]}, svg:{fontCache:'global'}};
-</script>
-<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <h1>Digital SAT Practice</h1>
+  <div id="questions"></div>
 
 <script>
-let data = null;
-let moduleIdx = 0;
-let state = { q:[], answers:{}, flagged:new Set(), current:0, remaining:0, timer:null };
-
-function fmt(s){ s=Math.max(0,Math.floor(s)); const m=Math.floor(s/60), r=s%60; return String(m).padStart(2,'0')+':'+String(r).padStart(2,'0'); }
-function showError(msg){ const e=document.getElementById('error'); e.textContent=msg; e.classList.remove('hidden'); }
-
-async function boot(){
-  try{
-    const res = await fetch('./questions.json', {cache:'no-store'});
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const raw = await res.json();
-    if(raw.modules){ data = raw; }
-    else if(Array.isArray(raw.questions)){ data = { metadata:{title:'Auto Set', section:'math', directions:'Answer each question.', durationMinutesPerModule:[(raw.metadata?.durationMinutes||30)]}, modules:[{module:1, questions: raw.questions}] }; }
-    else throw new Error('Unsupported schema');
-    loadModule(0);
-  }catch(e){
-    showError('questions.json 로드 실패: '+e.message+' — 파일이 index.html과 같은 폴더에 있는지 확인하세요.');
-    return;
-  }
-}
-
-function directionsToggle(){ document.getElementById('dirCard').classList.toggle('hidden'); }
-function loadModule(i){
-  moduleIdx = i;
-  const mod = data.modules[i];
-  state.q = mod.questions || [];
-  state.answers = {}; state.flagged = new Set(); state.current = 0;
-  const mins = (data.metadata?.durationMinutesPerModule||[])[i] || 30;
-  state.remaining = mins*60;
-  document.getElementById('metaPill').textContent = `${(data.metadata?.section||'Math')} • Module ${mod.module||i+1}`;
-  document.getElementById('dirText').innerHTML = (data.metadata?.directions || '(none)');
-  document.getElementById('resultView').classList.add('hidden');
-  document.getElementById('qView').classList.remove('hidden');
-  renderTop(); renderQuestion(); renderPalette();
-  startTimer();
-}
-function startTimer(){
-  if(state.timer) clearInterval(state.timer);
-  state.timer = setInterval(()=>{
-    state.remaining--; renderTop();
-    if(state.remaining<=0){ clearInterval(state.timer); submit(true); }
-  },1000);
-}
-function renderTop(){ document.getElementById('timer').textContent = fmt(state.remaining); }
-function renderPalette(){
-  const pal = document.getElementById('palette'); pal.innerHTML='';
-  state.q.forEach((q,i)=>{
-    const d = document.createElement('div'); d.className='mapcell';
-    const a = state.answers[q.id];
-    if(a && a.value!=='' && a.value!=null) d.classList.add('answered');
-    if(state.flagged.has(q.id)) d.classList.add('flagged');
-    if(i===state.current) d.classList.add('current');
-    d.textContent = i+1; d.onclick = ()=>{ state.current=i; renderQuestion(); };
-    pal.appendChild(d);
-  });
-}
-function renderQuestion(){
-  const q = state.q[state.current]; if(!q) return;
-  document.getElementById('qIndex').textContent = state.current+1;
-  document.getElementById('prompt').innerHTML = q.prompt || (q.question||''); // legacy
-  const ch = document.getElementById('choices'); const gi = document.getElementById('gridin'); const giIn = document.getElementById('gridinInput');
-  ch.innerHTML=''; gi.classList.add('hidden');
-  if(q.type==='mcq' || q.choices){
-    (q.choices||[]).forEach((c,i)=>{
-      const item = document.createElement('div'); item.className='choice';
-      const b = document.createElement('div'); b.className='bubble'; b.textContent = String.fromCharCode(65+i);
-      const t = document.createElement('div'); t.innerHTML = (typeof c==='string')? c : (c.text || '');
-      item.appendChild(b); item.appendChild(t);
-      const sel = state.answers[q.id]?.value;
-      if(sel===i) item.classList.add('selected');
-      item.onclick = ()=>{ state.answers[q.id]={type:'mcq', value:i}; renderQuestion(); renderPalette(); };
-      ch.appendChild(item);
-    });
-  }else{
-    gi.classList.remove('hidden');
-    giIn.value = state.answers[q.id]?.value ?? '';
-    giIn.oninput = ()=>{ state.answers[q.id]={type:'gridin', value:giIn.value}; renderPalette(); };
-  }
-  document.getElementById('statusPill').textContent = state.flagged.has(q.id)? '플래그됨' : (isAnswered(q.id)?'응답됨':'미응답');
-  MathJax?.typesetPromise?.();
-}
-function isAnswered(id){ const a = state.answers[id]; if(!a) return false; return a.type==='mcq' ? a.value!=null : String(a.value||'').trim()!==''; }
-
-/* === Flexible Grid-In Grading Patch === */
-
-/* 1) 문자열 → 숫자 파싱(분수 "a/b" 지원, 콤마 제거) */
-function parseNumberLike(s) {
-  if (s == null) return NaN;
-  s = String(s).trim();
-  // fraction a/b
-  const frac = s.match(/^\s*([+-]?\d+)\s*\/\s*([+-]?\d+)\s*$/);
-  if (frac) {
-    const n = Number(frac[1]), d = Number(frac[2]);
-    if (Number.isFinite(n) && Number.isFinite(d) && d !== 0) return n / d;
-    return NaN;
-  }
-  // normal number (allow commas)
-  const v = Number(s.replace(/,/g, ''));
-  return Number.isFinite(v) ? v : NaN;
-}
-
-/* 2) 허용 숫자 집합 구성(기본값 + altNumeric + range) */
-function buildAcceptedNumerics(q) {
-  const arr = [];
-  if (q.answerNumeric !== undefined) arr.push(q.answerNumeric);
-  if (Array.isArray(q.altNumeric)) arr.push(...q.altNumeric);
-  return arr.map(x => typeof x === 'number' ? x : parseNumberLike(x))
-            .filter(v => Number.isFinite(v));
-}
-
-/* 3) 주관식 정답 판정 */
-function isCorrectGridIn(q, userRaw) {
-  const tol = typeof q.tolerance === 'number' ? q.tolerance : 0;
-  const uNum = parseNumberLike(userRaw);
-
-  // 3-a) 숫자 비교(기본/대체)
-  const nums = buildAcceptedNumerics(q);
-  if (Number.isFinite(uNum)) {
-    for (const v of nums) {
-      if (Math.abs(uNum - v) <= tol) return true;
-    }
-    // 3-b) 구간 허용(range)
-    if (q.range && Number.isFinite(q.range.min) && Number.isFinite(q.range.max)) {
-      if (uNum >= q.range.min && uNum <= q.range.max) return true;
-    }
-  }
-
-  // 3-c) 문자열 그대로 허용(예: "45/8", 단위 포함값 등)
-  if (Array.isArray(q.altStrings)) {
-    const raw = String(userRaw).trim();
-    if (q.altStrings.some(s => String(s).trim() === raw)) return true;
-  }
-
-  return false;
-}
-
-/* === /Flexible Grid-In Grading Patch === */
-
-function score(){
-  let c=0,w=0,b=0; const rows=[];
-  for(const q of state.q){
-    const a = state.answers[q.id];
-    let ok=false, ua='', ca='';
-    if(q.type==='mcq' || q.choices){
-      ua = (a && a.value!=null)? String.fromCharCode(65+a.value):'';
-      const ans = (q.answer!=null)? q.answer : null;
-      ca = (ans!=null)? String.fromCharCode(65+ans):'';
-      ok = a && a.value==ans;
-    }else{
-      // gridin — use flexible grading
-      ua = a? String(a.value).trim():'';
-      const caNum = (q.answerNumeric!==undefined) ? q.answerNumeric : null;
-      if (caNum!==null && Number.isFinite(caNum)) {
-        ca = String(caNum);
-      } else if (q.altNumeric && q.altNumeric.length) {
-        ca = String(q.altNumeric[0]);
-      } else if (q.altStrings && q.altStrings.length) {
-        ca = String(q.altStrings[0]);
+function renderMediaPlaceholders(html) {
+  return html.replace(/\[\[IMAGE:\s*([^\]|]+)(?:\s*\|\s*([^\]]+))?\]\]/g,
+    (_, file, opts) => {
+      let src = `./img/${file.trim()}`;
+      let alt = 'image';
+      let extra = 'style="max-width:100%;height:auto"';
+      if (opts) {
+        opts.split('|').map(s => s.trim()).forEach(pair => {
+          const [k,v] = pair.split('=').map(x => x.trim());
+          if (!k || !v) return;
+          if (k === 'alt') alt = v;
+          else if (k === 'width' || k === 'height') extra += ` ${k}="${v}"`;
+          else if (k === 'class')  extra += ` class="${v}"`;
+          else if (k === 'style')  extra += ` style="${v}"`;
+        });
       }
-      ok = a && isCorrectGridIn(q, a.value);
-    }
-    if(!a || (!ua && ua!==0)) b++; else if(ok) c++; else w++;
-    rows.push({i:rows.length+1, id:q.id||('q'+(rows.length+1)), user:ua, correct:ca, ok, rationale:q.rationale||''});
-  }
-  return {correct:c, wrong:w, blank:b, rows};
-}
-
-function submit(auto=false){
-  if(state.timer){ clearInterval(state.timer); state.timer=null; }
-  const s = score();
-  document.getElementById('qView').classList.add('hidden');
-  const R = document.getElementById('resultView'); R.classList.remove('hidden');
-  document.getElementById('resultMeta').textContent = ` ${(data.metadata?.title||'Set')} • Module ${data.modules[moduleIdx]?.module||moduleIdx+1}`;
-  document.getElementById('scoreLab').textContent = `${s.correct} / ${state.q.length}`;
-  document.getElementById('breakLab').textContent = `${s.correct} / ${s.wrong} / ${s.blank}`;
-  document.getElementById('timeLab').textContent = fmt(((data.metadata?.durationMinutesPerModule||[])[moduleIdx]||30)*60 - state.remaining);
-  const ex = document.getElementById('explainWrap'); ex.innerHTML='';
-  s.rows.forEach(r=>{
-    const d = document.createElement('div'); d.className='rationale';
-    d.innerHTML = `<strong>Q${r.i}</strong> • 내 답: ${r.user||'-'} / 정답: ${r.correct||'-'} — ${r.ok?'<span style="color:#16a34a">정답</span>':'<span style="color:#dc2626">오답</span>'}<br>${r.rationale}`;
-    ex.appendChild(d);
+      return `<img src="${src}" alt="${alt}" ${extra}>`;
   });
-  MathJax?.typesetPromise?.();
-  const nextBtn = document.getElementById('btnNextModule');
-  if(moduleIdx < (data.modules?.length||1)-1){
-    nextBtn.onclick = ()=>loadModule(moduleIdx+1);
-    nextBtn.classList.remove('hidden');
-  }else{
-    nextBtn.classList.add('hidden'); nextBtn.onclick=null;
-  }
 }
 
-document.getElementById('btnPrev').onclick = ()=>{ state.current=Math.max(0,state.current-1); renderQuestion(); renderPalette(); };
-document.getElementById('btnNext').onclick = ()=>{ state.current=Math.min(state.q.length-1,state.current+1); renderQuestion(); renderPalette(); };
-document.getElementById('btnFlag').onclick = ()=>{ const id=state.q[state.current].id; state.flagged.has(id)?state.flagged.delete(id):state.flagged.add(id); renderQuestion(); renderPalette(); };
-document.getElementById('btnMap').onclick = ()=> document.getElementById('palette').scrollIntoView({behavior:'smooth',block:'center'});
-document.getElementById('btnSubmit').onclick = ()=>{ if(confirm('제출할까요?')) submit(false); };
-document.getElementById('btnExplain').onclick = ()=> document.getElementById('explainWrap').classList.toggle('hidden');
-document.getElementById('btnCSV').onclick = ()=>{
-  const s = score();
-  const lines = ['index,id,user,correct,isCorrect', ...s.rows.map(r=>[r.i,r.id,r.user,r.correct,r.ok].join(','))];
-  const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='dsat_result.csv'; a.click(); URL.revokeObjectURL(url);
-};
-document.getElementById('btnRestart').onclick = ()=>{ location.reload(); };
-document.getElementById('btnNextModule').classList.add('hidden');
-document.getElementById('btnDirections').onclick = directionsToggle;
+async function loadQuestions() {
+  const res = await fetch("./questions_fixed.json");
+  const data = await res.json();
+  const container = document.getElementById("questions");
 
-boot();
+  data.modules.forEach(mod => {
+    mod.questions.forEach(q => {
+      let div = document.createElement("div");
+      div.className = "question";
+      div.innerHTML = `<b>Q${q.id}:</b> ${renderMediaPlaceholders(q.prompt)}`;
+
+      if (q.type === "mcq") {
+        let choicesDiv = document.createElement("div");
+        choicesDiv.className = "choices";
+        q.choices.forEach((c,i) => {
+          let choiceHTML = renderMediaPlaceholders(c);
+          choicesDiv.innerHTML += `<label><input type="radio" name="${q.id}"> ${choiceHTML}</label>`;
+        });
+        div.appendChild(choicesDiv);
+      } else if (q.type === "gridin") {
+        div.innerHTML += `<div><input type="text" placeholder="Your answer"></div>`;
+      }
+
+      container.appendChild(div);
+    });
+  });
+
+  MathJax.typeset();
+}
+
+loadQuestions();
 </script>
 </body>
 </html>
