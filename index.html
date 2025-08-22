@@ -3,49 +3,144 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Digital SAT Practice (Placeholder → IMG)</title>
+  <title>Digital SAT – Classic Practice</title>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <style>
-    :root { --card:#f7f7f7; --border:#d0d0d0; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; }
-    h1 { margin: 0 0 8px; }
-    .meta { color:#555; margin-bottom: 16px; }
-    .toolbar { display:flex; gap:12px; align-items:center; margin: 12px 0 18px; flex-wrap: wrap; }
-    .toolbar input[type="text"]{ padding:8px 10px; border:1px solid var(--border); border-radius:8px; min-width:280px;}
-    .toolbar button, .toolbar label { padding:8px 12px; border:1px solid var(--border); border-radius:8px; background:#fff; cursor:pointer;}
-    .toolbar input[type=file]{ display:none; }
-    .err { color:#b00020; margin:6px 0 0; }
-    .ok { color:#0a7a0a; margin:6px 0 0; }
-    .question { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; margin:14px 0; }
-    .choices label { display:block; margin:6px 0; }
-    img { max-width:100%; height:auto; display:block; margin:8px 0; }
-    table { border-collapse: collapse; margin-top: 8px; }
-    table, th, td { border: 1px solid #444; padding: 6px; }
-    .footer { margin-top: 32px; font-size: 12px; color: #555; }
+    :root {
+      --bg: #0f172a;           /* dark indigo header */
+      --fg: #ffffff;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --card: #ffffff;
+      --accent: #2563eb;       /* blue */
+      --accent-2: #10b981;     /* green */
+      --danger: #ef4444;
+      --palette-bg: #f8fafc;
+      --flag: #f59e0b;         /* amber */
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+    /* Top Bar */
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 18px;
+      background: var(--bg);
+      color: var(--fg);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .brand { font-weight: 700; letter-spacing: .2px; }
+    .chip { background: rgba(255,255,255,.1); padding: 6px 10px; border-radius: 999px; font-size: 14px; }
+    .timer { font-variant-numeric: tabular-nums; font-weight: 700; }
+    .btn {
+      background: var(--fg); color: #111827;
+      border: none; border-radius: 10px; padding: 8px 12px; cursor: pointer; font-weight: 600;
+    }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-accent { background: var(--accent); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    .layout {
+      display: grid; grid-template-columns: 1fr 320px; gap: 16px;
+      padding: 16px; max-width: 1200px; margin: 0 auto;
+    }
+    /* Left (question area) */
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px;
+    }
+    .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .q-id { font-weight: 700; }
+    .flag { color: var(--flag); font-weight: 700; cursor: pointer; user-select: none; }
+    .prompt { margin-top: 6px; }
+    .choices label { display: block; margin: 8px 0; }
+    .gridin input { width: 220px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; }
+    .navline { display: flex; gap: 8px; justify-content: space-between; margin-top: 14px; }
+    /* Right (palette) */
+    .side {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px;
+    }
+    .side h3 { margin: 6px 0 10px; font-size: 16px; }
+    .palette { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; background: var(--palette-bg); padding: 10px; border-radius: 10px; }
+    .cell {
+      text-align: center; padding: 8px 0; border-radius: 8px; cursor: pointer; font-variant-numeric: tabular-nums;
+      border: 1px solid var(--border); background: white;
+    }
+    .cell.current { outline: 2px solid var(--accent); }
+    .cell.answered { background: #ecfeff; border-color: #67e8f9; }
+    .cell.flagged { background: #fffbeb; border-color: #fbbf24; }
+    .legend { display: flex; gap: 8px; font-size: 12px; color: #374151; margin-top: 8px; flex-wrap: wrap;}
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; border: 1px solid var(--border); }
+    .swatch-ans { background:#ecfeff; border-color:#67e8f9; }
+    .swatch-flag { background:#fffbeb; border-color:#fbbf24; }
+    /* Footer actions */
+    .actions { display: flex; gap: 8px; margin-top: 12px; }
   </style>
 </head>
 <body>
-  <h1>Digital SAT Practice</h1>
-  <div class="meta">Placeholder <code>[[IMAGE: ...]]</code> → <code>&lt;img&gt;</code> 치환, MathJax 수식 지원</div>
-
-  <div class="toolbar">
-    <input type="text" id="urlInput" placeholder="questions JSON 경로 (기본: ./questions.json)" />
-    <button id="btnLoad">서버에서 불러오기</button>
-    <label for="filePick">로컬 JSON 파일 선택</label>
-    <input id="filePick" type="file" accept=".json,application/json" />
-    <span id="status"></span>
+  <div class="topbar">
+    <div class="brand">Digital SAT – Classic</div>
+    <div class="chip" id="chipSection">Section: Math</div>
+    <div class="chip" id="chipModule">Module: 1</div>
+    <div class="chip timer" id="chipTimer">35:00</div>
   </div>
 
-  <div id="header"></div>
-  <div id="questions"></div>
+  <div class="layout">
+    <!-- Left -->
+    <div class="card" id="qCard">
+      <div class="q-header">
+        <div class="q-id" id="qId">Q1</div>
+        <div class="flag" id="btnFlag">⚑ Flag</div>
+      </div>
+      <div class="prompt" id="qPrompt">Loading…</div>
+      <div class="choices" id="qChoices"></div>
+      <div class="gridin" id="qGridin" style="display:none;"><input id="gridInput" type="text" placeholder="Your answer"></div>
+      <div class="navline">
+        <div>
+          <button class="btn" id="btnPrev">← Prev</button>
+          <button class="btn" id="btnNext">Next →</button>
+        </div>
+        <div>
+          <button class="btn btn-danger" id="btnSubmit">Submit Module</button>
+        </div>
+      </div>
+    </div>
 
-  <div class="footer">Tip: GitHub Pages에서는 경로/대소문자, CORS, 캐시를 확인하세요. (예: <code>./questions_fixed.json?v=20250822</code>)</div>
+    <!-- Right -->
+    <div class="side">
+      <h3>Question Palette</h3>
+      <div class="palette" id="palette"></div>
+      <div class="legend">
+        <span><span class="swatch swatch-ans"></span> Answered</span>
+        <span><span class="swatch swatch-flag"></span> Flagged</span>
+      </div>
+      <div class="actions">
+        <button class="btn" id="btnClear">Clear Choice</button>
+        <button class="btn" id="btnReview">Review Flags</button>
+      </div>
+      <div class="actions">
+        <input type="text" id="urlInput" placeholder="./questions_fixed.json" style="flex:1; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
+        <button class="btn" id="btnLoad">Load</button>
+      </div>
+      <div id="status" style="margin-top:6px;font-size:12px;color:#374151;"></div>
+    </div>
+  </div>
 
 <script>
+/* ===== Helper: IMAGE placeholder → <img> ===== */
 function renderMediaPlaceholders(html) {
   if (!html) return "";
-  return html.replace(/\[\[IMAGE:\s*([^\]|]+)(?:\s*\|\s*([^\]]+))?\]\]/g,
+  return html.replace(/\\[\\[IMAGE:\\s*([^\\]|]+)(?:\\s*\\|\\s*([^\\]]+))?\\]\\]/g,
     (_, file, opts) => {
       let src = `./img/${file.trim()}`;
       let alt = 'image';
@@ -63,98 +158,261 @@ function renderMediaPlaceholders(html) {
       return `<img src="${src}" alt="${alt}" ${extra}>`;
   });
 }
+/* ===== State ===== */
+let DSAT = {
+  raw: null,
+  moduleIndex: 0,
+  qIndex: 0,
+  answers: {},     // key: q.id → { type, value, flagged }
+  timer: null,
+  secs: 35*60,
+};
 
-function setStatus(msg, ok=false) {
-  const s = document.getElementById('status');
-  s.textContent = msg || '';
-  s.className = ok ? 'ok' : 'err';
+function setStatus(msg, danger=false) {
+  const el = document.getElementById('status');
+  el.textContent = msg || '';
+  el.style.color = danger ? '#b00020' : '#374151';
 }
 
-function clearRender() {
-  document.getElementById('header').innerHTML = '';
-  document.getElementById('questions').innerHTML = '';
+function mmss(secs) {
+  const m = Math.floor(secs/60).toString().padStart(2,'0');
+  const s = (secs%60).toString().padStart(2,'0');
+  return `${m}:${s}`;
 }
 
-function renderSet(data) {
-  const header = document.getElementById('header');
-  const qroot = document.getElementById('questions');
-  header.innerHTML = '';
-  qroot.innerHTML = '';
-
-  const md = data.metadata || {};
-  const t = md.title || 'Untitled Set';
-  const dir = md.directions || '';
-  header.innerHTML = `<h2>${t}</h2><div>${renderMediaPlaceholders(dir)}</div>`;
-
-  (data.modules || []).forEach((mod, mi) => {
-    const modTitle = document.createElement('h3');
-    modTitle.textContent = `Module ${mod.module ?? (mi+1)}`;
-    qroot.appendChild(modTitle);
-
-    (mod.questions || []).forEach(q => {
-      const el = document.createElement('div');
-      el.className = 'question';
-      el.innerHTML = `<b>${q.id ?? ''}</b> — ${renderMediaPlaceholders(q.prompt)}`;
-
-      if (q.type === 'mcq' && Array.isArray(q.choices)) {
-        const cdiv = document.createElement('div');
-        cdiv.className = 'choices';
-        q.choices.forEach((c,i) => {
-          const cHTML = renderMediaPlaceholders(c);
-          cdiv.innerHTML += `<label><input type="radio" name="${q.id}"> ${cHTML}</label>`;
-        });
-        el.appendChild(cdiv);
-      } else if (q.type === 'gridin') {
-        el.innerHTML += `<div><input type="text" placeholder="Your answer"></div>`;
-      }
-      qroot.appendChild(el);
-    });
-  });
-
-  if (window.MathJax && MathJax.typeset) MathJax.typeset();
-}
-
+/* ===== Load JSON ===== */
 async function fetchJson(url) {
   const res = await fetch(url, {cache:'no-store'});
   if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
   return await res.json();
 }
 
-async function loadFromUrl(url) {
-  clearRender();
+async function loadSet(url='./questions_fixed.json') {
+  setStatus('Loading…');
   try {
     const data = await fetchJson(url);
-    renderSet(data);
-    setStatus(`로드 성공: ${url}`, true);
-  } catch (e) {
-    setStatus(`로드 실패: ${e.message}. 경로/대소문자/CORS 확인`, false);
+    DSAT.raw = data;
+    DSAT.moduleIndex = 0;
+    DSAT.qIndex = 0;
+    DSAT.answers = {};
+    // Timer per module
+    const md = data.metadata || {};
+    const mins = (md.durationMinutesPerModule && md.durationMinutesPerModule[0]) || 35;
+    DSAT.secs = mins*60;
+    initTimer();
+    renderModuleHeader();
+    buildPalette();
+    renderCurrent();
+    setStatus('Loaded', false);
+  } catch(e) {
+    setStatus('Load failed: '+e.message, true);
   }
 }
 
-document.getElementById('btnLoad').addEventListener('click', () => {
-  const val = document.getElementById('urlInput').value.trim();
-  const url = val || './questions_fixed.json?v=' + Date.now();
-  loadFromUrl(url);
+function renderModuleHeader() {
+  const md = DSAT.raw?.metadata || {};
+  document.getElementById('chipSection').textContent = `Section: ${md.section || 'Math'}`;
+  document.getElementById('chipModule').textContent = `Module: ${DSAT.moduleIndex+1}`;
+}
+
+function initTimer() {
+  clearInterval(DSAT.timer);
+  const el = document.getElementById('chipTimer');
+  el.textContent = mmss(DSAT.secs);
+  DSAT.timer = setInterval(()=>{
+    DSAT.secs--;
+    if (DSAT.secs <= 0) {
+      DSAT.secs = 0;
+      clearInterval(DSAT.timer);
+      el.textContent = '00:00';
+      alert('Time is up! Submitting module.');
+      submitModule();
+      return;
+    }
+    el.textContent = mmss(DSAT.secs);
+  }, 1000);
+}
+
+function currentModule() {
+  return DSAT.raw?.modules?.[DSAT.moduleIndex] || { questions: [] };
+}
+function currentQuestion() {
+  return currentModule().questions?.[DSAT.qIndex] || null;
+}
+
+/* ===== Palette ===== */
+function buildPalette() {
+  const pal = document.getElementById('palette');
+  pal.innerHTML = '';
+  const qs = currentModule().questions || [];
+  qs.forEach((q, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.textContent = (i+1);
+    cell.addEventListener('click', ()=>{
+      saveCurrentAnswer();
+      DSAT.qIndex = i;
+      renderCurrent();
+    });
+    pal.appendChild(cell);
+  });
+  updatePalette();
+}
+function updatePalette() {
+  const pal = document.getElementById('palette');
+  const qs = currentModule().questions || [];
+  [...pal.children].forEach((cell, i) => {
+    cell.classList.remove('current','answered','flagged');
+    if (i === DSAT.qIndex) cell.classList.add('current');
+    const q = qs[i];
+    const a = DSAT.answers[q.id];
+    if (a?.flagged) cell.classList.add('flagged');
+    if (a && (a.value !== undefined && a.value !== null && a.value !== '')) cell.classList.add('answered');
+  });
+}
+
+/* ===== Render Question ===== */
+function renderCurrent() {
+  const q = currentQuestion();
+  if (!q) return;
+  document.getElementById('qId').textContent = q.id || `Q${DSAT.qIndex+1}`;
+  document.getElementById('qPrompt').innerHTML = renderMediaPlaceholders(q.prompt || '');
+
+  // Reset inputs
+  const chRoot = document.getElementById('qChoices');
+  const giRoot = document.getElementById('qGridin');
+  chRoot.innerHTML = '';
+  giRoot.style.display = 'none';
+
+  if (q.type === 'mcq') {
+    (q.choices||[]).forEach((c, i) => {
+      const id = `opt_${q.id}_${i}`;
+      const lbl = document.createElement('label');
+      lbl.innerHTML = `<input type="radio" name="${q.id}" id="${id}" value="${i}"> ${renderMediaPlaceholders(c)}`;
+      chRoot.appendChild(lbl);
+    });
+  } else if (q.type === 'gridin') {
+    giRoot.style.display = 'block';
+  }
+  // restore saved answer
+  const saved = DSAT.answers[q.id];
+  if (q.type === 'mcq' && saved?.value !== undefined) {
+    const radio = document.querySelector(`input[name="${q.id}"][value="${saved.value}"]`);
+    if (radio) radio.checked = true;
+  } else if (q.type === 'gridin' && saved?.value !== undefined) {
+    document.getElementById('gridInput').value = saved.value;
+  }
+  // flag visual
+  document.getElementById('btnFlag').textContent = (saved?.flagged ? '⚑ Flagged (click to unflag)' : '⚑ Flag');
+  if (window.MathJax && MathJax.typeset) MathJax.typeset();
+  updatePalette();
+}
+
+function saveCurrentAnswer() {
+  const q = currentQuestion();
+  if (!q) return;
+  const entry = DSAT.answers[q.id] || { type: q.type, value: null, flagged: false };
+  if (q.type === 'mcq') {
+    const selected = document.querySelector(`input[name="${q.id}"]:checked`);
+    entry.value = selected ? Number(selected.value) : null;
+  } else if (q.type === 'gridin') {
+    entry.value = document.getElementById('gridInput').value.trim();
+  }
+  DSAT.answers[q.id] = entry;
+  updatePalette();
+}
+
+/* ===== Navigation, Flag, Submit ===== */
+document.getElementById('btnPrev').addEventListener('click', ()=>{
+  saveCurrentAnswer();
+  DSAT.qIndex = Math.max(0, DSAT.qIndex-1);
+  renderCurrent();
+});
+document.getElementById('btnNext').addEventListener('click', ()=>{
+  saveCurrentAnswer();
+  const qs = currentModule().questions || [];
+  DSAT.qIndex = Math.min(qs.length-1, DSAT.qIndex+1);
+  renderCurrent();
+});
+document.getElementById('btnFlag').addEventListener('click', ()=>{
+  const q = currentQuestion();
+  if (!q) return;
+  const entry = DSAT.answers[q.id] || { type: q.type, value: null, flagged: false };
+  entry.flagged = !entry.flagged;
+  DSAT.answers[q.id] = entry;
+  renderCurrent();
 });
 
-document.getElementById('filePick').addEventListener('change', async (ev) => {
-  const f = ev.target.files?.[0];
-  if (!f) return;
-  clearRender();
-  try {
-    const text = await f.text();
-    const data = JSON.parse(text);
-    renderSet(data);
-    setStatus(`로컬 파일 로드 성공: ${f.name}`, true);
-  } catch (e) {
-    setStatus(`로컬 파일 파싱 실패: ${e.message}`, false);
-  } finally {
-    ev.target.value = '';
+document.getElementById('btnClear').addEventListener('click', ()=>{
+  const q = currentQuestion();
+  if (!q) return;
+  const entry = DSAT.answers[q.id] || { type: q.type, value: null, flagged: false };
+  if (q.type === 'mcq') {
+    const checked = document.querySelector(`input[name="${q.id}"]:checked`);
+    if (checked) checked.checked = false;
+    entry.value = null;
+  } else if (q.type === 'gridin') {
+    document.getElementById('gridInput').value = '';
+    entry.value = '';
+  }
+  DSAT.answers[q.id] = entry;
+  updatePalette();
+});
+
+document.getElementById('btnReview').addEventListener('click', ()=>{
+  const qs = currentModule().questions || [];
+  const firstFlagIndex = qs.findIndex(q => DSAT.answers[q.id]?.flagged);
+  if (firstFlagIndex >= 0) {
+    saveCurrentAnswer();
+    DSAT.qIndex = firstFlagIndex;
+    renderCurrent();
+  } else {
+    alert('No flagged questions.');
   }
 });
 
-// 기본 자동 로드
-loadFromUrl('./questions.json?v=' + Date.now());
+document.getElementById('btnSubmit').addEventListener('click', submitModule);
+
+function submitModule() {
+  saveCurrentAnswer();
+  clearInterval(DSAT.timer);
+  // Basic scoring for MCQ if "answer" index exists, and gridin using exact match (string/number)
+  const qs = currentModule().questions || [];
+  let correct = 0;
+  let total = qs.length;
+  qs.forEach(q => {
+    const a = DSAT.answers[q.id];
+    if (!a) return;
+    if (q.type === 'mcq' && typeof q.answer === 'number') {
+      if (a.value === q.answer) correct++;
+    } else if (q.type === 'gridin') {
+      const v = (a.value ?? '').toString().trim();
+      const alts = (q.altNumeric || []).map(x => x.toString());
+      // numeric compare if number, else direct string
+      if (q.answerNumeric !== undefined) {
+        const tol = q.tolerance ?? 0;
+        const num = Number(v);
+        if (!Number.isNaN(num)) {
+          if (Math.abs(num - Number(q.answerNumeric)) <= tol) correct++;
+          else if (alts.some(s => !Number.isNaN(Number(s)) && Math.abs(num - Number(s)) <= tol)) correct++;
+        } else if (alts.includes(v)) {
+          correct++;
+        }
+      }
+    }
+  });
+  const msg = `Module ${DSAT.moduleIndex+1} submitted.\nScore: ${correct} / ${total}`;
+  alert(msg);
+}
+
+/* ===== URL Loader ===== */
+document.getElementById('btnLoad').addEventListener('click', ()=>{
+  const url = document.getElementById('urlInput').value.trim() || './questions_fixed.json?v='+Date.now();
+  loadSet(url);
+});
+
+// auto-load default
+loadSet('./questions_fixed.json?v='+Date.now());
 </script>
 </body>
 </html>
