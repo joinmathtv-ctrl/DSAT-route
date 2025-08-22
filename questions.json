@@ -382,7 +382,7 @@
         {
           "id": "m2q20",
           "type": "mcq",
-          "prompt": "The functions \\( f \\) and \\( g \\) are defined by the equations shown, where \\( a \\) and \\( b \\) are integer constants, <br> \\( a<b \\) and \\( b\\le 0 \\). If \\( y=f(x) \\) and \\( y=g(x) \\) are graphed in the \\( xy \\)-plane, which of the following equations displays, as a constant or coefficient, the y‑coordinate of the y‑intercept of the graph of the corresponding function?<br><br>I. \\( f(x)=a(4.2)^{x+b} \\)<br>II. \\( g(x)=a(4.2)^{x}+b \\)",
+          "prompt": "The functions \\( f \\) and \\( g \\) are defined by the equations shown, where \\( a \\) and \\( b \\) are integer constants, <br> \\( a < b \\) and \\( b\\le 0 \\). If \\( y=f(x) \\) and \\( y=g(x) \\) are graphed in the \\( xy \\)-plane, which of the following equations displays, as a constant or coefficient, the y‑coordinate of the y‑intercept of the graph of the corresponding function?<br><br>I. \\( f(x)=a(4.2)^{x+b} \\)<br>II. \\( g(x)=a(4.2)^{x}+b \\)",
           "choices": ["I only", "II only", "I and II", "Neither I nor II"],
           "answer": 3,
           "rationale": "For I, the y‑intercept \\( f(0)=a(4.2)^b \\) is not a displayed constant. For II, the y‑intercept is \\( a+b \\), not directly a displayed constant or single coefficient."
