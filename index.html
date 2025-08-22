@@ -1,27 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Digital SAT Practice</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Digital SAT Practice (Placeholder → IMG)</title>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-  <script id="MathJax-script" async
-    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .question { margin-bottom: 25px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; }
-    .choices { margin-top: 10px; }
-    .choices label { display: block; margin: 4px 0; }
-    img { max-width: 100%; height: auto; display: block; margin: 8px 0; }
+    :root { --card:#f7f7f7; --border:#d0d0d0; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; }
+    h1 { margin: 0 0 8px; }
+    .meta { color:#555; margin-bottom: 16px; }
+    .toolbar { display:flex; gap:12px; align-items:center; margin: 12px 0 18px; flex-wrap: wrap; }
+    .toolbar input[type="text"]{ padding:8px 10px; border:1px solid var(--border); border-radius:8px; min-width:280px;}
+    .toolbar button, .toolbar label { padding:8px 12px; border:1px solid var(--border); border-radius:8px; background:#fff; cursor:pointer;}
+    .toolbar input[type=file]{ display:none; }
+    .err { color:#b00020; margin:6px 0 0; }
+    .ok { color:#0a7a0a; margin:6px 0 0; }
+    .question { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; margin:14px 0; }
+    .choices label { display:block; margin:6px 0; }
+    img { max-width:100%; height:auto; display:block; margin:8px 0; }
     table { border-collapse: collapse; margin-top: 8px; }
     table, th, td { border: 1px solid #444; padding: 6px; }
+    .footer { margin-top: 32px; font-size: 12px; color: #555; }
   </style>
 </head>
 <body>
   <h1>Digital SAT Practice</h1>
+  <div class="meta">Placeholder <code>[[IMAGE: ...]]</code> → <code>&lt;img&gt;</code> 치환, MathJax 수식 지원</div>
+
+  <div class="toolbar">
+    <input type="text" id="urlInput" placeholder="questions JSON 경로 (기본: ./questions_fixed.json)" />
+    <button id="btnLoad">서버에서 불러오기</button>
+    <label for="filePick">로컬 JSON 파일 선택</label>
+    <input id="filePick" type="file" accept=".json,application/json" />
+    <span id="status"></span>
+  </div>
+
+  <div id="header"></div>
   <div id="questions"></div>
+
+  <div class="footer">Tip: GitHub Pages에서는 경로/대소문자, CORS, 캐시를 확인하세요. (예: <code>./questions_fixed.json?v=20250822</code>)</div>
 
 <script>
 function renderMediaPlaceholders(html) {
+  if (!html) return "";
   return html.replace(/\[\[IMAGE:\s*([^\]|]+)(?:\s*\|\s*([^\]]+))?\]\]/g,
     (_, file, opts) => {
       let src = `./img/${file.trim()}`;
@@ -41,37 +64,97 @@ function renderMediaPlaceholders(html) {
   });
 }
 
-async function loadQuestions() {
-  const res = await fetch("./questions_fixed.json");
-  const data = await res.json();
-  const container = document.getElementById("questions");
+function setStatus(msg, ok=false) {
+  const s = document.getElementById('status');
+  s.textContent = msg || '';
+  s.className = ok ? 'ok' : 'err';
+}
 
-  data.modules.forEach(mod => {
-    mod.questions.forEach(q => {
-      let div = document.createElement("div");
-      div.className = "question";
-      div.innerHTML = `<b>Q${q.id}:</b> ${renderMediaPlaceholders(q.prompt)}`;
+function clearRender() {
+  document.getElementById('header').innerHTML = '';
+  document.getElementById('questions').innerHTML = '';
+}
 
-      if (q.type === "mcq") {
-        let choicesDiv = document.createElement("div");
-        choicesDiv.className = "choices";
+function renderSet(data) {
+  const header = document.getElementById('header');
+  const qroot = document.getElementById('questions');
+  header.innerHTML = '';
+  qroot.innerHTML = '';
+
+  const md = data.metadata || {};
+  const t = md.title || 'Untitled Set';
+  const dir = md.directions || '';
+  header.innerHTML = `<h2>${t}</h2><div>${renderMediaPlaceholders(dir)}</div>`;
+
+  (data.modules || []).forEach((mod, mi) => {
+    const modTitle = document.createElement('h3');
+    modTitle.textContent = `Module ${mod.module ?? (mi+1)}`;
+    qroot.appendChild(modTitle);
+
+    (mod.questions || []).forEach(q => {
+      const el = document.createElement('div');
+      el.className = 'question';
+      el.innerHTML = `<b>${q.id ?? ''}</b> — ${renderMediaPlaceholders(q.prompt)}`;
+
+      if (q.type === 'mcq' && Array.isArray(q.choices)) {
+        const cdiv = document.createElement('div');
+        cdiv.className = 'choices';
         q.choices.forEach((c,i) => {
-          let choiceHTML = renderMediaPlaceholders(c);
-          choicesDiv.innerHTML += `<label><input type="radio" name="${q.id}"> ${choiceHTML}</label>`;
+          const cHTML = renderMediaPlaceholders(c);
+          cdiv.innerHTML += `<label><input type="radio" name="${q.id}"> ${cHTML}</label>`;
         });
-        div.appendChild(choicesDiv);
-      } else if (q.type === "gridin") {
-        div.innerHTML += `<div><input type="text" placeholder="Your answer"></div>`;
+        el.appendChild(cdiv);
+      } else if (q.type === 'gridin') {
+        el.innerHTML += `<div><input type="text" placeholder="Your answer"></div>`;
       }
-
-      container.appendChild(div);
+      qroot.appendChild(el);
     });
   });
 
-  MathJax.typeset();
+  if (window.MathJax && MathJax.typeset) MathJax.typeset();
 }
 
-loadQuestions();
+async function fetchJson(url) {
+  const res = await fetch(url, {cache:'no-store'});
+  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+  return await res.json();
+}
+
+async function loadFromUrl(url) {
+  clearRender();
+  try {
+    const data = await fetchJson(url);
+    renderSet(data);
+    setStatus(`로드 성공: ${url}`, true);
+  } catch (e) {
+    setStatus(`로드 실패: ${e.message}. 경로/대소문자/CORS 확인`, false);
+  }
+}
+
+document.getElementById('btnLoad').addEventListener('click', () => {
+  const val = document.getElementById('urlInput').value.trim();
+  const url = val || './questions_fixed.json?v=' + Date.now();
+  loadFromUrl(url);
+});
+
+document.getElementById('filePick').addEventListener('change', async (ev) => {
+  const f = ev.target.files?.[0];
+  if (!f) return;
+  clearRender();
+  try {
+    const text = await f.text();
+    const data = JSON.parse(text);
+    renderSet(data);
+    setStatus(`로컬 파일 로드 성공: ${f.name}`, true);
+  } catch (e) {
+    setStatus(`로컬 파일 파싱 실패: ${e.message}`, false);
+  } finally {
+    ev.target.value = '';
+  }
+});
+
+// 기본 자동 로드
+loadFromUrl('./questions_fixed.json?v=' + Date.now());
 </script>
 </body>
 </html>
