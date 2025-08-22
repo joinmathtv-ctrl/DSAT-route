@@ -1,418 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Digital SAT – Classic Practice</title>
+  <meta charset="UTF-8">
+  <title>Digital SAT Practice</title>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <style>
-    :root {
-      --bg: #0f172a;           /* dark indigo header */
-      --fg: #ffffff;
-      --muted: #6b7280;
-      --border: #e5e7eb;
-      --card: #ffffff;
-      --accent: #2563eb;       /* blue */
-      --accent-2: #10b981;     /* green */
-      --danger: #ef4444;
-      --palette-bg: #f8fafc;
-      --flag: #f59e0b;         /* amber */
-    }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: #f3f4f6;
-      color: #111827;
-    }
-    /* Top Bar */
-    .topbar {
-      display: grid;
-      grid-template-columns: 1fr auto auto auto;
-      gap: 12px;
-      align-items: center;
-      padding: 14px 18px;
-      background: var(--bg);
-      color: var(--fg);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    .brand { font-weight: 700; letter-spacing: .2px; }
-    .chip { background: rgba(255,255,255,.1); padding: 6px 10px; border-radius: 999px; font-size: 14px; }
-    .timer { font-variant-numeric: tabular-nums; font-weight: 700; }
-    .btn {
-      background: var(--fg); color: #111827;
-      border: none; border-radius: 10px; padding: 8px 12px; cursor: pointer; font-weight: 600;
-    }
-    .btn:disabled { opacity: .5; cursor: not-allowed; }
-    .btn-accent { background: var(--accent); color: white; }
-    .btn-danger { background: var(--danger); color: white; }
-    .layout {
-      display: grid; grid-template-columns: 1fr 320px; gap: 16px;
-      padding: 16px; max-width: 1200px; margin: 0 auto;
-    }
-    /* Left (question area) */
-    .card {
-      background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px;
-    }
-    .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .q-id { font-weight: 700; }
-    .flag { color: var(--flag); font-weight: 700; cursor: pointer; user-select: none; }
-    .prompt { margin-top: 6px; }
-    .choices label { display: block; margin: 8px 0; }
-    .gridin input { width: 220px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; }
-    .navline { display: flex; gap: 8px; justify-content: space-between; margin-top: 14px; }
-    /* Right (palette) */
-    .side {
-      background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px;
-    }
-    .side h3 { margin: 6px 0 10px; font-size: 16px; }
-    .palette { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; background: var(--palette-bg); padding: 10px; border-radius: 10px; }
-    .cell {
-      text-align: center; padding: 8px 0; border-radius: 8px; cursor: pointer; font-variant-numeric: tabular-nums;
-      border: 1px solid var(--border); background: white;
-    }
-    .cell.current { outline: 2px solid var(--accent); }
-    .cell.answered { background: #ecfeff; border-color: #67e8f9; }
-    .cell.flagged { background: #fffbeb; border-color: #fbbf24; }
-    .legend { display: flex; gap: 8px; font-size: 12px; color: #374151; margin-top: 8px; flex-wrap: wrap;}
-    .legend span { display: inline-flex; align-items: center; gap: 6px; }
-    .legend .swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; border: 1px solid var(--border); }
-    .swatch-ans { background:#ecfeff; border-color:#67e8f9; }
-    .swatch-flag { background:#fffbeb; border-color:#fbbf24; }
-    /* Footer actions */
-    .actions { display: flex; gap: 8px; margin-top: 12px; }
+    body { font-family: Arial, sans-serif; margin:0; padding:0; display:flex; }
+    #sidebar { width: 220px; border-right: 1px solid #ccc; padding: 10px; }
+    #content { flex:1; padding: 20px; }
+    .question { margin-bottom: 20px; }
+    .choices label { display:block; margin:5px 0; }
+    .palette button { width:40px; height:40px; margin:2px; }
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="brand">Digital SAT – Classic</div>
-    <div class="chip" id="chipSection">Section: Math</div>
-    <div class="chip" id="chipModule">Module: 1</div>
-    <div class="chip timer" id="chipTimer">35:00</div>
+  <div id="sidebar">
+    <h3>Questions</h3>
+    <div id="palette" class="palette"></div>
+    <hr>
+    <input id="filePath" placeholder="./questions.json" value="./questions.json">
+    <button onclick="loadQuestions()">Load</button>
   </div>
-
-  <div class="layout">
-    <!-- Left -->
-    <div class="card" id="qCard">
-      <div class="q-header">
-        <div class="q-id" id="qId">Q1</div>
-        <div class="flag" id="btnFlag">⚑ Flag</div>
-      </div>
-      <div class="prompt" id="qPrompt">Loading…</div>
-      <div class="choices" id="qChoices"></div>
-      <div class="gridin" id="qGridin" style="display:none;"><input id="gridInput" type="text" placeholder="Your answer"></div>
-      <div class="navline">
-        <div>
-          <button class="btn" id="btnPrev">← Prev</button>
-          <button class="btn" id="btnNext">Next →</button>
-        </div>
-        <div>
-          <button class="btn btn-danger" id="btnSubmit">Submit Module</button>
-        </div>
-      </div>
+  <div id="content">
+    <h2 id="title">Loading...</h2>
+    <div id="question-container"></div>
+    <div>
+      <button onclick="prevQ()">Prev</button>
+      <button onclick="nextQ()">Next</button>
+      <button onclick="submitTest()">Submit</button>
     </div>
-
-    <!-- Right -->
-    <div class="side">
-      <h3>Question Palette</h3>
-      <div class="palette" id="palette"></div>
-      <div class="legend">
-        <span><span class="swatch swatch-ans"></span> Answered</span>
-        <span><span class="swatch swatch-flag"></span> Flagged</span>
-      </div>
-      <div class="actions">
-        <button class="btn" id="btnClear">Clear Choice</button>
-        <button class="btn" id="btnReview">Review Flags</button>
-      </div>
-      <div class="actions">
-        <input type="text" id="urlInput" placeholder="./questions_fixed.json" style="flex:1; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
-        <button class="btn" id="btnLoad">Load</button>
-      </div>
-      <div id="status" style="margin-top:6px;font-size:12px;color:#374151;"></div>
-    </div>
+    <div id="result"></div>
   </div>
 
 <script>
-/* ===== Helper: IMAGE placeholder → <img> ===== */
-function renderMediaPlaceholders(html) {
-  if (!html) return "";
-  return html.replace(/\\[\\[IMAGE:\\s*([^\\]|]+)(?:\\s*\\|\\s*([^\\]]+))?\\]\\]/g,
-    (_, file, opts) => {
-      let src = `./img/${file.trim()}`;
-      let alt = 'image';
-      let extra = 'style="max-width:100%;height:auto"';
-      if (opts) {
-        opts.split('|').map(s => s.trim()).forEach(pair => {
-          const [k,v] = pair.split('=').map(x => x.trim());
-          if (!k || !v) return;
-          if (k === 'alt') alt = v;
-          else if (k === 'width' || k === 'height') extra += ` ${k}="${v}"`;
-          else if (k === 'class')  extra += ` class="${v}"`;
-          else if (k === 'style')  extra += ` style="${v}"`;
-        });
-      }
-      return `<img src="${src}" alt="${alt}" ${extra}>`;
-  });
-}
-/* ===== State ===== */
-let DSAT = {
-  raw: null,
-  moduleIndex: 0,
-  qIndex: 0,
-  answers: {},     // key: q.id → { type, value, flagged }
-  timer: null,
-  secs: 35*60,
-};
+let data = null;
+let current = 0;
+let answers = {};
 
-function setStatus(msg, danger=false) {
-  const el = document.getElementById('status');
-  el.textContent = msg || '';
-  el.style.color = danger ? '#b00020' : '#374151';
-}
-
-function mmss(secs) {
-  const m = Math.floor(secs/60).toString().padStart(2,'0');
-  const s = (secs%60).toString().padStart(2,'0');
-  return `${m}:${s}`;
-}
-
-/* ===== Load JSON ===== */
-async function fetchJson(url) {
-  const res = await fetch(url, {cache:'no-store'});
-  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-  return await res.json();
-}
-
-async function loadSet(url='./questions.json') {
-  setStatus('Loading…');
+async function loadQuestions() {
+  const path = document.getElementById('filePath').value;
   try {
-    const data = await fetchJson(url);
-    DSAT.raw = data;
-    DSAT.moduleIndex = 0;
-    DSAT.qIndex = 0;
-    DSAT.answers = {};
-    // Timer per module
-    const md = data.metadata || {};
-    const mins = (md.durationMinutesPerModule && md.durationMinutesPerModule[0]) || 35;
-    DSAT.secs = mins*60;
-    initTimer();
-    renderModuleHeader();
-    buildPalette();
-    renderCurrent();
-    setStatus('Loaded', false);
-  } catch(e) {
-    setStatus('Load failed: '+e.message, true);
+    const res = await fetch(path);
+    data = await res.json();
+    document.getElementById('title').innerText = data.metadata.title || "DSAT Practice";
+    current = 0;
+    answers = {};
+    renderPalette();
+    showQ();
+  } catch (e) {
+    alert("로드 실패: " + e);
   }
 }
 
-function renderModuleHeader() {
-  const md = DSAT.raw?.metadata || {};
-  document.getElementById('chipSection').textContent = `Section: ${md.section || 'Math'}`;
-  document.getElementById('chipModule').textContent = `Module: ${DSAT.moduleIndex+1}`;
-}
-
-function initTimer() {
-  clearInterval(DSAT.timer);
-  const el = document.getElementById('chipTimer');
-  el.textContent = mmss(DSAT.secs);
-  DSAT.timer = setInterval(()=>{
-    DSAT.secs--;
-    if (DSAT.secs <= 0) {
-      DSAT.secs = 0;
-      clearInterval(DSAT.timer);
-      el.textContent = '00:00';
-      alert('Time is up! Submitting module.');
-      submitModule();
-      return;
-    }
-    el.textContent = mmss(DSAT.secs);
-  }, 1000);
-}
-
-function currentModule() {
-  return DSAT.raw?.modules?.[DSAT.moduleIndex] || { questions: [] };
-}
-function currentQuestion() {
-  return currentModule().questions?.[DSAT.qIndex] || null;
-}
-
-/* ===== Palette ===== */
-function buildPalette() {
+function renderPalette(){
   const pal = document.getElementById('palette');
-  pal.innerHTML = '';
-  const qs = currentModule().questions || [];
-  qs.forEach((q, i) => {
-    const cell = document.createElement('div');
-    cell.className = 'cell';
-    cell.textContent = (i+1);
-    cell.addEventListener('click', ()=>{
-      saveCurrentAnswer();
-      DSAT.qIndex = i;
-      renderCurrent();
+  pal.innerHTML = "";
+  data.modules.forEach(m=>{
+    m.questions.forEach((q,i)=>{
+      const b = document.createElement("button");
+      b.innerText = q.id;
+      b.onclick = ()=>{currentQ(q.id);};
+      pal.appendChild(b);
     });
-    pal.appendChild(cell);
-  });
-  updatePalette();
-}
-function updatePalette() {
-  const pal = document.getElementById('palette');
-  const qs = currentModule().questions || [];
-  [...pal.children].forEach((cell, i) => {
-    cell.classList.remove('current','answered','flagged');
-    if (i === DSAT.qIndex) cell.classList.add('current');
-    const q = qs[i];
-    const a = DSAT.answers[q.id];
-    if (a?.flagged) cell.classList.add('flagged');
-    if (a && (a.value !== undefined && a.value !== null && a.value !== '')) cell.classList.add('answered');
   });
 }
 
-/* ===== Render Question ===== */
-function renderCurrent() {
-  const q = currentQuestion();
-  if (!q) return;
-  document.getElementById('qId').textContent = q.id || `Q${DSAT.qIndex+1}`;
-  document.getElementById('qPrompt').innerHTML = renderMediaPlaceholders(q.prompt || '');
-
-  // Reset inputs
-  const chRoot = document.getElementById('qChoices');
-  const giRoot = document.getElementById('qGridin');
-  chRoot.innerHTML = '';
-  giRoot.style.display = 'none';
-
-  if (q.type === 'mcq') {
-    (q.choices||[]).forEach((c, i) => {
-      const id = `opt_${q.id}_${i}`;
-      const lbl = document.createElement('label');
-      lbl.innerHTML = `<input type="radio" name="${q.id}" id="${id}" value="${i}"> ${renderMediaPlaceholders(c)}`;
-      chRoot.appendChild(lbl);
+function currentQ(id){
+  data.modules.forEach(m=>{
+    m.questions.forEach((q,i)=>{
+      if(q.id===id){ current = q; showQ(); }
     });
-  } else if (q.type === 'gridin') {
-    giRoot.style.display = 'block';
-  }
-  // restore saved answer
-  const saved = DSAT.answers[q.id];
-  if (q.type === 'mcq' && saved?.value !== undefined) {
-    const radio = document.querySelector(`input[name="${q.id}"][value="${saved.value}"]`);
-    if (radio) radio.checked = true;
-  } else if (q.type === 'gridin' && saved?.value !== undefined) {
-    document.getElementById('gridInput').value = saved.value;
-  }
-  // flag visual
-  document.getElementById('btnFlag').textContent = (saved?.flagged ? '⚑ Flagged (click to unflag)' : '⚑ Flag');
-  if (window.MathJax && MathJax.typeset) MathJax.typeset();
-  updatePalette();
+  });
 }
 
-function saveCurrentAnswer() {
-  const q = currentQuestion();
-  if (!q) return;
-  const entry = DSAT.answers[q.id] || { type: q.type, value: null, flagged: false };
-  if (q.type === 'mcq') {
-    const selected = document.querySelector(`input[name="${q.id}"]:checked`);
-    entry.value = selected ? Number(selected.value) : null;
-  } else if (q.type === 'gridin') {
-    entry.value = document.getElementById('gridInput').value.trim();
-  }
-  DSAT.answers[q.id] = entry;
-  updatePalette();
-}
-
-/* ===== Navigation, Flag, Submit ===== */
-document.getElementById('btnPrev').addEventListener('click', ()=>{
-  saveCurrentAnswer();
-  DSAT.qIndex = Math.max(0, DSAT.qIndex-1);
-  renderCurrent();
-});
-document.getElementById('btnNext').addEventListener('click', ()=>{
-  saveCurrentAnswer();
-  const qs = currentModule().questions || [];
-  DSAT.qIndex = Math.min(qs.length-1, DSAT.qIndex+1);
-  renderCurrent();
-});
-document.getElementById('btnFlag').addEventListener('click', ()=>{
-  const q = currentQuestion();
-  if (!q) return;
-  const entry = DSAT.answers[q.id] || { type: q.type, value: null, flagged: false };
-  entry.flagged = !entry.flagged;
-  DSAT.answers[q.id] = entry;
-  renderCurrent();
-});
-
-document.getElementById('btnClear').addEventListener('click', ()=>{
-  const q = currentQuestion();
-  if (!q) return;
-  const entry = DSAT.answers[q.id] || { type: q.type, value: null, flagged: false };
-  if (q.type === 'mcq') {
-    const checked = document.querySelector(`input[name="${q.id}"]:checked`);
-    if (checked) checked.checked = false;
-    entry.value = null;
-  } else if (q.type === 'gridin') {
-    document.getElementById('gridInput').value = '';
-    entry.value = '';
-  }
-  DSAT.answers[q.id] = entry;
-  updatePalette();
-});
-
-document.getElementById('btnReview').addEventListener('click', ()=>{
-  const qs = currentModule().questions || [];
-  const firstFlagIndex = qs.findIndex(q => DSAT.answers[q.id]?.flagged);
-  if (firstFlagIndex >= 0) {
-    saveCurrentAnswer();
-    DSAT.qIndex = firstFlagIndex;
-    renderCurrent();
+function showQ(){
+  const q = getCurrent();
+  if(!q) return;
+  const box = document.getElementById('question-container');
+  box.innerHTML = "<div class='question'><b>"+q.prompt+"</b></div>";
+  if(q.type==="mcq"){
+    const choices = q.choices.map((c,i)=>
+      `<label><input type='radio' name='ans' value='${i}' ${(answers[q.id]==i)?"checked":""}> ${c}</label>`
+    ).join("");
+    box.innerHTML += "<div class='choices'>"+choices+"</div>";
   } else {
-    alert('No flagged questions.');
+    box.innerHTML += `<input type='text' id='gridin' value='${answers[q.id]||""}'>`;
   }
-});
+  MathJax.typesetPromise();
+}
 
-document.getElementById('btnSubmit').addEventListener('click', submitModule);
-
-function submitModule() {
-  saveCurrentAnswer();
-  clearInterval(DSAT.timer);
-  // Basic scoring for MCQ if "answer" index exists, and gridin using exact match (string/number)
-  const qs = currentModule().questions || [];
-  let correct = 0;
-  let total = qs.length;
-  qs.forEach(q => {
-    const a = DSAT.answers[q.id];
-    if (!a) return;
-    if (q.type === 'mcq' && typeof q.answer === 'number') {
-      if (a.value === q.answer) correct++;
-    } else if (q.type === 'gridin') {
-      const v = (a.value ?? '').toString().trim();
-      const alts = (q.altNumeric || []).map(x => x.toString());
-      // numeric compare if number, else direct string
-      if (q.answerNumeric !== undefined) {
-        const tol = q.tolerance ?? 0;
-        const num = Number(v);
-        if (!Number.isNaN(num)) {
-          if (Math.abs(num - Number(q.answerNumeric)) <= tol) correct++;
-          else if (alts.some(s => !Number.isNaN(Number(s)) && Math.abs(num - Number(s)) <= tol)) correct++;
-        } else if (alts.includes(v)) {
-          correct++;
-        }
+function getCurrent(){
+  for(const m of data.modules){
+    for(const q of m.questions){
+      if(q.id===current.id || q===data.modules[0].questions[0] && !current){
+        return q;
       }
     }
-  });
-  const msg = `Module ${DSAT.moduleIndex+1} submitted.\nScore: ${correct} / ${total}`;
-  alert(msg);
+  }
+  return null;
 }
 
-/* ===== URL Loader ===== */
-document.getElementById('btnLoad').addEventListener('click', ()=>{
-  const url = document.getElementById('urlInput').value.trim() || './questions.json?v='+Date.now();
-  loadSet(url);
-});
+function prevQ(){ /* TODO: implement prev navigation */ }
+function nextQ(){ /* TODO: implement next navigation */ }
 
-// auto-load default
-loadSet('./questions.json?v='+Date.now());
+function submitTest(){
+  let score=0, total=0;
+  data.modules.forEach(m=>{
+    m.questions.forEach(q=>{
+      total++;
+      if(q.type==="mcq" && answers[q.id]==q.answer) score++;
+      if(q.type==="gridin" && answers[q.id]==q.answerNumeric) score++;
+    });
+  });
+  document.getElementById('result').innerText = "Score: "+score+"/"+total;
+}
 </script>
 </body>
 </html>
