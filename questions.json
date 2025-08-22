@@ -331,7 +331,7 @@
         {
           "id": "m2q14",
           "type": "mcq",
-          "prompt": "The function \\( f \\) is defined by \\( f(x)=2^{-3x} \\). The function \\( g \\) is a decreasing linear function. In the \\( xy \\)-plane, the graphs of \\( y=f(x) \\) and \\( y=g(x) \\) intersect at two points, \\( (h,\\,j) \\) and \\( (k,\\,m) \\), where \\( j>m \\). When \\( g(x)<f(x) \\), which of the following must also be true?",
+          "prompt": "The function \\( f \\) is defined by \\( f(x)=2^{-3x} \\). The function \\( g \\) is a decreasing linear function. In the \\( xy \\)-plane, the graphs of \\( y=f(x) \\) and \\( y=g(x) \\) intersect at two points, \\( (h,\\,j) \\) and \\( (k,\\,m) \\), where \\( j>m \\). When \\( g(x) < f(x) \\), which of the following must also be true?",
           "choices": ["\\( x < h \\)", "\\( x > k \\)", "\\( x > k \\text{ or } x < h \\)", "\\( h < x < k \\)"],
           "answer": 3,
           "rationale": "Between the intersection points the exponential lies above the decreasing line."
