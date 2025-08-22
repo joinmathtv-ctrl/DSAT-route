@@ -3,23 +3,23 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>DSAT Practice — Classic UI</title>
+<title>DSAT Practice — Classic UI (Enhanced)</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <script defer id="MathJax-script"
         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <style>
   :root{
-    --bg:#fafbfe; --card:#fff; --ink:#1f2937; --muted:#6b7280;
+    --bg:#fafbfe; --card:#fff; --ink:#111827; --muted:#6b7280;
     --line:#e5e7eb; --accent:#2563eb; --accent-ghost:#e7f0ff;
     --flag:#ef9b0f; --choice:#f7f7fb; --choice-hover:#eef2ff;
-    --ok:#e9fbe7; --ok-border:#b7f4be; --bad:#ffe6e6; --bad-border:#f3b0b0;
+    --ok:#16a34a; --ng:#dc2626;
   }
   *{ box-sizing:border-box }
   body{ margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Apple SD Gothic Neo,Arial,sans-serif; color:var(--ink); background:var(--bg) }
 
   /* ===== TOP BAR ===== */
   .topbar{
-    position:sticky; top:0; z-index:5; background:#fff;
+    position:sticky; top:0; z-index:10; background:#fff;
     border-bottom:1px solid var(--line);
   }
   .topbar-row{
@@ -33,69 +33,100 @@
   .timer{ font-weight:800; font-variant-numeric:tabular-nums }
   .hide-btn{ border:1px solid var(--line); background:#fff; padding:3px 8px; border-radius:6px; font-size:12px; cursor:pointer }
 
-  /* Directions */
-  .dir-zone{ display:flex; align-items:center; gap:10px }
+  .dir-zone{ display:flex; align-items:center; gap:10px; position:relative }
   .dir-btn{ border:1px solid var(--line); background:#fff; padding:5px 10px; border-radius:8px; font-size:13px; cursor:pointer }
   .dir-panel{
-    position:absolute; left:14px; top:44px; width:520px; background:#fff; border:1px solid var(--line);
-    border-radius:12px; padding:12px; font-size:14px; line-height:1.45; box-shadow:0 12px 32px rgba(0,0,0,.08); display:none;
+    position:absolute; left:0; top:40px; width:520px; max-width:90vw; background:#fff; border:1px solid var(--line);
+    border-radius:12px; padding:12px; font-size:14px; line-height:1.45; box-shadow:0 12px 32px rgba(0,0,0,.08); display:none; z-index:20;
   }
-
   .dash{ height:6px; background:repeating-linear-gradient(90deg,
       #d9ead3 0 46px, #fff 46px 54px,
       #f9e1ae 54px 98px, #fff 98px 106px,
       #cfe2f3 106px 152px, #fff 152px 160px); opacity:.95 }
 
-  /* ===== 메인 ===== */
-  .wrap{ max-width:1160px; margin:12px auto; padding:0 14px; display:grid; grid-template-columns: 1fr 320px; gap:16px }
-  .loader{ grid-column:1 / -1; display:flex; gap:8px; margin:6px 0 12px 0 }
-  input[type="text"]#path{ width:330px; padding:7px 10px; border:1px solid var(--line); border-radius:8px }
-  .btn{ border:1px solid var(--line); background:#fff; padding:8px 12px; border-radius:10px; cursor:pointer }
-  .btn.primary{ background:var(--accent); color:#fff; border-color:var(--accent) }
-  .alert{ background:#fef3f2; color:#b42318; border:1px solid #fecdca; padding:10px 12px; border-radius:10px; margin:8px 0; font-size:14px }
+  /* ===== 레이아웃 ===== */
+  .page{
+    display:grid; grid-template-columns: 1fr 320px; gap:16px;
+    max-width:1280px; margin:12px auto; padding:0 14px;
+  }
+  .side{ display:none } /* 해설패널은 결과 단계에서만 표시 */
 
-  /* 문제 카드 */
+  /* ===== 카드 ===== */
   .qcard{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:0 6px 20px rgba(0,0,0,.04) }
   .qhead{ display:flex; align-items:center; gap:10px; margin-bottom:6px }
-  .qnum{ width:28px; height:28px; display:grid; place-items:center; font-weight:700; border:1px solid var(--line); border-radius:6px; }
+  .qnum{ min-width:28px; height:28px; display:grid; place-items:center; font-weight:700;
+         border:1px solid var(--line); border-radius:6px; padding:0 8px }
   .flag-btn{ margin-left:4px; border:1px solid var(--line); background:#fff; border-radius:8px; padding:4px 10px; cursor:pointer; font-size:13px; color:var(--muted) }
   .flagged{ color:var(--flag); border-color:#fde68a; background:#fffaf0 }
   .qtitle{ text-align:center; color:#0f172a; font-size:14px; margin:4px 0 6px 0 }
   .qstem{ font-size:16px; line-height:1.55; margin:10px 0 12px 0 }
   .choices{ display:grid; gap:10px }
 
-  /* 선택지 */
   .choice{ border:1px solid var(--line); background:var(--choice); border-radius:10px; padding:10px 12px; cursor:pointer;
            display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:flex-start; transition:background .15s, border-color .15s; }
   .choice:hover{ background:var(--choice-hover) }
-  .bubble{ width:24px; height:24px; border:1px solid var(--line); border-radius:50%; display:grid; place-items:center; font-weight:700; background:#fff; user-select:none; font-size:13px; }
+  .bubble{
+    width:24px; height:24px; border:1px solid var(--line); border-radius:50%;
+    display:grid; place-items:center; font-weight:700; background:#fff; user-select:none; font-size:13px;
+  }
   .choice input{ display:none }
   .choice.selected{ border-color:#bfd3ff; background:#eef4ff }
   .choice.selected .bubble{ border-color:var(--accent); color:#fff; background:var(--accent) }
 
-  /* grid-in */
-  .gridin{ width:260px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; font-size:16px; background:#fff }
+  .gridin{ width:260px; max-width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px; font-size:16px; background:#fff }
 
-  /* 하단 컨트롤 & 팔레트 */
-  .footer{ display:flex; align-items:center; justify-content:space-between; margin:14px 0 }
-  .nav{ display:flex; gap:8px }
-  .palette{ display:flex; flex-wrap:wrap; gap:6px; padding:8px 0 }
-  .dot{ width:36px; height:36px; border-radius:10px; border:1px solid var(--line); background:#fff; cursor:pointer; font-weight:600 }
-  .dot.active{ outline:2px solid var(--accent) }
+  /* ===== 하단 고정 리본 ===== */
+  .ribbon{
+    position:sticky; bottom:0; left:0; right:0; z-index:9;
+    background:rgba(255,255,255,.95); backdrop-filter:saturate(1.2) blur(6px);
+    border-top:1px solid var(--line);
+  }
+  .ribbon-row{
+    max-width:1280px; margin:0 auto; padding:8px 14px;
+    display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px;
+  }
+  .btn{ border:1px solid var(--line); background:#fff; padding:8px 12px; border-radius:10px; cursor:pointer }
+  .btn.primary{ background:var(--accent); color:#fff; border-color:var(--accent) }
+  .btn.ghost{ background:var(--accent-ghost); color:#1d4ed8; border-color:#c3d3ff }
+
+  .progress-box{ border:1px solid var(--line); background:#fff; padding:6px 10px; border-radius:10px; cursor:pointer; font-weight:600 }
+  .progress-sub{ font-size:12px; color:var(--muted); margin-left:6px }
+
+  /* ===== 모달 공통 ===== */
+  .modal-back{
+    position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; z-index:30;
+    align-items:center; justify-content:center; padding:16px;
+  }
+  .modal{ background:#fff; border:1px solid var(--line); border-radius:12px; width:min(680px, 96vw); max-height:88vh; overflow:auto; box-shadow:0 20px 60px rgba(0,0,0,.18) }
+  .modal .head{ padding:12px 16px; border-bottom:1px solid var(--line); font-weight:700 }
+  .modal .body{ padding:12px 16px }
+  .modal .foot{ padding:12px 16px; border-top:1px solid var(--line); display:flex; gap:8px; justify-content:flex-end }
+
+  /* 번호 그리드 */
+  .grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(44px,1fr)); gap:8px;
+  }
+  .grid .dot{
+    height:42px; border-radius:10px; border:1px solid var(--line); background:#fff; cursor:pointer; font-weight:700; display:grid; place-items:center;
+  }
   .dot.answered{ background:#e9fbe7; border-color:#b7f4be }
   .dot.flag{ background:#fff3d6; border-color:#fde68a }
-  .dot.correct{ background:var(--ok); border-color:var(--ok-border) }
-  .dot.incorrect{ background:var(--bad); border-color:var(--bad-border) }
+  .dot.active{ outline:2px solid var(--accent) }
 
-  /* 좌측=문제/팔레트, 우측=해설 패널 */
-  .left-col{ grid-column:1 / 2 }
-  .right-col{ grid-column:2 / 3 }
-  .side{ position:sticky; top:64px; }
-  .panel{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; box-shadow:0 10px 24px rgba(0,0,0,.05) }
-  .panel h4{ margin:0 0 8px 0; font-size:15px }
-  .panel .muted{ color:var(--muted); font-size:13px }
-  .scorebox .summary{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px }
-  .pill{ border:1px solid var(--line); border-radius:999px; padding:4px 10px; background:#fff }
+  /* ===== 결과표 ===== */
+  .score-card{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; }
+  .res-table{ width:100%; border-collapse:collapse; font-size:14px }
+  .res-table th, .res-table td{ border-top:1px solid var(--line); padding:8px 6px; text-align:left }
+  .badge{ display:inline-block; padding:2px 8px; border-radius:999px; font-weight:700; font-size:12px }
+  .ok{ background:#e8f8ee; color:#166534 }
+  .ng{ background:#fdecec; color:#991b1b }
+
+  /* 해설 패널 */
+  .side{ position:sticky; top:62px }
+  .explain{ display:none; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; }
+  .explain h4{ margin:6px 0 10px 0 }
+  .explain .content{ font-size:14px; line-height:1.5 }
+  .muted{ color:var(--muted) }
 </style>
 </head>
 <body>
@@ -121,45 +152,84 @@
   <div class="dash"></div>
 </div>
 
-<div class="wrap">
-  <div class="loader">
-    <input id="path" type="text" value="./questions.json" />
-    <button class="btn" id="loadBtn">Load set</button>
-  </div>
-  <div id="loadError" class="alert" style="display:none"></div>
+<!-- ===== PAGE ===== -->
+<div class="page">
+  <main>
+    <div class="qcard" style="margin-bottom:10px">
+      <div class="loader" style="display:flex; gap:8px">
+        <input id="path" type="text" value="./questions.json" style="width:340px; padding:7px 10px; border:1px solid var(--line); border-radius:8px"/>
+        <button class="btn" id="loadBtn">Load set</button>
+        <span id="modInfo" class="muted"></span>
+      </div>
+      <div id="loadError" class="score-card" style="display:none; color:#b42318; background:#fef3f2; border-color:#fecdca"></div>
+    </div>
 
-  <!-- 좌측: 문제/팔레트/점수 -->
-  <div class="left-col">
-    <!-- 문제 카드 -->
     <div class="qcard" id="card" style="display:none">
       <div class="qhead">
         <div class="qnum" id="qnum">1</div>
         <button id="flagBtn" class="flag-btn">Mark for Review</button>
+        <div class="qtitle" id="qtitle" style="margin-left:auto"></div>
       </div>
-      <div class="qtitle" id="qtitle"></div>
       <div class="qstem" id="qstem"></div>
       <div class="choices" id="choices"></div>
     </div>
 
-    <div class="footer" id="footer" style="display:none">
-      <div class="nav">
-        <button class="btn" id="prevBtn">← Prev</button>
-        <button class="btn" id="nextBtn">Next →</button>
-      </div>
+    <div id="scoreBox" style="margin:12px 0"></div>
+  </main>
+
+  <!-- 해설 사이드 패널 (최종 제출 후만 보여줌) -->
+  <aside class="side" id="side">
+    <div class="explain" id="explainBox">
+      <h4 id="explainTitle">해설</h4>
+      <div class="content" id="explainBody">문제 번호를 선택하면 해설이 여기에 표시됩니다.</div>
+    </div>
+  </aside>
+</div>
+
+<!-- ===== 하단 고정 리본 ===== -->
+<div class="ribbon">
+  <div class="ribbon-row">
+    <div class="nav">
+      <button class="btn" id="prevBtn">← Prev</button>
+      <button class="btn" id="nextBtn">Next →</button>
+    </div>
+    <div style="justify-self:center">
+      <button class="progress-box" id="progressBtn"><span id="progressNow">1</span>/<span id="progressTotal">22</span> <span class="progress-sub">문제 목록</span></button>
+    </div>
+    <div>
       <button class="btn primary" id="submitBtn">Submit</button>
     </div>
-
-    <div class="palette" id="palette" style="display:none"></div>
-    <div id="scoreBox" class="scorebox"></div>
   </div>
+</div>
 
-  <!-- 우측: 해설 사이드패널 -->
-  <div class="right-col">
-    <div class="side">
-      <div class="panel" id="explainPanel">
-        <h4>해설 패널</h4>
-        <div class="muted">종합 결과에서 문항 번호를 클릭하면 이곳에 해설이 표시됩니다.</div>
-      </div>
+<!-- ===== 제출 확인 모달 ===== -->
+<div class="modal-back" id="confirmBack">
+  <div class="modal">
+    <div class="head">제출하시겠어요?</div>
+    <div class="body">
+      <div style="margin-bottom:8px">현재 <b id="confirmModLabel">Module 1</b>을(를) 제출합니다.</div>
+      <ul style="margin:0; padding-left:18px; color:var(--muted); font-size:14px">
+        <li>제출 후에는 해당 모듈의 답안을 더 이상 수정할 수 없습니다.</li>
+        <li>모듈 1 제출 시 자동으로 모듈 2가 시작됩니다.</li>
+        <li>모듈 2 제출 시 종합 정오표와 해설 패널이 표시됩니다.</li>
+      </ul>
+    </div>
+    <div class="foot">
+      <button class="btn" id="confirmCancel">Cancel</button>
+      <button class="btn primary" id="confirmOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 번호 탐색 모달 ===== -->
+<div class="modal-back" id="navBack">
+  <div class="modal">
+    <div class="head">문제 이동 — <span id="navModTitle">Module 1</span></div>
+    <div class="body">
+      <div class="grid" id="navGrid"></div>
+    </div>
+    <div class="foot">
+      <button class="btn" id="navClose">Close</button>
     </div>
   </div>
 </div>
@@ -168,9 +238,9 @@
 /* ===== 상태 ===== */
 let SET=null, modIdx=0, qIdx=0;
 let flags=new Set(), answers={};
+/* results: { [qid]: {correct:boolean, user:any, key:any, rationale?:string, module:number, index:number} } */
+let results = {};
 let timerSec=0, tickId=null;
-// 종합 결과 저장
-const RESULTS = { moduleScores:[], perQuestion:{} };
 
 /* ===== 유틸 ===== */
 const $ = s=>document.querySelector(s);
@@ -178,7 +248,6 @@ const bubbleABC = idx => "ABCD".charAt(idx);
 const fmt = s => (s??"").replaceAll("\\n","<br>");
 const fmtTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 const typeset = ()=> window.MathJax && MathJax.typesetPromise();
-// [[IMAGE: file.png|alt]] -> <img ...>
 const injectImages = html =>
   (html||"").replace(/\[\[IMAGE:\s*([^|\]]+)(?:\|([^\]]+))?\]\]/g,
     (_m,src,alt)=>`<img src="./img/${src.trim()}" alt="${(alt||'problem image').trim()}" style="max-width:100%">`);
@@ -201,19 +270,23 @@ async function loadSet(path){
     $('#loadError').style.display='block';
     return;
   }
-  // 전역 초기화
-  flags.clear(); Object.keys(answers).forEach(k=>delete answers[k]);
-  RESULTS.moduleScores.length = 0;
-  RESULTS.perQuestion = {};
-  $('#scoreBox').innerHTML=''; $('#explainPanel').innerHTML='<h4>해설 패널</h4><div class="muted">종합 결과에서 문항 번호를 클릭하면 이곳에 해설이 표시됩니다.</div>';
+  // 초기화
+  flags.clear(); answers={}; results={}; $('#scoreBox').innerHTML='';
+  $('#explainBox').style.display='none'; $('#side').style.display='none';
   dirPanel.innerHTML = fmt(SET.metadata?.directions);
-  startModule(0); // 항상 첫 모듈부터
+  $('#progressTotal').textContent = (SET.modules?.[0]?.questions?.length ?? 0);
+  startModule(0);
 }
 
 /* ===== 모듈 이동/타이머 ===== */
 function startModule(idx){
   modIdx = idx; qIdx = 0;
+  const qsLen = SET.modules[modIdx].questions.length;
   $('#crumb').textContent = `${SET.metadata?.title || 'Math'} — Module ${modIdx+1}`;
+  $('#modInfo').textContent = `Now: Module ${modIdx+1} / ${SET.modules.length} • ${qsLen}문항`;
+  $('#progressNow').textContent = 1;
+  $('#progressTotal').textContent = qsLen;
+
   // 타이머 시작(모듈별)
   clearInterval(tickId);
   timerSec = (SET.metadata?.durationMinutesPerModule?.[modIdx] ?? 35) * 60;
@@ -221,32 +294,18 @@ function startModule(idx){
   tickId = setInterval(()=>{
     timerSec = Math.max(0, timerSec - 1);
     $('#timer').textContent = fmtTime(timerSec);
-    if (timerSec === 0) { clearInterval(tickId); gotoNextModule(); }
+    if (timerSec === 0) { clearInterval(tickId); openConfirm(true); } // 시간 종료 시 자동 제출 확인
   }, 1000);
 
   // UI 표시
   $('#card').style.display='block';
-  $('#footer').style.display='flex';
-  $('#palette').style.display='flex';
-  renderPalette();
   renderQuestion();
-  $('#scoreBox').innerHTML = '';
 }
 
-function gotoNextModule(){
-  const last = SET.modules.length - 1;
-  if (modIdx < last){
-    startModule(modIdx + 1);
-  } else {
-    // 모든 모듈 완료
-    showFinalReport();
-  }
-}
-
-/* ===== 팔레트 ===== */
-function renderPalette(){
+/* ===== 팔레트 → 모달 내 번호 그리드로 대체 ===== */
+function buildNavGrid(){
   const list = SET.modules[modIdx].questions;
-  const box = $('#palette'); box.innerHTML='';
+  const grid = $('#navGrid'); grid.innerHTML='';
   list.forEach((q,i)=>{
     const b=document.createElement('button');
     b.className='dot';
@@ -254,8 +313,8 @@ function renderPalette(){
     if(flags.has(q.id)) b.classList.add('flag');
     if(answers[q.id]!==undefined && answers[q.id]!=='' ) b.classList.add('answered');
     b.textContent=i+1;
-    b.onclick=()=>{ qIdx=i; renderPalette(); renderQuestion(); };
-    box.appendChild(b);
+    b.onclick=()=>{ qIdx=i; $('#navBack').style.display='none'; renderQuestion(); };
+    grid.appendChild(b);
   });
 }
 
@@ -263,12 +322,13 @@ function renderPalette(){
 function renderQuestion(){
   const q = SET.modules[modIdx].questions[qIdx];
   $('#qnum').textContent = qIdx+1;
+  $('#progressNow').textContent = qIdx+1;
 
   const fb=$('#flagBtn');
   const flagged=flags.has(q.id);
   fb.className = 'flag-btn' + (flagged?' flagged':'');
   fb.textContent = flagged ? 'Marked for Review' : 'Mark for Review';
-  fb.onclick = ()=>{ flagged?flags.delete(q.id):flags.add(q.id); renderPalette(); renderQuestion(); };
+  fb.onclick = ()=>{ flagged?flags.delete(q.id):flags.add(q.id); };
 
   $('#qtitle').innerHTML = q.title || '';
   $('#qstem').innerHTML  = injectImages(fmt(q.prompt));
@@ -282,29 +342,27 @@ function renderQuestion(){
         <div class="bubble">${bubbleABC(i)}</div>
         <div class="txt">${c}</div>`;
       if(String(answers[q.id])===String(i)) row.classList.add('selected');
-      row.addEventListener('click',()=>{ answers[q.id]=i; renderQuestion(); renderPalette(); });
+      row.addEventListener('click',()=>{ answers[q.id]=i; renderQuestion(); });
       area.appendChild(row);
     });
   }else{ // grid-in
     const inp=document.createElement('input'); inp.className='gridin';
     inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
-    inp.oninput=e=>{ answers[q.id]=e.target.value.trim(); renderPalette(); };
+    inp.oninput=e=>{ answers[q.id]=e.target.value.trim(); };
     area.appendChild(inp);
   }
   typeset();
 }
 
-/* ===== 정답 판별 ===== */
+/* ===== 정답 비교 ===== */
 function gridinEqual(user,q){
   if(user===undefined || user==='') return false;
-  // 숫자 비교(+허용 오차)
   if(q.answerNumeric!==undefined){
     const num = Number(user); if(!isNaN(num)){
       const tol = Number(q.tolerance||0);
       if(Math.abs(num-Number(q.answerNumeric))<=tol) return true;
     }
   }
-  // 대체 표현(분수/문자열) 비교
   if(Array.isArray(q.altNumeric)){
     const s=String(user).replace(/\s/g,'');
     return q.altNumeric.some(v=> String(v).replace(/\s/g,'')===s );
@@ -312,120 +370,164 @@ function gridinEqual(user,q){
   return false;
 }
 
-/* ===== 제출 ===== */
-function submitScore(){
+/* ===== 모듈 채점 (결과 누적) ===== */
+function scoreModule(){
   const qs = SET.modules[modIdx].questions;
   let score=0;
-  qs.forEach((q,i)=>{
-    let correct=false;
-    if(q.type==='mcq'){
-      correct = Number(answers[q.id])===Number(q.answer);
-    }else{
-      correct = gridinEqual(answers[q.id], q);
-    }
-    if(correct) score++;
-    // 종합 저장(모듈 번호, 문항 번호, 정오/해설)
-    RESULTS.perQuestion[q.id] = {
-      correct,
-      rationale: q.rationale || '(해설 없음)',
-      module: modIdx+1,
-      index: i+1,
-      type: q.type,
-      user: answers[q.id],
-      answer: q.type==='mcq' ? q.answer : (q.answerNumeric ?? q.altNumeric?.[0])
+  qs.forEach((q, i)=>{
+    let ok=false, key=null, user=answers[q.id];
+    if(q.type==='mcq'){ ok = Number(user)===Number(q.answer); key = q.answer; }
+    else{ ok = gridinEqual(user, q); key = q.answerNumeric ?? q.altNumeric; }
+    if(ok) score++;
+    results[q.id] = {
+      correct: ok, user, key,
+      rationale: q.rationale || '',
+      module: modIdx, index: i
     };
   });
-  RESULTS.moduleScores[modIdx] = { score, total: qs.length };
+  return {score, total:qs.length};
+}
 
-  // 모듈 1이면 즉시 모듈 2 시작(요청사항)
-  const last = SET.modules.length - 1;
-  if(modIdx < last){
-    startModule(modIdx + 1);
-  }else{
-    showFinalReport();
+/* ===== 제출 확인 모달 ===== */
+function openConfirm(autoFromTimer=false){
+  $('#confirmModLabel').textContent = `Module ${modIdx+1}`;
+  $('#confirmBack').style.display='flex';
+  // 타이머 정지(모달 동안 일시 정지)
+  clearInterval(tickId);
+  // auto submit 표시를 위해 메시지를 살짝 바꿀 수도 있지만 기능상 동일 처리
+}
+function closeConfirm(){
+  $('#confirmBack').style.display='none';
+  // 모듈 진행 중이면 타이머 재개
+  if($('#card').style.display!=='none' && !isAllFinished()){
+    tickId = setInterval(()=>{
+      timerSec = Math.max(0, timerSec - 1);
+      $('#timer').textContent = fmtTime(timerSec);
+      if (timerSec === 0) { clearInterval(tickId); openConfirm(true); }
+    }, 1000);
   }
 }
-$('#submitBtn').onclick=submitScore;
+$('#confirmCancel').onclick = closeConfirm;
+$('#confirmOk').onclick = ()=>{
+  $('#confirmBack').style.display='none';
+  // 채점/다음 단계
+  const {score,total} = scoreModule();
+  const isLast = (modIdx === SET.modules.length - 1);
 
-/* ===== 종합 결과 ===== */
-function showFinalReport(){
+  if(!isLast){
+    // 모듈 1 제출 → 모듈 2 시작
+    $('#scoreBox').innerHTML =
+      `<div class="score-card"><b>Module ${modIdx+1} Score:</b> ${score} / ${total}<br><span class="muted">다음 모듈로 이동합니다…</span></div>`;
+    setTimeout(()=>{ startModule(modIdx+1); $('#scoreBox').innerHTML=''; }, 200); // 부드럽게 전환
+  }else{
+    // 마지막 모듈 제출 → 종합 결과
+    finishExamAndShowSummary();
+  }
+};
+
+/* ===== 전체 종료 & 종합 정오표 ===== */
+function isAllFinished(){ return modIdx === SET.modules.length - 1 && $('#card').style.display==='none'; }
+
+function finishExamAndShowSummary(){
   clearInterval(tickId);
   $('#card').style.display='none';
-  $('#footer').style.display='none';
-  $('#palette').style.display='none';
+  // 사이드 해설 패널 활성화
+  $('#side').style.display='block';
+  $('#explainBox').style.display='block';
 
-  // 총점 집계
-  const totals = RESULTS.moduleScores.reduce((acc,m)=>({score:acc.score+m.score,total:acc.total+m.total}),{score:0,total:0});
-  const sb = $('#scoreBox');
-  sb.innerHTML =
-    `<div class="qcard">
-      <b>All Modules — Summary</b>
-      <div class="summary" style="margin-top:6px">
-        <span class="pill">Total: <b>${totals.score}</b> / ${totals.total}</span>
-        ${RESULTS.moduleScores.map((m,i)=>`<span class="pill">Module ${i+1}: <b>${m.score}</b> / ${m.total}</span>`).join('')}
-      </div>
-      <div style="margin-top:12px"><b>문항별 정오표</b></div>
-     </div>`;
+  // 모듈2도 채점 누락 없도록 안전장치 (이미 했어도 동일값)
+  const {score:score2,total:total2} = scoreModule(); // 현재 모듈
 
-  // 모듈별 정오 버튼 팔레트 + 클릭 시 해설 패널
-  SET.modules.forEach((mod, mIdx)=>{
-    const box = document.createElement('div');
-    box.className='qcard';
-    box.style.marginTop='10px';
-    const title = document.createElement('div');
-    title.innerHTML = `<b>Module ${mIdx+1}</b>`;
-    const list = document.createElement('div');
-    list.className = 'palette';
-    mod.questions.forEach((q,i)=>{
-      const info = RESULTS.perQuestion[q.id];
-      const b = document.createElement('button');
-      b.className = 'dot ' + (info?.correct ? 'correct' : 'incorrect');
-      b.textContent = (i+1);
-      b.title = info?.correct ? '정답' : '오답';
-      b.onclick = ()=> showExplanation(q.id);
-      list.appendChild(b);
-    });
-    box.appendChild(title);
-    box.appendChild(list);
-    sb.appendChild(box);
+  // 모듈별 점수 집계
+  let sums = SET.modules.map((_m,idx)=>{
+    const list = _m.questions;
+    let s=0;
+    list.forEach(q=>{ if(results[q.id]?.correct) s++; });
+    return {score:s, total:list.length};
   });
 
-  // 해설 패널 안내
-  $('#explainPanel').innerHTML =
-    `<h4>해설 패널</h4>
-     <div class="muted">오른쪽 정오표에서 문항 번호를 클릭하세요. 선택한 문항의 해설이 여기에 표시됩니다.</div>`;
-  typeset();
+  // 결과표 그리기
+  const tableRows = [];
+  SET.modules.forEach((m, mi)=>{
+    tableRows.push(
+      `<tr><th colspan="5" style="background:#f9fafb">Module ${mi+1}</th></tr>`
+    );
+    m.questions.forEach((q, qi)=>{
+      const r = results[q.id] || {};
+      const badge = r.correct ? `<span class="badge ok">정답</span>` : `<span class="badge ng">오답</span>`;
+      tableRows.push(
+        `<tr data-qid="${q.id}" class="res-row">
+          <td style="width:70px">#${qi+1}</td>
+          <td style="width:90px">${badge}</td>
+          <td style="width:160px"><span class="muted">${q.type==='mcq'?'MCQ':'Grid-in'}</span></td>
+          <td style="width:160px"><span class="muted">내 답:</span> ${escapeHtml(String(r.user ?? ''))}</td>
+          <td><button class="btn ghost mini" data-explain="${q.id}">해설 보기</button></td>
+        </tr>`
+      );
+    });
+  });
+
+  $('#scoreBox').innerHTML =
+    `<div class="score-card">
+       <div style="font-weight:700; margin-bottom:6px">종합 결과</div>
+       <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px">
+         ${sums.map((s,i)=>`<div>Module ${i+1}: <b>${s.score}/${s.total}</b></div>`).join('')}
+       </div>
+       <table class="res-table">
+         <thead>
+           <tr><th>문항</th><th>정오</th><th>형식</th><th>응답</th><th>해설</th></tr>
+         </thead>
+         <tbody>${tableRows.join('')}</tbody>
+       </table>
+       <div class="muted" style="margin-top:10px">해설 버튼을 누르면 오른쪽 패널에 해설이 표시됩니다.</div>
+     </div>`;
+
+  // 결과 화면용 이벤트 바인딩 (해설)
+  document.querySelectorAll('[data-explain]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const qid = btn.getAttribute('data-explain');
+      showExplanation(qid);
+    });
+  });
 }
 
 function showExplanation(qid){
-  // SET에서 문항 찾기
-  let found=null, modNo=0, number=0;
-  for(let m=0;m<SET.modules.length;m++){
-    const idx = SET.modules[m].questions.findIndex(q=>q.id===qid);
-    if(idx>=0){ found = SET.modules[m].questions[idx]; modNo=m+1; number=idx+1; break; }
-  }
-  if(!found){ return; }
-  const info = RESULTS.perQuestion[qid];
-  const panel = $('#explainPanel');
-  panel.innerHTML =
-    `<h4>Module ${modNo} — Q${number} (${info?.correct?'정답':'오답'})</h4>
-     <div style="font-size:14px; margin:6px 0 8px 0"><b>문항</b></div>
-     <div class="muted" style="margin-bottom:8px">${injectImages(fmt(found.prompt))}</div>
-     <div style="font-size:14px; margin:6px 0 8px 0"><b>해설</b></div>
-     <div>${fmt(found.rationale || '(해설 없음)')}</div>
-     <div class="summary" style="margin-top:10px">
-       ${info?.type==='mcq'
-         ? `<span class="pill">정답 선택지: ${String.fromCharCode(65+Number(found.answer))}</span>`
-         : `<span class="pill">정답: ${found.answer}</span>`
-       }
-       ${info?.user!==undefined ? `<span class="pill">내 답: ${info.user}</span>`:''}
-     </div>`;
+  // 해당 문제 찾기
+  let meta=null, prompt='', rat='';
+  SET.modules.forEach((m,mi)=>{
+    m.questions.forEach((q,qi)=>{
+      if(q.id===qid){ meta={mi,qi}; prompt=q.prompt; rat=q.rationale||'해설이 제공되지 않았습니다.'; }
+    });
+  });
+  if(!meta) return;
+  $('#explainTitle').textContent = `해설 — Module ${meta.mi+1} #${meta.qi+1}`;
+  $('#explainBody').innerHTML = `
+    <div style="margin-bottom:8px"><b>문제</b></div>
+    <div class="muted" style="margin-bottom:10px">${injectImages(fmt(prompt))}</div>
+    <div style="margin-bottom:8px"><b>해설</b></div>
+    <div>${injectImages(fmt(rat))}</div>`;
   typeset();
 }
 
+/* ===== 내비게이션 ===== */
+$('#prevBtn').onclick=()=>{ if(!SET) return; if(qIdx>0){ qIdx--; renderQuestion(); } };
+$('#nextBtn').onclick=()=>{ if(!SET) return; const n=SET.modules[modIdx].questions.length; if(qIdx<n-1){ qIdx++; renderQuestion(); } };
+
+/* ===== 제출 버튼 → 확인 모달 ===== */
+$('#submitBtn').onclick = ()=>{ if(!SET) return; openConfirm(false); };
+
+/* ===== 번호 모달 ===== */
+$('#progressBtn').onclick = ()=>{ if(!SET) return; $('#navModTitle').textContent=`Module ${modIdx+1}`; buildNavGrid(); $('#navBack').style.display='flex'; };
+$('#navClose').onclick = ()=>{ $('#navBack').style.display='none'; };
+
 /* ===== 기타 ===== */
 $('#loadBtn').onclick=()=>loadSet($('#path').value);
-$('#hideBtn').onclick=()=>{ const w=$('.wrap'); w.style.display = w.style.display==='none'?'grid':'none'; };
+$('#hideBtn').onclick=()=>{ const page=document.querySelector('.page'); page.style.display = page.style.display==='none'?'grid':'none'; };
+
+/* 안전한 text 출력 */
+function escapeHtml(t){ return t.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m])); }
+
+/* 초기 로드 */
 window.addEventListener('DOMContentLoaded',()=>loadSet($('#path').value));
 </script>
 </body>
