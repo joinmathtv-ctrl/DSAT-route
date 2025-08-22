@@ -187,7 +187,7 @@ async function fetchJson(url) {
   return await res.json();
 }
 
-async function loadSet(url='./questions_fixed.json') {
+async function loadSet(url='./questions.json') {
   setStatus('Loading…');
   try {
     const data = await fetchJson(url);
