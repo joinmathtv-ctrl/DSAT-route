@@ -3,23 +3,23 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>DSAT Practice — Classic UI (Enhanced)</title>
+<title>DSAT Practice — Classic UI</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <script defer id="MathJax-script"
         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <style>
   :root{
-    --bg:#fafbfe; --card:#fff; --ink:#111827; --muted:#6b7280;
+    --bg:#fafbfe; --card:#fff; --ink:#1f2937; --muted:#6b7280;
     --line:#e5e7eb; --accent:#2563eb; --accent-ghost:#e7f0ff;
     --flag:#ef9b0f; --choice:#f7f7fb; --choice-hover:#eef2ff;
-    --ok:#16a34a; --ng:#dc2626;
+    --good:#16a34a; --bad:#dc2626;
   }
   *{ box-sizing:border-box }
   body{ margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Apple SD Gothic Neo,Arial,sans-serif; color:var(--ink); background:var(--bg) }
 
   /* ===== TOP BAR ===== */
   .topbar{
-    position:sticky; top:0; z-index:10; background:#fff;
+    position:sticky; top:0; z-index:5; background:#fff;
     border-bottom:1px solid var(--line);
   }
   .topbar-row{
@@ -33,100 +33,97 @@
   .timer{ font-weight:800; font-variant-numeric:tabular-nums }
   .hide-btn{ border:1px solid var(--line); background:#fff; padding:3px 8px; border-radius:6px; font-size:12px; cursor:pointer }
 
-  .dir-zone{ display:flex; align-items:center; gap:10px; position:relative }
+  /* 상단 Directions 드롭다운 */
+  .dir-zone{ display:flex; align-items:center; gap:10px }
   .dir-btn{ border:1px solid var(--line); background:#fff; padding:5px 10px; border-radius:8px; font-size:13px; cursor:pointer }
   .dir-panel{
-    position:absolute; left:0; top:40px; width:520px; max-width:90vw; background:#fff; border:1px solid var(--line);
-    border-radius:12px; padding:12px; font-size:14px; line-height:1.45; box-shadow:0 12px 32px rgba(0,0,0,.08); display:none; z-index:20;
+    position:absolute; left:14px; top:44px; width:520px; background:#fff; border:1px solid var(--line);
+    border-radius:12px; padding:12px; font-size:14px; line-height:1.45; box-shadow:0 12px 32px rgba(0,0,0,.08); display:none;
   }
   .dash{ height:6px; background:repeating-linear-gradient(90deg,
       #d9ead3 0 46px, #fff 46px 54px,
       #f9e1ae 54px 98px, #fff 98px 106px,
       #cfe2f3 106px 152px, #fff 152px 160px); opacity:.95 }
 
-  /* ===== 레이아웃 ===== */
-  .page{
-    display:grid; grid-template-columns: 1fr 320px; gap:16px;
-    max-width:1280px; margin:12px auto; padding:0 14px;
-  }
-  .side{ display:none } /* 해설패널은 결과 단계에서만 표시 */
+  /* ===== 메인 ===== */
+  .wrap{ max-width:1060px; margin:12px auto; padding:0 14px }
+  .loader{ display:flex; gap:8px; margin:6px 0 12px 0 }
+  input[type="text"]#path{ width:330px; padding:7px 10px; border:1px solid var(--line); border-radius:8px }
+  .btn{ border:1px solid var(--line); background:#fff; padding:8px 12px; border-radius:10px; cursor:pointer }
+  .btn.primary{ background:var(--accent); color:#fff; border-color:var(--accent) }
+  .alert{ background:#fef3f2; color:#b42318; border:1px solid #fecdca; padding:10px 12px; border-radius:10px; margin:8px 0; font-size:14px }
 
-  /* ===== 카드 ===== */
-  .qcard{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:0 6px 20px rgba(0,0,0,.04) }
+  /* ===== 문제 카드 ===== */
+  .qcard{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:0 6px 20px rgba(0,0,0,.04); margin-bottom:14px }
   .qhead{ display:flex; align-items:center; gap:10px; margin-bottom:6px }
-  .qnum{ min-width:28px; height:28px; display:grid; place-items:center; font-weight:700;
-         border:1px solid var(--line); border-radius:6px; padding:0 8px }
+  .qnum{ width:28px; height:28px; display:grid; place-items:center; font-weight:700; border:1px solid var(--line); border-radius:6px; }
   .flag-btn{ margin-left:4px; border:1px solid var(--line); background:#fff; border-radius:8px; padding:4px 10px; cursor:pointer; font-size:13px; color:var(--muted) }
   .flagged{ color:var(--flag); border-color:#fde68a; background:#fffaf0 }
   .qtitle{ text-align:center; color:#0f172a; font-size:14px; margin:4px 0 6px 0 }
   .qstem{ font-size:16px; line-height:1.55; margin:10px 0 12px 0 }
   .choices{ display:grid; gap:10px }
-
   .choice{ border:1px solid var(--line); background:var(--choice); border-radius:10px; padding:10px 12px; cursor:pointer;
            display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:flex-start; transition:background .15s, border-color .15s; }
   .choice:hover{ background:var(--choice-hover) }
-  .bubble{
-    width:24px; height:24px; border:1px solid var(--line); border-radius:50%;
-    display:grid; place-items:center; font-weight:700; background:#fff; user-select:none; font-size:13px;
-  }
+  .bubble{ width:24px; height:24px; border:1px solid var(--line); border-radius:50%; display:grid; place-items:center; font-weight:700; background:#fff; user-select:none; font-size:13px; }
   .choice input{ display:none }
   .choice.selected{ border-color:#bfd3ff; background:#eef4ff }
   .choice.selected .bubble{ border-color:var(--accent); color:#fff; background:var(--accent) }
-
-  .gridin{ width:260px; max-width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px; font-size:16px; background:#fff }
+  .gridin{ width:260px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; font-size:16px; background:#fff }
 
   /* ===== 하단 고정 리본 ===== */
   .ribbon{
-    position:sticky; bottom:0; left:0; right:0; z-index:9;
-    background:rgba(255,255,255,.95); backdrop-filter:saturate(1.2) blur(6px);
-    border-top:1px solid var(--line);
+    position:fixed; left:0; right:0; bottom:0; z-index:4;
+    background:#fff; border-top:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:8px 12px; gap:10px;
   }
-  .ribbon-row{
-    max-width:1280px; margin:0 auto; padding:8px 14px;
-    display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px;
+  .spacer-bottom{ height:64px } /* 리본에 가리지 않도록 여백 */
+  .nav{ display:flex; gap:8px }
+  .progress{
+    display:flex; align-items:center; gap:8px;
+    border:1px solid var(--line); border-radius:10px; padding:6px 10px; background:#fff;
+    font-weight:600;
   }
-  .btn{ border:1px solid var(--line); background:#fff; padding:8px 12px; border-radius:10px; cursor:pointer }
-  .btn.primary{ background:var(--accent); color:#fff; border-color:var(--accent) }
-  .btn.ghost{ background:var(--accent-ghost); color:#1d4ed8; border-color:#c3d3ff }
+  .progress button{ border:1px solid var(--line); border-radius:8px; background:#fff; padding:6px 10px; cursor:pointer }
+  .progress .light{ color:var(--muted); font-weight:500 }
 
-  .progress-box{ border:1px solid var(--line); background:#fff; padding:6px 10px; border-radius:10px; cursor:pointer; font-weight:600 }
-  .progress-sub{ font-size:12px; color:var(--muted); margin-left:6px }
-
-  /* ===== 모달 공통 ===== */
-  .modal-back{
-    position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; z-index:30;
-    align-items:center; justify-content:center; padding:16px;
+  /* ===== 점프 모달(번호 선택) ===== */
+  .modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:10; }
+  .modal.show{ display:flex }
+  .modal .back{ position:absolute; inset:0; background:rgba(0,0,0,.28) }
+  .modal .panel{ position:relative; width:min(760px,90vw); max-height:80vh; overflow:auto;
+                 background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; box-shadow:0 18px 42px rgba(0,0,0,.16) }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(48px,1fr)); gap:8px }
+  .num{
+    height:42px; border:1px solid var(--line); border-radius:10px; background:#fff; cursor:pointer;
+    font-weight:700; display:grid; place-items:center;
   }
-  .modal{ background:#fff; border:1px solid var(--line); border-radius:12px; width:min(680px, 96vw); max-height:88vh; overflow:auto; box-shadow:0 20px 60px rgba(0,0,0,.18) }
-  .modal .head{ padding:12px 16px; border-bottom:1px solid var(--line); font-weight:700 }
-  .modal .body{ padding:12px 16px }
-  .modal .foot{ padding:12px 16px; border-top:1px solid var(--line); display:flex; gap:8px; justify-content:flex-end }
+  .num.answered{ background:#e9fbe7; border-color:#b7f4be }
+  .num.flag{ background:#fff3d6; border-color:#fde68a }
+  .num.active{ outline:2px solid var(--accent) }
 
-  /* 번호 그리드 */
-  .grid{
-    display:grid; grid-template-columns:repeat(auto-fill, minmax(44px,1fr)); gap:8px;
+  /* ===== 결과 요약 / 해설 패널 ===== */
+  .summary{ display:flex; gap:14px; flex-wrap:wrap }
+  .tag{ display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; border:1px solid var(--line); background:#fff }
+  .pill{ padding:2px 8px; border-radius:999px; font-weight:700; font-variant-numeric:tabular-nums }
+  .good{ color:#065f46; background:#dcfce7; border:1px solid #bbf7d0 }
+  .bad{ color:#991b1b; background:#fee2e2; border:1px solid #fecaca }
+
+  .result-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(44px,1fr)); gap:8px }
+  .cell{
+    height:40px; border:1px solid var(--line); border-radius:10px; display:grid; place-items:center; cursor:pointer; font-weight:700;
   }
-  .grid .dot{
-    height:42px; border-radius:10px; border:1px solid var(--line); background:#fff; cursor:pointer; font-weight:700; display:grid; place-items:center;
+  .cell.ok{ background:#e9fbe7; border-color:#b7f4be }
+  .cell.ng{ background:#fee2e2; border-color:#fecaca }
+  .cell.flag{ outline:2px dashed #f59e0b }
+
+  .exp-drawer{
+    position:fixed; top:64px; right:12px; bottom:76px; width:min(380px, 90vw); z-index:6;
+    background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px; box-shadow:0 18px 42px rgba(0,0,0,.12); overflow:auto;
   }
-  .dot.answered{ background:#e9fbe7; border-color:#b7f4be }
-  .dot.flag{ background:#fff3d6; border-color:#fde68a }
-  .dot.active{ outline:2px solid var(--accent) }
-
-  /* ===== 결과표 ===== */
-  .score-card{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; }
-  .res-table{ width:100%; border-collapse:collapse; font-size:14px }
-  .res-table th, .res-table td{ border-top:1px solid var(--line); padding:8px 6px; text-align:left }
-  .badge{ display:inline-block; padding:2px 8px; border-radius:999px; font-weight:700; font-size:12px }
-  .ok{ background:#e8f8ee; color:#166534 }
-  .ng{ background:#fdecec; color:#991b1b }
-
-  /* 해설 패널 */
-  .side{ position:sticky; top:62px }
-  .explain{ display:none; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; }
-  .explain h4{ margin:6px 0 10px 0 }
-  .explain .content{ font-size:14px; line-height:1.5 }
-  .muted{ color:var(--muted) }
+  .exp-title{ font-weight:700; margin-bottom:6px }
+  .exp-body{ font-size:14px; line-height:1.45 }
 </style>
 </head>
 <body>
@@ -152,99 +149,63 @@
   <div class="dash"></div>
 </div>
 
-<!-- ===== PAGE ===== -->
-<div class="page">
-  <main>
-    <div class="qcard" style="margin-bottom:10px">
-      <div class="loader" style="display:flex; gap:8px">
-        <input id="path" type="text" value="./questions.json" style="width:340px; padding:7px 10px; border:1px solid var(--line); border-radius:8px"/>
-        <button class="btn" id="loadBtn">Load set</button>
-        <span id="modInfo" class="muted"></span>
-      </div>
-      <div id="loadError" class="score-card" style="display:none; color:#b42318; background:#fef3f2; border-color:#fecdca"></div>
-    </div>
+<div class="wrap">
+  <div class="loader">
+    <input id="path" type="text" value="./questions.json" />
+    <button class="btn" id="loadBtn">Load set</button>
+  </div>
+  <div id="loadError" class="alert" style="display:none"></div>
 
-    <div class="qcard" id="card" style="display:none">
-      <div class="qhead">
-        <div class="qnum" id="qnum">1</div>
-        <button id="flagBtn" class="flag-btn">Mark for Review</button>
-        <div class="qtitle" id="qtitle" style="margin-left:auto"></div>
-      </div>
-      <div class="qstem" id="qstem"></div>
-      <div class="choices" id="choices"></div>
+  <!-- 문제 카드 -->
+  <div class="qcard" id="card" style="display:none">
+    <div class="qhead">
+      <div class="qnum" id="qnum">1</div>
+      <button id="flagBtn" class="flag-btn">Mark for Review</button>
     </div>
+    <div class="qtitle" id="qtitle"></div>
+    <div class="qstem" id="qstem"></div>
+    <div class="choices" id="choices"></div>
+  </div>
 
-    <div id="scoreBox" style="margin:12px 0"></div>
-  </main>
-
-  <!-- 해설 사이드 패널 (최종 제출 후만 보여줌) -->
-  <aside class="side" id="side">
-    <div class="explain" id="explainBox">
-      <h4 id="explainTitle">해설</h4>
-      <div class="content" id="explainBody">문제 번호를 선택하면 해설이 여기에 표시됩니다.</div>
-    </div>
-  </aside>
+  <!-- 점수/결과 표시 -->
+  <div id="scoreBox"></div>
 </div>
 
-<!-- ===== 하단 고정 리본 ===== -->
-<div class="ribbon">
-  <div class="ribbon-row">
-    <div class="nav">
-      <button class="btn" id="prevBtn">← Prev</button>
-      <button class="btn" id="nextBtn">Next →</button>
-    </div>
-    <div style="justify-self:center">
-      <button class="progress-box" id="progressBtn"><span id="progressNow">1</span>/<span id="progressTotal">22</span> <span class="progress-sub">문제 목록</span></button>
-    </div>
-    <div>
-      <button class="btn primary" id="submitBtn">Submit</button>
-    </div>
+<!-- 하단 고정 리본 -->
+<div class="ribbon" id="ribbon" style="display:none">
+  <div class="progress">
+    <span id="progLabel" class="light">Q 1 / 1</span>
+    <button id="jumpBtn">문항 이동</button>
+  </div>
+  <div class="nav">
+    <button class="btn" id="prevBtn">← Prev</button>
+    <button class="btn" id="nextBtn">Next →</button>
+    <button class="btn primary" id="submitBtn">Submit</button>
   </div>
 </div>
+<div class="spacer-bottom" aria-hidden="true"></div>
 
-<!-- ===== 제출 확인 모달 ===== -->
-<div class="modal-back" id="confirmBack">
-  <div class="modal">
-    <div class="head">제출하시겠어요?</div>
-    <div class="body">
-      <div style="margin-bottom:8px">현재 <b id="confirmModLabel">Module 1</b>을(를) 제출합니다.</div>
-      <ul style="margin:0; padding-left:18px; color:var(--muted); font-size:14px">
-        <li>제출 후에는 해당 모듈의 답안을 더 이상 수정할 수 없습니다.</li>
-        <li>모듈 1 제출 시 자동으로 모듈 2가 시작됩니다.</li>
-        <li>모듈 2 제출 시 종합 정오표와 해설 패널이 표시됩니다.</li>
-      </ul>
+<!-- 번호 점프 모달 -->
+<div class="modal" id="jumpModal" aria-hidden="true">
+  <div class="back" id="jumpBack"></div>
+  <div class="panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div><b>문항 이동</b> — Module <span id="jumpMod">1</span></div>
+      <button class="btn" id="jumpClose">Close</button>
     </div>
-    <div class="foot">
-      <button class="btn" id="confirmCancel">Cancel</button>
-      <button class="btn primary" id="confirmOk">OK</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== 번호 탐색 모달 ===== -->
-<div class="modal-back" id="navBack">
-  <div class="modal">
-    <div class="head">문제 이동 — <span id="navModTitle">Module 1</span></div>
-    <div class="body">
-      <div class="grid" id="navGrid"></div>
-    </div>
-    <div class="foot">
-      <button class="btn" id="navClose">Close</button>
-    </div>
+    <div class="grid" id="jumpGrid"></div>
   </div>
 </div>
 
 <script>
 /* ===== 상태 ===== */
 let SET=null, modIdx=0, qIdx=0;
-let flags=new Set(), answers={};
-/* results: { [qid]: {correct:boolean, user:any, key:any, rationale?:string, module:number, index:number} } */
-let results = {};
+let flags=new Set(), answers={};         // answers[qid] = choiceIndex or gridin string
+let perModuleScore=[];                   // [{correct, total}]
 let timerSec=0, tickId=null;
 
 /* ===== 유틸 ===== */
 const $ = s=>document.querySelector(s);
-const bubbleABC = idx => "ABCD".charAt(idx);
 const fmt = s => (s??"").replaceAll("\\n","<br>");
 const fmtTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 const typeset = ()=> window.MathJax && MathJax.typesetPromise();
@@ -271,21 +232,21 @@ async function loadSet(path){
     return;
   }
   // 초기화
-  flags.clear(); answers={}; results={}; $('#scoreBox').innerHTML='';
-  $('#explainBox').style.display='none'; $('#side').style.display='none';
+  flags.clear(); answers={}; perModuleScore=[];
+  $('#scoreBox').innerHTML='';
+  $('#card').style.display='block';
+  $('#ribbon').style.display='flex';
   dirPanel.innerHTML = fmt(SET.metadata?.directions);
-  $('#progressTotal').textContent = (SET.modules?.[0]?.questions?.length ?? 0);
   startModule(0);
 }
 
 /* ===== 모듈 이동/타이머 ===== */
 function startModule(idx){
+  // 연습 중에는 해설 패널 DOM이 존재하지 않도록 보장
+  removeExplainDrawer();
+
   modIdx = idx; qIdx = 0;
-  const qsLen = SET.modules[modIdx].questions.length;
-  $('#crumb').textContent = `${SET.metadata?.title || 'Math'} — Module ${modIdx+1}`;
-  $('#modInfo').textContent = `Now: Module ${modIdx+1} / ${SET.modules.length} • ${qsLen}문항`;
-  $('#progressNow').textContent = 1;
-  $('#progressTotal').textContent = qsLen;
+  $('#crumb').textContent = `Section 2, Module ${modIdx+1}: Math`;
 
   // 타이머 시작(모듈별)
   clearInterval(tickId);
@@ -294,27 +255,48 @@ function startModule(idx){
   tickId = setInterval(()=>{
     timerSec = Math.max(0, timerSec - 1);
     $('#timer').textContent = fmtTime(timerSec);
-    if (timerSec === 0) { clearInterval(tickId); openConfirm(true); } // 시간 종료 시 자동 제출 확인
+    if (timerSec === 0) { clearInterval(tickId); handleSubmitModule(true); }
   }, 1000);
 
-  // UI 표시
-  $('#card').style.display='block';
   renderQuestion();
+  renderProgress();
 }
 
-/* ===== 팔레트 → 모달 내 번호 그리드로 대체 ===== */
-function buildNavGrid(){
+function gotoNextModule(){
+  const last = SET.modules.length - 1;
+  if (modIdx < last){
+    startModule(modIdx + 1); // 모듈2 1번부터, 타이머 새로 시작
+    $('#scoreBox').innerHTML='';
+  } else {
+    showCombinedResults();
+  }
+}
+
+/* ===== 진행/점프 ===== */
+function renderProgress(){
+  const n = SET.modules[modIdx].questions.length;
+  $('#progLabel').textContent = `Q ${qIdx+1} / ${n}`;
+  buildJumpGrid(); // 모달용 번호 갱신
+}
+function openJumpModal(){ $('#jumpModal').classList.add('show'); $('#jumpModal').setAttribute('aria-hidden','false'); }
+function closeJumpModal(){ $('#jumpModal').classList.remove('show'); $('#jumpModal').setAttribute('aria-hidden','true'); }
+$('#jumpBtn').onclick=openJumpModal;
+$('#jumpBack').onclick=closeJumpModal;
+$('#jumpClose').onclick=closeJumpModal;
+
+function buildJumpGrid(){
+  $('#jumpMod').textContent = (modIdx+1);
   const list = SET.modules[modIdx].questions;
-  const grid = $('#navGrid'); grid.innerHTML='';
+  const box = $('#jumpGrid'); box.innerHTML='';
   list.forEach((q,i)=>{
     const b=document.createElement('button');
-    b.className='dot';
+    b.className='num';
     if(i===qIdx) b.classList.add('active');
     if(flags.has(q.id)) b.classList.add('flag');
     if(answers[q.id]!==undefined && answers[q.id]!=='' ) b.classList.add('answered');
     b.textContent=i+1;
-    b.onclick=()=>{ qIdx=i; $('#navBack').style.display='none'; renderQuestion(); };
-    grid.appendChild(b);
+    b.onclick=()=>{ qIdx=i; renderQuestion(); renderProgress(); closeJumpModal(); };
+    box.appendChild(b);
   });
 }
 
@@ -322,13 +304,12 @@ function buildNavGrid(){
 function renderQuestion(){
   const q = SET.modules[modIdx].questions[qIdx];
   $('#qnum').textContent = qIdx+1;
-  $('#progressNow').textContent = qIdx+1;
 
   const fb=$('#flagBtn');
   const flagged=flags.has(q.id);
   fb.className = 'flag-btn' + (flagged?' flagged':'');
   fb.textContent = flagged ? 'Marked for Review' : 'Mark for Review';
-  fb.onclick = ()=>{ flagged?flags.delete(q.id):flags.add(q.id); };
+  fb.onclick = ()=>{ flagged?flags.delete(q.id):flags.add(q.id); renderProgress(); };
 
   $('#qtitle').innerHTML = q.title || '';
   $('#qstem').innerHTML  = injectImages(fmt(q.prompt));
@@ -339,22 +320,32 @@ function renderQuestion(){
       const row=document.createElement('label'); row.className='choice';
       row.innerHTML = `
         <input type="radio" name="ans" value="${i}" ${String(answers[q.id])===String(i)?'checked':''}/>
-        <div class="bubble">${bubbleABC(i)}</div>
+        <div class="bubble">${"ABCD".charAt(i)}</div>
         <div class="txt">${c}</div>`;
       if(String(answers[q.id])===String(i)) row.classList.add('selected');
-      row.addEventListener('click',()=>{ answers[q.id]=i; renderQuestion(); });
+      row.addEventListener('click',()=>{ answers[q.id]=i; renderQuestion(); renderProgress(); });
       area.appendChild(row);
     });
   }else{ // grid-in
     const inp=document.createElement('input'); inp.className='gridin';
     inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
-    inp.oninput=e=>{ answers[q.id]=e.target.value.trim(); };
+    inp.oninput=e=>{ answers[q.id]=e.target.value.trim(); renderProgress(); };
     area.appendChild(inp);
   }
   typeset();
 }
 
-/* ===== 정답 비교 ===== */
+/* ===== 내비게이션 ===== */
+$('#prevBtn').onclick=()=>{ if(qIdx>0){ qIdx--; renderQuestion(); renderProgress(); } };
+$('#nextBtn').onclick=()=>{
+  const n=SET.modules[modIdx].questions.length;
+  if(qIdx<n-1){ qIdx++; renderQuestion(); renderProgress(); }
+  else{ // 마지막 문항에서 Next → 다음 모듈
+    gotoNextModule();
+  }
+};
+
+/* ===== 채점 ===== */
 function gridinEqual(user,q){
   if(user===undefined || user==='') return false;
   if(q.answerNumeric!==undefined){
@@ -370,164 +361,134 @@ function gridinEqual(user,q){
   return false;
 }
 
-/* ===== 모듈 채점 (결과 누적) ===== */
-function scoreModule(){
-  const qs = SET.modules[modIdx].questions;
-  let score=0;
-  qs.forEach((q, i)=>{
-    let ok=false, key=null, user=answers[q.id];
-    if(q.type==='mcq'){ ok = Number(user)===Number(q.answer); key = q.answer; }
-    else{ ok = gridinEqual(user, q); key = q.answerNumeric ?? q.altNumeric; }
-    if(ok) score++;
-    results[q.id] = {
-      correct: ok, user, key,
-      rationale: q.rationale || '',
-      module: modIdx, index: i
-    };
+function scoreModule(idx){
+  const qs = SET.modules[idx].questions;
+  let correct=0;
+  const detail = qs.map((q,qi)=>{
+    let ok=false, user=answers[q.id];
+    if(q.type==='mcq'){ ok = Number(user)===Number(q.answer); }
+    else{ ok = gridinEqual(user, q); }
+    if(ok) correct++;
+    return {id:q.id, ok, user, q, number:qi+1};
   });
-  return {score, total:qs.length};
+  return {correct, total:qs.length, detail};
 }
 
-/* ===== 제출 확인 모달 ===== */
-function openConfirm(autoFromTimer=false){
-  $('#confirmModLabel').textContent = `Module ${modIdx+1}`;
-  $('#confirmBack').style.display='flex';
-  // 타이머 정지(모달 동안 일시 정지)
-  clearInterval(tickId);
-  // auto submit 표시를 위해 메시지를 살짝 바꿀 수도 있지만 기능상 동일 처리
-}
-function closeConfirm(){
-  $('#confirmBack').style.display='none';
-  // 모듈 진행 중이면 타이머 재개
-  if($('#card').style.display!=='none' && !isAllFinished()){
-    tickId = setInterval(()=>{
-      timerSec = Math.max(0, timerSec - 1);
-      $('#timer').textContent = fmtTime(timerSec);
-      if (timerSec === 0) { clearInterval(tickId); openConfirm(true); }
-    }, 1000);
+/* ===== 제출 처리 ===== */
+function handleSubmitModule(fromTimer=false){
+  if(!fromTimer){
+    const ok = window.confirm(`Module ${modIdx+1}을(를) 제출하시겠습니까?`);
+    if(!ok) return;
   }
-}
-$('#confirmCancel').onclick = closeConfirm;
-$('#confirmOk').onclick = ()=>{
-  $('#confirmBack').style.display='none';
-  // 채점/다음 단계
-  const {score,total} = scoreModule();
-  const isLast = (modIdx === SET.modules.length - 1);
+  clearInterval(tickId);
+  const result = scoreModule(modIdx);
+  perModuleScore[modIdx]= {correct:result.correct, total:result.total, detail:result.detail};
 
-  if(!isLast){
-    // 모듈 1 제출 → 모듈 2 시작
+  // 모듈1이면 자동으로 모듈2 시작
+  const last = SET.modules.length - 1;
+  if(modIdx < last){
+    // 간단 점수 안내만 보여주고 바로 모듈2 시작
     $('#scoreBox').innerHTML =
-      `<div class="score-card"><b>Module ${modIdx+1} Score:</b> ${score} / ${total}<br><span class="muted">다음 모듈로 이동합니다…</span></div>`;
-    setTimeout(()=>{ startModule(modIdx+1); $('#scoreBox').innerHTML=''; }, 200); // 부드럽게 전환
+      `<div class="qcard" style="margin-top:10px">
+         <b>Module ${modIdx+1} Score:</b> ${result.correct} / ${result.total}<br>다음 모듈을 시작합니다.
+       </div>`;
+    gotoNextModule();
   }else{
-    // 마지막 모듈 제출 → 종합 결과
-    finishExamAndShowSummary();
+    showCombinedResults(); // 마지막 모듈
   }
-};
-
-/* ===== 전체 종료 & 종합 정오표 ===== */
-function isAllFinished(){ return modIdx === SET.modules.length - 1 && $('#card').style.display==='none'; }
-
-function finishExamAndShowSummary(){
-  clearInterval(tickId);
-  $('#card').style.display='none';
-  // 사이드 해설 패널 활성화
-  $('#side').style.display='block';
-  $('#explainBox').style.display='block';
-
-  // 모듈2도 채점 누락 없도록 안전장치 (이미 했어도 동일값)
-  const {score:score2,total:total2} = scoreModule(); // 현재 모듈
-
-  // 모듈별 점수 집계
-  let sums = SET.modules.map((_m,idx)=>{
-    const list = _m.questions;
-    let s=0;
-    list.forEach(q=>{ if(results[q.id]?.correct) s++; });
-    return {score:s, total:list.length};
-  });
-
-  // 결과표 그리기
-  const tableRows = [];
-  SET.modules.forEach((m, mi)=>{
-    tableRows.push(
-      `<tr><th colspan="5" style="background:#f9fafb">Module ${mi+1}</th></tr>`
-    );
-    m.questions.forEach((q, qi)=>{
-      const r = results[q.id] || {};
-      const badge = r.correct ? `<span class="badge ok">정답</span>` : `<span class="badge ng">오답</span>`;
-      tableRows.push(
-        `<tr data-qid="${q.id}" class="res-row">
-          <td style="width:70px">#${qi+1}</td>
-          <td style="width:90px">${badge}</td>
-          <td style="width:160px"><span class="muted">${q.type==='mcq'?'MCQ':'Grid-in'}</span></td>
-          <td style="width:160px"><span class="muted">내 답:</span> ${escapeHtml(String(r.user ?? ''))}</td>
-          <td><button class="btn ghost mini" data-explain="${q.id}">해설 보기</button></td>
-        </tr>`
-      );
-    });
-  });
-
-  $('#scoreBox').innerHTML =
-    `<div class="score-card">
-       <div style="font-weight:700; margin-bottom:6px">종합 결과</div>
-       <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px">
-         ${sums.map((s,i)=>`<div>Module ${i+1}: <b>${s.score}/${s.total}</b></div>`).join('')}
-       </div>
-       <table class="res-table">
-         <thead>
-           <tr><th>문항</th><th>정오</th><th>형식</th><th>응답</th><th>해설</th></tr>
-         </thead>
-         <tbody>${tableRows.join('')}</tbody>
-       </table>
-       <div class="muted" style="margin-top:10px">해설 버튼을 누르면 오른쪽 패널에 해설이 표시됩니다.</div>
-     </div>`;
-
-  // 결과 화면용 이벤트 바인딩 (해설)
-  document.querySelectorAll('[data-explain]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const qid = btn.getAttribute('data-explain');
-      showExplanation(qid);
-    });
-  });
 }
+$('#submitBtn').onclick=()=>handleSubmitModule(false);
 
-function showExplanation(qid){
-  // 해당 문제 찾기
-  let meta=null, prompt='', rat='';
-  SET.modules.forEach((m,mi)=>{
-    m.questions.forEach((q,qi)=>{
-      if(q.id===qid){ meta={mi,qi}; prompt=q.prompt; rat=q.rationale||'해설이 제공되지 않았습니다.'; }
-    });
-  });
-  if(!meta) return;
-  $('#explainTitle').textContent = `해설 — Module ${meta.mi+1} #${meta.qi+1}`;
-  $('#explainBody').innerHTML = `
-    <div style="margin-bottom:8px"><b>문제</b></div>
-    <div class="muted" style="margin-bottom:10px">${injectImages(fmt(prompt))}</div>
-    <div style="margin-bottom:8px"><b>해설</b></div>
-    <div>${injectImages(fmt(rat))}</div>`;
+/* ===== 결과 해설 패널 ===== */
+function removeExplainDrawer(){
+  const ex = document.getElementById('expDrawer');
+  if(ex) ex.remove();
+}
+function ensureExplainDrawer(){
+  let ex = document.getElementById('expDrawer');
+  if(!ex){
+    ex = document.createElement('aside');
+    ex.id = 'expDrawer';
+    ex.className = 'exp-drawer';
+    ex.innerHTML = `<div class="exp-title" id="expTitle">해설</div>
+                    <div class="exp-body" id="expBody">좌측 번호를 선택하면 해설이 표시됩니다.</div>`;
+    document.body.appendChild(ex);
+  }
+  return ex;
+}
+function showExplanation(mod, number){
+  const m = SET.modules[mod-1];
+  const q = m.questions[number-1];
+  ensureExplainDrawer();
+  $('#expTitle').innerHTML = `Module ${mod} · Q${number}`;
+  const body = q.rationale ? injectImages(fmt(q.rationale)) : '해설이 없습니다.';
+  $('#expBody').innerHTML = body;
   typeset();
 }
 
-/* ===== 내비게이션 ===== */
-$('#prevBtn').onclick=()=>{ if(!SET) return; if(qIdx>0){ qIdx--; renderQuestion(); } };
-$('#nextBtn').onclick=()=>{ if(!SET) return; const n=SET.modules[modIdx].questions.length; if(qIdx<n-1){ qIdx++; renderQuestion(); } };
+/* ===== 전체 결과(모듈2 제출 후) ===== */
+function showCombinedResults(){
+  clearInterval(tickId);
 
-/* ===== 제출 버튼 → 확인 모달 ===== */
-$('#submitBtn').onclick = ()=>{ if(!SET) return; openConfirm(false); };
+  // 연습 UI 숨김, 리본 숨김
+  $('#card').style.display='none';
+  $('#ribbon').style.display='none';
 
-/* ===== 번호 모달 ===== */
-$('#progressBtn').onclick = ()=>{ if(!SET) return; $('#navModTitle').textContent=`Module ${modIdx+1}`; buildNavGrid(); $('#navBack').style.display='flex'; };
-$('#navClose').onclick = ()=>{ $('#navBack').style.display='none'; };
+  // 전체 채점(혹시 detail 누락 보완)
+  SET.modules.forEach((_,mi)=>{
+    if(!perModuleScore[mi]){
+      const sc = scoreModule(mi);
+      perModuleScore[mi] = {correct:sc.correct, total:sc.total, detail:sc.detail};
+    }
+  });
+
+  const grand = perModuleScore.reduce((a,b)=>({correct:a.correct+b.correct, total:a.total+b.total}), {correct:0,total:0});
+
+  // 결과 요약
+  const sumHTML = `
+    <div class="qcard">
+      <div class="summary">
+        <div class="tag">총점 <span class="pill ${grand.correct>=(grand.total/2)?'good':'bad'}">${grand.correct} / ${grand.total}</span></div>
+        <div class="tag">Module 1 <span class="pill">${perModuleScore[0].correct} / ${perModuleScore[0].total}</span></div>
+        <div class="tag">Module 2 <span class="pill">${perModuleScore[1].correct} / ${perModuleScore[1].total}</span></div>
+      </div>
+    </div>`;
+
+  // 모듈별 정오표 그리드
+  function moduleResultPanel(mi){
+    const det = perModuleScore[mi].detail;
+    const cells = det.map(d=>{
+      const cls = d.ok ? 'ok' : 'ng';
+      const flag = flags.has(d.id) ? ' flag' : '';
+      return `<button class="cell ${cls}${flag}" data-mod="${mi+1}" data-num="${d.number}" title="Module ${mi+1} · Q${d.number}">
+                ${d.number}
+              </button>`;
+    }).join('');
+    return `
+      <div class="qcard">
+        <b>Module ${mi+1} — 정오표</b>
+        <div class="result-grid" style="margin-top:10px">${cells}</div>
+      </div>`;
+  }
+
+  $('#scoreBox').innerHTML = sumHTML + moduleResultPanel(0) + moduleResultPanel(1);
+
+  // 결과 화면에만 해설 패널 생성
+  ensureExplainDrawer();
+
+  // 클릭 시 해설 표시
+  $('#scoreBox').querySelectorAll('.cell').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const mod = Number(e.currentTarget.getAttribute('data-mod'));
+      const num = Number(e.currentTarget.getAttribute('data-num'));
+      showExplanation(mod, num);
+    });
+  });
+}
 
 /* ===== 기타 ===== */
 $('#loadBtn').onclick=()=>loadSet($('#path').value);
-$('#hideBtn').onclick=()=>{ const page=document.querySelector('.page'); page.style.display = page.style.display==='none'?'grid':'none'; };
-
-/* 안전한 text 출력 */
-function escapeHtml(t){ return t.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m])); }
-
-/* 초기 로드 */
+$('#hideBtn').onclick=()=>{ const w=$('.wrap'); w.style.display = w.style.display==='none'?'block':'none'; };
 window.addEventListener('DOMContentLoaded',()=>loadSet($('#path').value));
 </script>
 </body>
