@@ -523,5 +523,14 @@ document.addEventListener('click', (e)=>{
   if(!$('#navPopup').contains(e.target) && e.target!==$('#navOpen')) hideNavPopup();
 });
 </script>
+
+<!-- ===== 해설 팝업 (결과표에서만 표시) ===== -->
+<div class="explain-back" id="explainBack" style="display:none; position:fixed; inset:0; z-index:30; background:rgba(0,0,0,.36);">
+  <div class="explain" style="width:min(980px, 95vw); max-height:80vh; overflow:auto; margin:8vh auto; background:#fff; border-radius:14px; border:1px solid #e5e7eb; padding:14px; position:relative">
+    <button class="x" id="explainClose" style="position:sticky; top:0; float:right; border:1px solid #e5e7eb; background:#fff; padding:6px 10px; border-radius:8px; cursor:pointer">Close</button>
+    <div id="explainBody"></div>
+  </div>
+</div>
+
 </body>
 </html>
