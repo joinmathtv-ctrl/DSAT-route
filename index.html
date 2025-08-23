@@ -289,6 +289,28 @@ function gotoNextModule(){
   }
 }
 
+/* ===== SPR 안내 패널(좌) 템플릿 ===== */
+function sprPanel(){
+  return `
+    <div class="spr">
+      <h4>Directions for Student‑Produced Response</h4>
+      <ul>
+        <li>Use decimals for most answers; use fractions only when repeating decimals occur (e.g., \(0.\overline{3}=1/3\)).</li>
+        <li>If multiple answers are possible, enter just <b>one</b>.</li>
+        <li>You may enter up to 5 characters; the negative sign does not count as a character.</li>
+        <li>For fractions that don’t fit the box, enter the decimal equivalent.</li>
+        <li>For long decimals, round to the fourth digit unless told otherwise.</li>
+        <li>For mixed numbers, use improper fractions or decimal equivalents.</li>
+        <li class="small">You may omit units/symbols such as \$, %, \( \text{cm}^3 \), \( m^2 \).</li>
+      </ul>
+      <table>
+        <thead><tr><th>Answer</th><th>Acceptable</th><th>Not acceptable</th></tr></thead>
+        <tbody><tr><td>4.25</td><td>4.25<br>17/4</td><td>41/4<br>4 1/4</td></tr></tbody>
+      </table>
+    </div>`;
+}
+
+
 /* ===== 문제 표시 ===== */
 function renderQuestion(){
   const q = currentQ();
@@ -317,26 +339,22 @@ function renderQuestion(){
       area.appendChild(row);
     });
   }else{
-    // 주관식 2분할 레이아웃
+     // GRID‑IN: 2분할(좌 SPR 안내, 우 문제+입력)
+    const rightHtml = `
+      <div>
+        <div class="qstem">${injectImages(fmt(q.prompt))}</div>
+        <input id="gridInput" class="gridin" placeholder="Enter your answer" />
+      </div>`;
     $('#qstem').innerHTML = `
       <div class="gridwrap">
-        <div class="spr">
-          <h4>How to enter answers</h4>
-          <p>Enter integers, simplified fractions (e.g., 3/5), mixed numbers (e.g., 2 1/3), or decimals as appropriate.</p>
-          <img src="./img/spr_guide.png" alt="SPR guide"
-               onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
-          <div class="fallback">Guide image not found. Place <code>spr_guide.png</code> in <code>./img/</code>.</div>
-        </div>
-        <div>
-          ${injectImages(fmt(q.prompt))}
-        </div>
-      </div>
-    `;
-    const inp=document.createElement('input'); inp.className='gridin';
-    inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
-    inp.oninput=e=>{ answers[q.id]=e.target.value.trim(); renderNavButton(); };
-    area.appendChild(inp);
+        ${sprPanel()}
+        ${rightHtml}
+      </div>`;
+    const inp = document.getElementById('gridInput');
+    inp.value = answers[q.id] ?? '';
+    inp.oninput = e=>{ answers[q.id]=e.target.value.trim(); renderNavButton(); };
   }
+
   typeset();
   renderNavButton();
 }
