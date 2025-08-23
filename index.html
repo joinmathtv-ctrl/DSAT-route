@@ -441,77 +441,117 @@ function isCorrect(q){
 function showFinalReport(){
   clearInterval(tickId);
   $('#card').style.display='none';
-  $('#ribbon').style.display='none';
-  hideNavPopup();
+  $('#ribbon')?.style.display='none'; // 리본 UI 쓰는 경우
+  const sb = $('#scoreBox'); sb.innerHTML='';
 
   // 모듈별 채점 상세
   const per = SET.modules.map((m,mi)=>{
     const detail = m.questions.map((q,qi)=>{
-      const ok = isCorrect(q);
-      return { id:q.id, number:qi+1, ok, q };
+      const ok = (q.type==='mcq')
+        ? Number(answers[q.id])===Number(q.answer)
+        : gridinEqual(answers[q.id], q);
+      return { id:q.id, number: qi+1, ok, q };
     });
     const correct = detail.filter(d=>d.ok).length;
-    return { total:detail.length, correct, detail };
+    return { mod: mi+1, total: m.questions.length, correct, detail };
   });
 
   // 요약
-  const grand = per.reduce((a,b)=>({total:a.total+b.total, correct:a.correct+b.correct}), {total:0,correct:0});
-
-  const sumHTML = `
+  const grand = per.reduce((a,p)=>({ total:a.total+p.total, correct:a.correct+p.correct }), {total:0,correct:0});
+  const headHTML = `
     <div class="qcard" style="margin-top:10px">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:8px">
         <div><b>Combined Score:</b> ${grand.correct} / ${grand.total}</div>
-        <div><span class="badge ok">Correct</span> <span class="badge bad" style="margin-left:8px">Wrong</span></div>
+        <div>
+          <span class="badge" style="background:#16a34a">Correct</span>
+          <span class="badge" style="background:#ef4444; margin-left:8px">Wrong</span>
+        </div>
       </div>
     </div>`;
 
-  function modulePanel(mi){
-    const det = per[mi].detail;
-    const cells = det.map(d=>{
-      return `<button class="result-dot ${d.ok?'ok':'bad'}"
-                title="Module ${mi+1} · Q${d.number}"
-                onclick="openExplain(${mi+1}, ${d.number}, window.SET.modules[${mi}].questions[${d.number-1}], ${d.ok})">
-                ${d.number}
-              </button>`;
+  // 모듈별 정오표 박스
+  function modulePanel(p){
+    const cells = p.detail.map(d=>{
+      const cls = d.ok ? 'ok' : 'bad';
+      return `<button class="result-dot ${cls}" data-mod="${p.mod}" data-num="${d.number}" title="Module ${p.mod} · Q${d.number}">${d.number}</button>`;
     }).join('');
     return `
       <div class="qcard" style="margin-top:10px">
-        <b>Module ${mi+1} — Items</b>
-        <div class="result-grid" style="margin-top:8px">${cells}</div>
+        <b>Module ${p.mod} — Items</b>
+        <div class="result-grid" data-grid-mod="${p.mod}" style="margin-top:10px">${cells}</div>
       </div>`;
   }
 
-  $('#scoreBox').innerHTML = sumHTML + modulePanel(0) + (SET.modules[1]?modulePanel(1):'');
+  sb.innerHTML = headHTML + modulePanel(per[0]) + modulePanel(per[1]);
+
+  // 결과 그리드 클릭 -> 해설 팝업 (이벤트 위임)
+  // (innerHTML로 그렸기 때문에 위임 방식이 안전합니다)
+  sb.addEventListener('click', (e)=>{
+    const btn = e.target.closest('.result-dot');
+    if(!btn) return;
+    const mod = Number(btn.getAttribute('data-mod'));
+    const num = Number(btn.getAttribute('data-num'));
+    const q = SET.modules[mod-1].questions[num-1];
+    const ok = (q.type==='mcq')
+      ? Number(answers[q.id])===Number(q.answer)
+      : gridinEqual(answers[q.id], q);
+    openExplain(mod, num, q, ok);
+  }, { once:false });
 }
 
 // 해설 팝업
 const explainBack = $('#explainBack');
 const explainBody = $('#explainBody');
-window.openExplain = function(mod, idx, q, ok){
+$('#explainClose')?.addEventListener('click', ()=>{ explainBack.style.display='none'; explainBody.innerHTML=''; });
+
+function openExplain(mod, idx, q, ok){
   const your = answers[q.id];
+  const correct = (q.type==='mcq') ? (Array.isArray(q.choices)? q.choices[q.answer] : q.answer)
+                                   : (q.answerNumeric ?? q.altNumeric?.[0] ?? '');
   const yourDisp = (q.type==='mcq' && your!==undefined) ? q.choices[Number(your)] : (your ?? '');
-  const badge = ok?'<span class="badge ok">Correct</span>':'<span class="badge bad">Wrong</span>';
+  const badge = ok ? '<span class="badge" style="background:#16a34a">Correct</span>'
+                   : '<span class="badge" style="background:#ef4444">Wrong</span>';
+
+  // 주관식 안내 2분할(시험 중에 쓰던 spr 레이아웃이 있으면 그대로 재사용 가능)
+  const stemBlock = `
+    <div class="qcard" style="margin-bottom:10px">
+      <div class="qstem">${injectImages(fmt(q.prompt))}</div>
+      ${q.type==='mcq' ? `
+        <div class="choices" style="margin-top:8px">
+          ${q.choices.map((c,i)=>`
+            <div class="choice" style="pointer-events:none; ${i===q.answer?'border-color:#b7f4be;background:#e9fbe7':''}">
+              <div class="bubble">${"ABCD".charAt(i)}</div><div class="txt">${c}</div>
+            </div>`).join('')}
+        </div>` : ''}
+    </div>`;
+
+  const ansBlock = `
+    <div class="qcard" style="margin-bottom:10px">
+      <div><b>Correct Answer:</b> ${correct}</div>
+      <div style="margin-top:6px"><b>Your Answer:</b> ${yourDisp===''||yourDisp===undefined?'<i>(blank)</i>':yourDisp}</div>
+    </div>`;
+
+  const expBlock = q.rationale
+    ? `<div class="qcard"><b>Explanation</b><div style="margin-top:6px">${fmt(q.rationale)}</div></div>`
+    : '';
 
   explainBody.innerHTML = `
     <div style="margin-bottom:8px; font-weight:800">Module ${mod} · Question ${idx} ${badge}</div>
     <div style="margin-bottom:10px; color:var(--muted); font-size:13px">${q.type==='mcq'?'Multiple Choice':'Student‑Produced Response'}</div>
-    <div class="qcard" style="margin-bottom:10px">
-      <div class="qstem">${injectImages(fmt(q.prompt))}</div>
-      ${q.type==='mcq' ? `<div class="choices" style="margin-top:8px">${q.choices.map((c,i)=>`
-        <div class="choice" style="pointer-events:none; ${i===q.answer?'border-color:#b7f4be;background:#e9fbe7':''}">
-          <div class="bubble">${bubbleABC(i)}</div><div class="txt">${c}</div>
-        </div>`).join('')}</div>` : ''}
-    </div>
-    <div class="qcard" style="margin-bottom:10px">
-      <div><b>Correct Answer:</b> ${q.type==='mcq' ? (q.choices[q.answer] ?? q.answer) : (q.answerNumeric ?? q.altNumeric?.[0] ?? '')}</div>
-      <div style="margin-top:6px"><b>Your Answer:</b> ${yourDisp===''||yourDisp===undefined?'<i>(blank)</i>':yourDisp}</div>
-    </div>
-    ${q.rationale ? `<div class="qcard"><b>Explanation</b><div style="margin-top:6px">${fmt(q.rationale)}</div></div>`:''}
+    ${stemBlock}${ansBlock}${expBlock}
   `;
   explainBack.style.display='block';
-  typeset();
-};
-$('#explainClose').onclick = ()=>{ explainBack.style.display='none'; explainBody.innerHTML=''; };
+  typeset && typeset();
+}
+
+// 팝업 바깥 클릭 시 닫힘
+document.addEventListener('click',(e)=>{
+  if(!explainBack || explainBack.style.display!=='block') return;
+  const panel = explainBack.querySelector('.explain');
+  if(panel && !panel.contains(e.target) && !e.target.closest('.result-dot')){
+    explainBack.style.display='none'; explainBody.innerHTML='';
+  }
+});
 
 /* ===== 기타 ===== */
 $('#loadBtn').onclick=()=>loadSet($('#path').value);
