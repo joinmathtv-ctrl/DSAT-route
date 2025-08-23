@@ -12,26 +12,22 @@
     --bg:#fafbfe; --card:#fff; --ink:#1f2937; --muted:#6b7280;
     --line:#e5e7eb; --accent:#2563eb; --accent-ghost:#e7f0ff;
     --flag:#ef9b0f; --choice:#f7f7fb; --choice-hover:#eef2ff;
-    --ok:#16a34a; --bad:#ef4444;
+    --ok:#16a34a; --ng:#ef4444;
   }
   *{ box-sizing:border-box }
   body{ margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Apple SD Gothic Neo,Arial,sans-serif; color:var(--ink); background:var(--bg) }
 
   /* ===== TOP BAR ===== */
-  .topbar{
-    position:sticky; top:0; z-index:5; background:#fff;
-    border-bottom:1px solid var(--line);
-  }
-  .topbar-row{
-    display:grid; grid-template-columns:1fr auto 1fr; align-items:center;
-    gap:10px; padding:6px 14px;
-  }
+  .topbar{ position:sticky; top:0; z-index:5; background:#fff; border-bottom:1px solid var(--line) }
+  .topbar-row{ display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:10px; padding:6px 14px }
   .crumb{ font-weight:600; font-size:14px }
   .controls{ justify-self:end; display:flex; gap:8px }
   .icon-btn{ border:1px solid var(--line); background:#fff; padding:6px 10px; border-radius:8px; font-size:12px; cursor:pointer }
   .timer-wrap{ justify-self:center; display:flex; align-items:center; gap:8px }
   .timer{ font-weight:800; font-variant-numeric:tabular-nums }
   .hide-btn{ border:1px solid var(--line); background:#fff; padding:3px 8px; border-radius:6px; font-size:12px; cursor:pointer }
+
+  /* Directions dropdown */
   .dir-zone{ display:flex; align-items:center; gap:10px }
   .dir-btn{ border:1px solid var(--line); background:#fff; padding:5px 10px; border-radius:8px; font-size:13px; cursor:pointer }
   .dir-panel{
@@ -39,86 +35,72 @@
     border-radius:12px; padding:12px; font-size:14px; line-height:1.45; box-shadow:0 12px 32px rgba(0,0,0,.08); display:none;
   }
 
+  /* progress dash (only decor) */
   .dash{ height:6px; background:repeating-linear-gradient(90deg,
       #d9ead3 0 46px, #fff 46px 54px,
       #f9e1ae 54px 98px, #fff 98px 106px,
       #cfe2f3 106px 152px, #fff 152px 160px); opacity:.95 }
 
-  /* ===== 메인 ===== */
-  .wrap{ max-width:1060px; margin:12px auto 88px; padding:0 14px } /* 리본 높이만큼 아래 여백 */
+  /* ===== MAIN ===== */
+  .wrap{ max-width:1060px; margin:12px auto; padding:0 14px }
   .loader{ display:flex; gap:8px; margin:6px 0 12px 0 }
   input[type="text"]#path{ width:330px; padding:7px 10px; border:1px solid var(--line); border-radius:8px }
   .btn{ border:1px solid var(--line); background:#fff; padding:8px 12px; border-radius:10px; cursor:pointer }
   .btn.primary{ background:var(--accent); color:#fff; border-color:var(--accent) }
-  .btn.ghost{ background:#fff; }
   .alert{ background:#fef3f2; color:#b42318; border:1px solid #fecdca; padding:10px 12px; border-radius:10px; margin:8px 0; font-size:14px }
 
-  /* ===== 문제 카드 ===== */
+  /* ===== Question card ===== */
   .qcard{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:0 6px 20px rgba(0,0,0,.04) }
   .qhead{ display:flex; align-items:center; gap:10px; margin-bottom:6px }
-  .qnum{ width:28px; height:28px; display:grid; place-items:center; font-weight:700; border:1px solid var(--line); border-radius:6px; }
+  .qnum{ width:28px; height:28px; display:grid; place-items:center; font-weight:700; border:1px solid var(--line); border-radius:6px }
   .flag-btn{ margin-left:4px; border:1px solid var(--line); background:#fff; border-radius:8px; padding:4px 10px; cursor:pointer; font-size:13px; color:var(--muted) }
   .flagged{ color:var(--flag); border-color:#fde68a; background:#fffaf0 }
   .qtitle{ text-align:center; color:#0f172a; font-size:14px; margin:4px 0 6px 0 }
   .qstem{ font-size:16px; line-height:1.55; margin:10px 0 12px 0 }
   .choices{ display:grid; gap:10px }
 
+  /* choices */
   .choice{ border:1px solid var(--line); background:var(--choice); border-radius:10px; padding:10px 12px; cursor:pointer;
-           display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:flex-start; transition:background .15s, border-color .15s; }
+           display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:flex-start; transition:background .15s, border-color .15s }
   .choice:hover{ background:var(--choice-hover) }
-  .bubble{ width:24px; height:24px; border:1px solid var(--line); border-radius:50%; display:grid; place-items:center; font-weight:700; background:#fff; user-select:none; font-size:13px; }
+  .bubble{ width:24px; height:24px; border:1px solid var(--line); border-radius:50%; display:grid; place-items:center; font-weight:700; background:#fff; user-select:none; font-size:13px }
   .choice input{ display:none }
   .choice.selected{ border-color:#bfd3ff; background:#eef4ff }
   .choice.selected .bubble{ border-color:var(--accent); color:#fff; background:var(--accent) }
 
+  /* grid-in input */
   .gridin{ width:260px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; font-size:16px; background:#fff }
 
-  /* ===== 고정 리본 ===== */
-  .ribbon{
-    position:fixed; left:0; right:0; bottom:0; z-index:6;
-    display:flex; align-items:center; justify-content:space-between;
-    gap:10px; padding:10px 12px; background:#fff; border-top:1px solid var(--line);
-  }
-  .r-left,.r-right{ display:flex; gap:10px; align-items:center }
-  .r-center{ display:flex; justify-content:center; flex:1 }
-  #navOpen{ min-width:120px; font-weight:700 }
+  /* grid-in two column layout (only when grid-in) */
+  .gridwrap{ display:grid; grid-template-columns: minmax(260px, 1fr) 2fr; gap:16px }
+  .spr{ border-right:1px solid var(--line); padding-right:16px }
+  .spr h4{ margin:0 0 8px 0 }
+  .spr ul{ margin:0; padding-left:18px }
+  .spr small{ color:var(--muted) }
+  @media (max-width:900px){ .gridwrap{ grid-template-columns:1fr } .spr{ border-right:none; border-bottom:1px solid var(--line); padding-bottom:12px; margin-bottom:12px } }
 
-  /* 네비 팝업 (리본 바로 위) */
-  .nav-popup{
-    position:fixed; left:50%; transform:translateX(-50%);
-    bottom:64px; z-index:7; background:#fff; border:1px solid var(--line);
-    border-radius:12px; box-shadow:0 16px 36px rgba(0,0,0,.12); padding:12px; display:none; max-width:90vw;
-  }
-  .nav-grid{ display:grid; grid-template-columns:repeat(11, 36px); gap:6px }
-  .dot{ width:36px; height:36px; border-radius:10px; border:1px solid var(--line); background:#fff; cursor:pointer; font-weight:600 }
-  .dot.active{ outline:2px solid var(--accent) }
-  .dot.answered{ background:#e9fbe7; border-color:#b7f4be }
-  .dot.flag{ background:#fff3d6; border-color:#fde68a }
+  /* result grid */
+  .summary{ display:flex; gap:10px; flex-wrap:wrap }
+  .tag{ background:#f7f7fb; border:1px solid var(--line); padding:8px 10px; border-radius:10px }
+  .pill{ padding:4px 8px; border-radius:999px; border:1px solid var(--line); background:#fff; margin-left:6px }
+  .pill.good{ border-color:#c7f0cf; background:#ecfdf5 }
+  .pill.bad { border-color:#ffd0ce; background:#fff1f0 }
+  .result-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(44px, 1fr)); gap:8px }
+  .cell{ height:44px; border:1px solid var(--line); border-radius:10px; background:#fff; cursor:pointer; font-weight:700 }
+  .cell.ok{ background:#ecfdf5; border-color:#bbf7d0; color:#065f46 }
+  .cell.ng{ background:#fff1f2; border-color:#fecdd3; color:#9f1239 }
+  .cell.flag{ box-shadow:inset 0 0 0 2px #fde68a }
+  .legend{ font-size:12px; color:var(--muted); display:flex; gap:12px; align-items:center }
+  .legend .sw{ width:14px; height:14px; display:inline-block; border-radius:4px; margin-right:4px; vertical-align:middle }
+  .sw-ok{ background:#ecfdf5; border:1px solid #bbf7d0 }
+  .sw-ng{ background:#fff1f2; border:1px solid #fecdd3 }
+  .sw-flag{ background:#fffbea; border:1px solid #fde68a }
 
-  /* 제출 확인 모달 */
-  .modal-back{ position:fixed; inset:0; background:rgba(0,0,0,.36); display:none; z-index:20; }
-  .modal{ width:min(520px, 92vw); margin:10vh auto; background:#fff; border-radius:14px; border:1px solid var(--line); padding:14px }
-  .modal .head{ font-weight:800; font-size:18px; margin-bottom:6px }
-  .modal .body{ font-size:14px; color:var(--ink) }
+  /* explanation modal (result only) */
+  .modal-back{ position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:center; justify-content:center; z-index:50 }
+  .modal{ width:min(920px, 92vw); max-height:92vh; overflow:auto; background:#fff; border:1px solid var(--line); border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.25); padding:16px }
+  .modal .head{ font-weight:700; margin-bottom:8px }
   .modal .foot{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px }
-
-  /* 결과/해설 오버레이 (스크롤 가능) */
-  .explain-back{ position:fixed; inset:0; background:rgba(0,0,0,.36); display:none; z-index:30; }
-  .explain{ width:min(980px, 95vw); max-height:80vh; overflow:auto;
-            margin:8vh auto; background:#fff; border-radius:14px; border:1px solid var(--line); padding:14px }
-  .explain .x{ float:right; border:1px solid var(--line); background:#fff; padding:6px 10px; border-radius:8px; cursor:pointer }
-  .badge{ display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; color:#fff }
-  .ok{ background:var(--ok) } .bad{ background:var(--bad) }
-
-  /* 결과표 박스 */
-  .result-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(36px,1fr)); gap:6px }
-  .result-dot{ height:36px; border-radius:10px; border:1px solid var(--line); background:#fff; cursor:pointer; font-weight:700 }
-  .result-dot.ok{ background:#e9fbe7; border-color:#b7f4be }
-  .result-dot.bad{ background:#fee2e2; border-color:#fecaca }
-
-  @media (max-width:560px){
-    .nav-grid{ grid-template-columns:repeat(8, 36px) }
-  }
 </style>
 </head>
 <body>
@@ -162,59 +144,36 @@
     <div class="choices" id="choices"></div>
   </div>
 
+  <!-- 하단 내비(Prev/Next만; 모듈 경계에서 자동 제출/이동) -->
+  <div class="footer" id="footer" style="display:none">
+    <div class="nav">
+      <button class="btn" id="prevBtn">← Prev</button>
+      <button class="btn" id="nextBtn">Next →</button>
+    </div>
+  </div>
+
+  <!-- 팔레트(연습 중) -->
+  <div class="palette" id="palette" style="display:none"></div>
+
+  <!-- 결과/정오표 영역 -->
   <div id="scoreBox"></div>
 </div>
 
-<!-- ===== 하단 고정 리본 ===== -->
-<div class="ribbon" id="ribbon" style="display:none">
-  <div class="r-left">
-    <button class="btn" id="prevBtn">← Prev</button>
-  </div>
-  <div class="r-center">
-    <button class="btn ghost" id="navOpen">1 / 22 ▾</button>
-  </div>
-  <div class="r-right">
-    <button class="btn" id="nextBtn">Next →</button>
-  </div>
-</div>
-
-<!-- 네비 팝업 -->
-<div class="nav-popup" id="navPopup">
-  <div style="font-weight:700; margin-bottom:8px">Module <span id="navMod">1</span></div>
-  <div class="nav-grid" id="navGrid"></div>
-</div>
-
-<!-- ===== 제출 확인 모달 ===== -->
-<div class="modal-back" id="confirmBack">
+<!-- ===== Explanation Modal (결과 전용) ===== -->
+<div class="modal-back" id="expBack">
   <div class="modal">
-    <div class="head">Submit now?</div>
-    <div class="body">
-      <div style="margin-bottom:8px">You are submitting <b id="confirmModLabel">Module 1</b>.</div>
-      <ul style="margin:0; padding-left:18px; color:var(--muted); font-size:14px">
-        <li>After submission, answers for this module can no longer be changed.</li>
-        <li>Submitting Module 1 will automatically start Module 2.</li>
-        <li>Submitting Module 2 will show the combined report and explanations.</li>
-      </ul>
-    </div>
+    <div class="head" id="expHead">Explanation</div>
+    <div class="body" id="expBody"></div>
     <div class="foot">
-      <button class="btn" id="confirmCancel">Cancel</button>
-      <button class="btn primary" id="confirmOk">OK</button>
+      <button class="btn" id="expClose">Close</button>
     </div>
-  </div>
-</div>
-
-<!-- ===== 해설 팝업 (결과표에서만 생성/표시) ===== -->
-<div class="explain-back" id="explainBack">
-  <div class="explain">
-    <button class="x" id="explainClose">Close</button>
-    <div id="explainBody"></div>
   </div>
 </div>
 
 <script>
 /* ===== 상태 ===== */
 let SET=null, modIdx=0, qIdx=0;
-let flags=new Set(), answers={};          // answers: {questionId: value}
+let flags=new Set(), answers={};
 let timerSec=0, tickId=null;
 
 /* ===== 유틸 ===== */
@@ -223,13 +182,10 @@ const bubbleABC = idx => "ABCD".charAt(idx);
 const fmt = s => (s??"").replaceAll("\\n","<br>");
 const fmtTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 const typeset = ()=> window.MathJax && MathJax.typesetPromise();
-// [[IMAGE: file.png|optional alt]] -> <img ...>
+// [[IMAGE: file.png|optional alt]] -> <img...>
 const injectImages = html =>
   (html||"").replace(/\[\[IMAGE:\s*([^|\]]+)(?:\|([^\]]+))?\]\]/g,
     (_m,src,alt)=>`<img src="./img/${src.trim()}" alt="${(alt||'problem image').trim()}" style="max-width:100%">`);
-
-function totalQ(mod){ return SET.modules[mod].questions.length; }
-function currentQ(){ return SET.modules[modIdx].questions[qIdx]; }
 
 /* ===== Directions ===== */
 const dirBtn=$('#dirToggle'), dirPanel=$('#dirPanel');
@@ -249,93 +205,55 @@ async function loadSet(path){
     $('#loadError').style.display='block';
     return;
   }
+  // 전역 초기화
   flags.clear(); answers={}; $('#scoreBox').innerHTML='';
   dirPanel.innerHTML = fmt(SET.metadata?.directions);
-  startModule(0); // 항상 모듈1부터
+  startModule(0); // 항상 모듈 1부터
 }
 
-/* ===== 모듈/타이머 ===== */
+/* ===== 모듈 이동/타이머 ===== */
 function startModule(idx){
   modIdx = idx; qIdx = 0;
-  $('#crumb').textContent = `${SET.metadata?.title || 'Math'} — Module ${modIdx+1}`;
-  // 타이머(모듈별)
+  $('#crumb').textContent = `Section 2, Module ${modIdx+1}: Math`;
+  // 타이머 시작(모듈별)
   clearInterval(tickId);
   timerSec = (SET.metadata?.durationMinutesPerModule?.[modIdx] ?? 35) * 60;
   $('#timer').textContent = fmtTime(timerSec);
   tickId = setInterval(()=>{
     timerSec = Math.max(0, timerSec - 1);
     $('#timer').textContent = fmtTime(timerSec);
-    if (timerSec === 0) { clearInterval(tickId); openSubmitConfirm(); }
+    if (timerSec === 0) { clearInterval(tickId); gotoNextModule(); }
   }, 1000);
 
-  // UI 표시
+  // UI 표준 상태
   $('#card').style.display='block';
-  $('#ribbon').style.display='flex';
-  renderQuestion();
-  renderNavButton();
-  hideNavPopup();
+  $('#footer').style.display='flex';
+  $('#palette').style.display='flex';
   $('#scoreBox').innerHTML='';
+  renderPalette();
+  renderQuestion();
 }
 
 function gotoNextModule(){
-  const last = SET.modules.length - 1;
-  if (modIdx < last){
-    startModule(modIdx + 1);
-  } else {
-    showFinalReport();
-  }
-}
-
-/* ===== 문제 표시 ===== */
-function renderQuestion(){
-  const q = currentQ();
-  $('#qnum').textContent = qIdx+1;
-
-  const fb=$('#flagBtn');
-  const flagged=flags.has(q.id);
-  fb.className = 'flag-btn' + (flagged?' flagged':'');
-  fb.textContent = flagged ? 'Marked for Review' : 'Mark for Review';
-  fb.onclick = ()=>{ flagged?flags.delete(q.id):flags.add(q.id); renderQuestion(); };
-
-  $('#qtitle').innerHTML = q.title || '';
-  $('#qstem').innerHTML  = injectImages(fmt(q.prompt));
-
-  const area = $('#choices'); area.innerHTML='';
-  if(q.type==='mcq'){
-    q.choices.forEach((c,i)=>{
-      const row=document.createElement('label'); row.className='choice';
-      row.innerHTML = `
-        <input type="radio" name="ans" value="${i}" ${String(answers[q.id])===String(i)?'checked':''}/>
-        <div class="bubble">${bubbleABC(i)}</div>
-        <div class="txt">${c}</div>`;
-      if(String(answers[q.id])===String(i)) row.classList.add('selected');
-      row.addEventListener('click',()=>{ answers[q.id]=i; renderQuestion(); renderNavButton(); });
-      area.appendChild(row);
-    });
+  const isLastQ = qIdx >= SET.modules[modIdx].questions.length - 1;
+  // 모듈 경계에서 "제출" 동작과 동일 처리
+  if(isLastQ){
+    if(modIdx < SET.modules.length-1){
+      // 모듈 1 완료 → 모듈 2 시작
+      startModule(modIdx + 1);
+    }else{
+      // 마지막 모듈 완료 → 종합 결과
+      finishExam();
+    }
   }else{
-    const inp=document.createElement('input'); inp.className='gridin';
-    inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
-    inp.oninput=e=>{ answers[q.id]=e.target.value.trim(); renderNavButton(); };
-    area.appendChild(inp);
+    qIdx++; renderPalette(); renderQuestion();
   }
-  typeset();
-  renderNavButton();
 }
 
-/* ===== 네비 리본 & 팝업 ===== */
-function renderNavButton(){
-  const total = totalQ(modIdx);
-  $('#navOpen').textContent = `${qIdx+1} / ${total} ▾`;
-  $('#navMod').textContent = (modIdx+1);
-}
-const navPopup = $('#navPopup');
-$('#navOpen').onclick = ()=>{
-  if(navPopup.style.display==='block') hideNavPopup();
-  else showNavPopup();
-};
-function showNavPopup(){
-  const grid = $('#navGrid'); grid.innerHTML='';
+/* ===== 팔레트 ===== */
+function renderPalette(){
   const list = SET.modules[modIdx].questions;
+  const box = $('#palette'); box.innerHTML='';
   list.forEach((q,i)=>{
     const b=document.createElement('button');
     b.className='dot';
@@ -343,34 +261,74 @@ function showNavPopup(){
     if(flags.has(q.id)) b.classList.add('flag');
     if(answers[q.id]!==undefined && answers[q.id]!=='' ) b.classList.add('answered');
     b.textContent=i+1;
-    b.onclick=()=>{ qIdx=i; renderQuestion(); showNavPopup(); };
-    grid.appendChild(b);
+    b.onclick=()=>{ qIdx=i; renderPalette(); renderQuestion(); };
+    box.appendChild(b);
   });
-  navPopup.style.display='block';
-}
-function hideNavPopup(){ navPopup.style.display='none'; }
-
-/* ===== 제출(모듈 경계) ===== */
-const confirmBack = $('#confirmBack');
-function openSubmitConfirm(){
-  $('#confirmModLabel').textContent = `Module ${modIdx+1}`;
-  confirmBack.style.display='block';
-}
-$('#confirmCancel').onclick = ()=> confirmBack.style.display='none';
-$('#confirmOk').onclick = ()=>{
-  confirmBack.style.display='none';
-  gotoNextModule();
 }
 
-/* ===== 버튼 액션 ===== */
-$('#prevBtn').onclick=()=>{ if(qIdx>0){ qIdx--; renderQuestion(); } hideNavPopup(); };
-$('#nextBtn').onclick=()=>{
-  const n=totalQ(modIdx);
-  if(qIdx<n-1){ qIdx++; renderQuestion(); hideNavPopup(); }
-  else{ openSubmitConfirm(); } // 마지막 문항이면 제출 확인
-};
+/* ===== 문제 표시 ===== */
+function renderQuestion(){
+  const q = SET.modules[modIdx].questions[qIdx];
+  $('#qnum').textContent = qIdx+1;
 
-/* ===== 채점 ===== */
+  const fb=$('#flagBtn');
+  const flagged=flags.has(q.id);
+  fb.className = 'flag-btn' + (flagged?' flagged':'');
+  fb.textContent = flagged ? 'Marked for Review' : 'Mark for Review';
+  fb.onclick = ()=>{ flagged?flags.delete(q.id):flags.add(q.id); renderPalette(); renderQuestion(); };
+
+  $('#qtitle').innerHTML = q.title || '';
+
+  const area = $('#choices'); area.innerHTML='';
+  // grid-in 두 칼럼 레이아웃
+  if(q.type==='gridin'){
+    const L = `
+      <div class="spr">
+        <h4>Directions for Student‑Produced Response</h4>
+        <ul>
+          <li>Use decimals for most answers; use fractions only when needed (e.g., \\(0.333\\ldots=\\tfrac13\\)).</li>
+          <li>If multiple answers are possible, enter <b>just one</b>.</li>
+          <li>You may enter up to <b>5 characters</b> (the minus sign doesn’t count).</li>
+          <li>For improper or mixed numbers, enter as an <b>improper fraction</b> or decimal.</li>
+          <li>Units/symbols like \\($,\\%,\\text{cm}^2\\) may be omitted.</li>
+        </ul>
+        <div style="margin-top:10px"><small>Tip: Fractions that do not fit the box → enter the decimal equivalent.</small></div>
+      </div>`;
+    const R = `<div>
+        <div class="qstem">${injectImages(fmt(q.prompt))}</div>
+        <input class="gridin" id="gridin" placeholder="Enter your answer" />
+      </div>`;
+    $('#qstem').innerHTML = `<div class="gridwrap">${L}${R}</div>`;
+    const inp=$('#gridin'); inp.value=answers[q.id]??''; inp.oninput=e=>{ answers[q.id]=e.target.value.trim(); renderPalette(); };
+  }else{
+    // 단일 칼럼(객관식/서술식 외)
+    $('#qstem').innerHTML  = injectImages(fmt(q.prompt));
+    if(q.type==='mcq'){
+      q.choices.forEach((c,i)=>{
+        const row=document.createElement('label'); row.className='choice';
+        row.innerHTML = `
+          <input type="radio" name="ans" value="${i}" ${String(answers[q.id])===String(i)?'checked':''}/>
+          <div class="bubble">${bubbleABC(i)}</div>
+          <div class="txt">${c}</div>`;
+        if(String(answers[q.id])===String(i)) row.classList.add('selected');
+        row.addEventListener('click',()=>{ answers[q.id]=i; renderQuestion(); renderPalette(); });
+        area.appendChild(row);
+      });
+    }else{
+      const inp=document.createElement('input'); inp.className='gridin';
+      inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
+      inp.oninput=e=>{ answers[q.id]=e.target.value.trim(); renderPalette(); };
+      area.appendChild(inp);
+    }
+  }
+  typeset();
+}
+
+/* ===== 내비게이션 ===== */
+$('#prevBtn').onclick=()=>{ if(qIdx>0){ qIdx--; renderPalette(); renderQuestion(); } };
+$('#nextBtn').onclick=()=> gotoNextModule();
+
+/* ===== 채점 도우미 ===== */
 function gridinEqual(user,q){
   if(user===undefined || user==='') return false;
   if(q.answerNumeric!==undefined){
@@ -385,92 +343,98 @@ function gridinEqual(user,q){
   }
   return false;
 }
-function isCorrect(q){
-  if(q.type==='mcq') return Number(answers[q.id])===Number(q.answer);
-  return gridinEqual(answers[q.id], q);
-}
 
-/* ===== 최종 결과표 & 해설 팝업 ===== */
-function showFinalReport(){
+/* ===== 최종 결과표 ===== */
+function finishExam(){
   clearInterval(tickId);
   $('#card').style.display='none';
-  $('#ribbon').style.display='none';
-  hideNavPopup();
+  $('#footer').style.display='none';
+  $('#palette').style.display='none';
 
-  // 종합 채점
-  let total=0, correct=0;
-  const flat=[];
-  SET.modules.forEach((m,mi)=>{
-    m.questions.forEach((q,qi)=>{
-      total++;
-      const ok = isCorrect(q);
+  // 모듈별 상세 채점
+  const perModuleScore = SET.modules.map((m,mi)=>{
+    let correct=0, total=m.questions.length;
+    const detail = m.questions.map((q,qi)=>{
+      let ok=false;
+      if(q.type==='mcq'){ ok = Number(answers[q.id])===Number(q.answer); }
+      else{ ok = gridinEqual(answers[q.id], q); }
       if(ok) correct++;
-      flat.push({mod:mi+1, idx:qi+1, q, ok});
+      return { id:q.id, number:qi+1, ok, correctAnswer:q.type==='mcq'?q.choices[q.answer]:q.answerNumeric, my:answers[q.id]??'', rationale:q.rationale||'', prompt:q.prompt, type:q.type, choices:q.choices||[] };
     });
+    return { correct,total,detail };
   });
+  const grand = {
+    correct: perModuleScore.reduce((s,m)=>s+m.correct,0),
+    total: perModuleScore.reduce((s,m)=>s+m.total,0)
+  };
 
-  // 결과표 렌더
-  const box = $('#scoreBox');
-  const head = `<div class="qcard" style="margin-top:10px">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px">
-      <div><b>Combined Score:</b> ${correct} / ${total}</div>
-      <div><span class="badge ok">Correct</span> <span class="badge bad" style="margin-left:8px">Wrong</span></div>
-    </div>
-    <div style="margin-top:10px; font-weight:700">Items</div>
-    <div class="result-grid" id="resultGrid" style="margin-top:8px"></div>
-  </div>`;
-  box.innerHTML = head;
+  // ==== 사용자 제공 포맷 반영 ====
+  const sumHTML = `
+    <div class="qcard">
+      <div class="summary">
+        <div class="tag">총점 <span class="pill ${grand.correct>=(grand.total/2)?'good':'bad'}">${grand.correct} / ${grand.total}</span></div>
+        <div class="tag">Module 1 <span class="pill">${perModuleScore[0].correct} / ${perModuleScore[0].total}</span></div>
+        <div class="tag">Module 2 <span class="pill">${perModuleScore[1]?.correct ?? 0} / ${perModuleScore[1]?.total ?? 0}</span></div>
+      </div>
+      <div class="legend" style="margin-top:10px">
+        <span><i class="sw sw-ok"></i>Correct</span>
+        <span><i class="sw sw-ng"></i>Incorrect</span>
+        <span><i class="sw sw-flag"></i>Flagged</span>
+      </div>
+    </div>`;
 
-  const grid = $('#resultGrid');
-  flat.forEach((it, idx)=>{
-    const b=document.createElement('button');
-    b.className='result-dot ' + (it.ok?'ok':'bad');
-    b.textContent = it.idx;
-    b.title = `Module ${it.mod} · Q${it.idx}`;
-    b.onclick = ()=> openExplain(it.mod, it.idx, it.q, it.ok);
-    grid.appendChild(b);
-  });
+  function moduleResultPanel(mi){
+    if(SET.modules.length<=mi) return '';
+    const det = perModuleScore[mi].detail;
+    const cells = det.map(d=>{
+      const cls = d.ok ? 'ok' : 'ng';
+      const flag = flags.has(d.id) ? ' flag' : '';
+      return `<button class="cell ${cls}${flag}" data-mi="${mi}" data-qi="${d.number-1}" title="Module ${mi+1} · Q${d.number}">${d.number}</button>`;
+    }).join('');
+    return `
+      <div class="qcard" style="margin-top:10px">
+        <b>Module ${mi+1} — 정오표</b>
+        <div class="result-grid" style="margin-top:10px">${cells}</div>
+      </div>`;
+  }
+
+  $('#scoreBox').innerHTML = sumHTML + moduleResultPanel(0) + moduleResultPanel(1);
+
+  // 셀 클릭 → 해설 팝업
+  $('#scoreBox').onclick = (e)=>{
+    const btn = e.target.closest('.cell');
+    if(!btn) return;
+    const mi = Number(btn.dataset.mi), qi = Number(btn.dataset.qi);
+    const q = SET.modules[mi].questions[qi];
+    const det = perModuleScore[mi].detail[qi];
+
+    $('#expHead').innerHTML = `Module ${mi+1} · Question ${qi+1} — ${det.ok?'<span style="color:var(--ok)">Correct</span>':'<span style="color:var(--ng)">Incorrect</span>'}`;
+    const choicesHTML = (q.type==='mcq' && q.choices)
+      ? `<ol style="margin:6px 0 0 18px">${q.choices.map((c,i)=>`<li style="margin:2px 0">${c}${i===Number(q.answer)?' <b>(correct)</b>':''}</li>`).join('')}</ol>` : '';
+    $('#expBody').innerHTML = `
+      <div class="qcard" style="margin-bottom:10px">
+        <div style="font-weight:700; margin-bottom:6px">Problem</div>
+        ${injectImages(fmt(q.prompt))}
+        ${choicesHTML}
+      </div>
+      <div class="qcard" style="margin-bottom:10px">
+        <div><b>Correct Answer:</b> ${q.type==='mcq'? (q.choices[q.answer]) : (q.answerNumeric)}</div>
+        <div style="margin-top:4px"><b>Your Answer:</b> ${det.my===''?'<i>(blank)</i>':det.my}</div>
+      </div>
+      ${det.rationale ? `<div class="qcard"><div style="font-weight:700; margin-bottom:6px">Explanation</div>${injectImages(fmt(det.rationale))}</div>` : ''}`;
+    $('#expBack').style.display='flex';
+    typeset();
+  };
 }
 
-const explainBack = $('#explainBack');
-const explainBody = $('#explainBody');
-$('#explainClose').onclick = ()=>{ explainBack.style.display='none'; explainBody.innerHTML=''; };
-
-function openExplain(mod, idx, q, ok){
-  const your = answers[q.id];
-  const correct = (q.type==='mcq') ? (Array.isArray(q.choices)? q.choices[q.answer] : q.answer) : (q.answerNumeric ?? q.altNumeric?.[0] ?? '');
-  const yourDisp = (q.type==='mcq' && your!==undefined) ? q.choices[Number(your)] : (your ?? '');
-  const badge = ok?'<span class="badge ok">Correct</span>':'<span class="badge bad">Wrong</span>';
-
-  explainBody.innerHTML = `
-    <div style="margin-bottom:8px; font-weight:800">Module ${mod} · Question ${idx} ${badge}</div>
-    <div style="margin-bottom:10px; color:var(--muted); font-size:13px">${q.type==='mcq'?'Multiple Choice':'Student‑Produced Response'}</div>
-    <div class="qcard" style="margin-bottom:10px">
-      <div class="qstem">${injectImages(fmt(q.prompt))}</div>
-      ${q.type==='mcq' ? `<div class="choices" style="margin-top:8px">${q.choices.map((c,i)=>`
-        <div class="choice" style="pointer-events:none; ${i===q.answer?'border-color:#b7f4be;background:#e9fbe7':''}">
-          <div class="bubble">${bubbleABC(i)}</div><div class="txt">${c}</div>
-        </div>`).join('')}</div>` : ''}
-    </div>
-    <div class="qcard" style="margin-bottom:10px">
-      <div><b>Correct Answer:</b> ${q.type==='mcq' ? (q.choices[q.answer] ?? q.answer) : (q.answerNumeric ?? q.altNumeric?.[0] ?? '')}</div>
-      <div style="margin-top:6px"><b>Your Answer:</b> ${yourDisp===''||yourDisp===undefined?'<i>(blank)</i>':yourDisp}</div>
-    </div>
-    ${q.rationale ? `<div class="qcard"><b>Explanation</b><div style="margin-top:6px">${fmt(q.rationale)}</div></div>`:''}
-  `;
-  explainBack.style.display='block';
-  typeset();
-}
+/* ===== 팝업 닫기 ===== */
+$('#expClose').onclick = ()=> $('#expBack').style.display='none';
+$('#expBack').addEventListener('click',e=>{ if(e.target.id==='expBack') $('#expBack').style.display='none'; });
 
 /* ===== 기타 ===== */
 $('#loadBtn').onclick=()=>loadSet($('#path').value);
 $('#hideBtn').onclick=()=>{ const w=$('.wrap'); w.style.display = w.style.display==='none'?'block':'none'; };
 window.addEventListener('DOMContentLoaded',()=>loadSet($('#path').value));
-
-// 팝업 외부 클릭 닫기
-document.addEventListener('click', (e)=>{
-  if(!$('#navPopup').contains(e.target) && e.target!==$('#navOpen')) hideNavPopup();
-});
 </script>
 </body>
 </html>
