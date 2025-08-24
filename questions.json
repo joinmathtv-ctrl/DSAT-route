@@ -887,7 +887,7 @@
         {
           "id": "m1q13",
           "type": "mcq",
-          "prompt": "The solution to the given system of equations is \\( (x, y) \\). What is the value of \\( 24x \\)?<br>\\( \\begin{aligned} 2y&=5x+16 \\ -2y&=7x-22 \\end{aligned} \\)",
+          "prompt": "The solution to the given system of equations is \\( (x, y) \\). What is the value of \\( 24x \\)?<br>\\( \\begin{aligned} 2y&=5x+16 \\\\\\\\ -2y&=7x-22 \\end{aligned} \\)",
           "choices": [
             "\\( -12 \\)",
             "\\( -6 \\)",
@@ -1044,7 +1044,7 @@
         {
           "id": "m2q3",
           "type": "mcq",
-          "prompt": "At what point \\( (x, y) \\) do the graphs of the equations in the given system intersect?<br>\\( \\begin{aligned} x+5&=11 \\ y&=3x^2+3 \\end{aligned} \\)",
+          "prompt": "At what point \\( (x, y) \\) do the graphs of the equations in the given system intersect?<br>\\( \\begin{aligned} x+5&=11 \\\\\\\\ y&=3x^2+3 \\end{aligned} \\)",
           "choices": [
             "\\( (6,\\,108) \\)",
             "\\( (6,\\,111) \\)",
@@ -1184,12 +1184,12 @@
         {
           "id": "m2q14",
           "type": "mcq",
-          "prompt": "The function \\( f \\) is defined by \\( f(x)=2^{-3x} \\). The function \\( g \\) is a decreasing linear function. In the \\( xy \\)-plane, the graphs of \\( y=f(x) \\) and \\( y=g(x) \\) intersect at two points, \\( (h,\\,j) \\) and \\( (k,\\,m) \\), where \\( j>m \\). When \\( g(x)<f(x) \\), which of the following must also be true?",
+          "prompt": "The function \\( f \\) is defined by \\( f(x)=2^{-3x} \\). The function \\( g \\) is a decreasing linear function. In the \\( xy \\)-plane, the graphs of \\( y=f(x) \\) and \\( y=g(x) \\) intersect at two points, \\( (h,\\,j) \\) and \\( (k,\\,m) \\), where \\( j>m \\). When \\\\( g(x) < f(x) \\), which of the following must also be true?",
           "choices": [
-            "\\( x<h \\)",
+            "\\( x < h \\)",
             "\\( x>k \\)",
-            "\\( x>k \\text{ or } x<h \\)",
-            "\\( h<x<k \\)"
+            "\\( x>k \\text{ or } x < h \\)",
+            "\\( h < x < k \\)"
           ],
           "answer": 3,
           "rationale": "Between the intersection points the exponential lies above the decreasing line."
@@ -1246,7 +1246,7 @@
         {
           "id": "m2q19",
           "type": "mcq",
-          "prompt": "Consider the system \\( \\begin{aligned} y&=x-c \\ y&=-4(x-6)^2 \\end{aligned} \\), where \\( c \\) is a constant. The system has two distinct real solutions. Which of the following could be the value of \\( c \\)?",
+          "prompt": "Consider the system \\( \\begin{aligned} y&=x-c \\\\\\\\ y&=-4(x-6)^2 \\end{aligned} \\), where \\( c \\) is a constant. The system has two distinct real solutions. Which of the following could be the value of \\( c \\)?",
           "choices": [
             "\\( 1 \\)",
             "\\( 5 \\)",
@@ -1272,7 +1272,7 @@
         {
           "id": "m2q21",
           "type": "mcq",
-          "prompt": "For each real number \\( r \\), which of the following points lies on the graph of each equation in the \\( xy \\)-plane for the given system?<br>\\n\\( \\begin{aligned} 5x+4y&=3 \\ 15x+12y&=9 \\end{aligned} \\)",
+          "prompt": "For each real number \\( r \\), which of the following points lies on the graph of each equation in the \\( xy \\)-plane for the given system?<br>\\n\\( \\begin{aligned} 5x+4y&=3 \\\\\\\\ 15x+12y&=9 \\end{aligned} \\)",
           "choices": [
             "\\( \\big(r,\\,-\\tfrac{5}{4}r+\\tfrac{3}{4}\\big) \\)",
             "\\( \\big(r,\\,\\tfrac{5}{4}r+\\tfrac{3}{4}\\big) \\)",
