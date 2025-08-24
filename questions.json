@@ -1044,7 +1044,7 @@
         {
           "id": "m2q3",
           "type": "mcq",
-          "prompt": " \\( \\begin{aligned} x+5&=11 \\ \\ y&=3x^2+3 \\end{aligned} \\) <br> At what point \\( (x, y) \\) do the graphs of the equations in the given system intersect?",
+          "prompt": " \\( \\begin{aligned} x+5&=11 \\\\\\ y&=3x^2+3 \\end{aligned} \\) <br> At what point \\( (x, y) \\) do the graphs of the equations in the given system intersect?",
           "choices": [
             "\\( (6,\\,108) \\)",
             "\\( (6,\\,111) \\)",
@@ -1184,7 +1184,7 @@
         {
           "id": "m2q14",
           "type": "mcq",
-          "prompt": "The function \\( f \\) is defined by \\( f(x)=2^{-3x} \\). The function \\( g \\) is a decreasing linear function. In the \\( xy \\)-plane, the graphs of \\( y=f(x) \\) and \\( y=g(x) \\) intersect at two points, \\( (h,\\,j) \\) and \\( (k,\\,m) \\), where \\( j>m \\). When \\\\( g(x) < f(x) \\), which of the following must also be true?",
+          "prompt": "The function \\( f \\) is defined by \\( f(x)=2^{-3x} \\). The function \\( g \\) is a decreasing linear function. In the \\( xy \\)-plane, the graphs of \\( y=f(x) \\) and \\( y=g(x) \\) intersect at two points, \\( (h,\\,j) \\) and \\( (k,\\,m) \\), where \\( j>m \\). When \\( g(x) < f(x) \\), which of the following must also be true?",
           "choices": [
             "\\( x < h \\)",
             "\\( x>k \\)",
@@ -1246,7 +1246,7 @@
         {
           "id": "m2q19",
           "type": "mcq",
-          "prompt": " \\( \\begin{aligned} y&=x-c \\ \\ y&=-4(x-6)^2 \\end{aligned} \\),<br> In given system of equations, where \\( c \\) is a constant. The system has two distinct real solutions. Which of the following could be the value of \\( c \\)?",
+          "prompt": " \\( \\begin{aligned} y&=x-c \\\\\\ y&=-4(x-6)^2 \\end{aligned} \\),<br> In given system of equations, where \\( c \\) is a constant. The system has two distinct real solutions. Which of the following could be the value of \\( c \\)?",
           "choices": [
             "\\( 1 \\)",
             "\\( 5 \\)",
@@ -1272,7 +1272,7 @@
         {
           "id": "m2q21",
           "type": "mcq",
-          "prompt": " \\( \\begin{aligned} 5x+4y&=3 \\ \\ 15x+12y&=9 \\end{aligned} \\) <br>\\n For each real number \\( r \\), which of the following points lies on the graph of each equation in the \\( xy \\)-plane for the given system?",
+          "prompt": " \\( \\begin{aligned} 5x+4y&=3 \\\\\\ 15x+12y&=9 \\end{aligned} \\) <br>\\n For each real number \\( r \\), which of the following points lies on the graph of each equation in the \\( xy \\)-plane for the given system?",
           "choices": [
             "\\( \\big(r,\\,-\\tfrac{5}{4}r+\\tfrac{3}{4}\\big) \\)",
             "\\( \\big(r,\\,\\tfrac{5}{4}r+\\tfrac{3}{4}\\big) \\)",
