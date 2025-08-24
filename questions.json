@@ -887,7 +887,7 @@
         {
           "id": "m1q13",
           "type": "mcq",
-          "prompt": "The solution to the given system of equations is \\( (x, y) \\). What is the value of \\( 24x \\)?<br>\\( \\begin{aligned} 2y&=5x+16 \\\\\\\\ -2y&=7x-22 \\end{aligned} \\)",
+          "prompt": "The solution to the given system of equations is \\( (x, y) \\). What is the value of \\( 24x \\)?<br>\\( \\begin{aligned} 2y&=5x+16 \\ -2y&=7x-22 \\end{aligned} \\)",
           "choices": [
             "\\( -12 \\)",
             "\\( -6 \\)",
@@ -933,12 +933,12 @@
             "\\( 18 \\)"
           ],
           "answer": 1,
-          "rationale": "Vertex \\( z=-\\\\tfrac{b}{2a}=-\\\\tfrac{18}{2}=-9 \\)."
+          "rationale": "Vertex \\( z=-\\tfrac{b}{2a}=-\\tfrac{18}{2}=-9 \\)."
         },
         {
           "id": "m1q17",
           "type": "mcq",
-          "prompt": "The function \\( P(t)=260(1.03)^{(\\\\tfrac{3t}{2})} \\) models the population, in thousands, of a certain city \\( t \\) years after \\( 2009 \\). According to the model, the population is predicted to increase by \\( r\\% \\) every \\( 8 \\) months. What is the value of \\( r \\)?",
+          "prompt": "The function \\( P(t)=260(1.03)^{(\\tfrac{3t}{2})} \\) models the population, in thousands, of a certain city \\( t \\) years after \\( 2009 \\). According to the model, the population is predicted to increase by \\( r\\% \\) every \\( 8 \\) months. What is the value of \\( r \\)?",
           "choices": [
             "\\( 0.22 \\)",
             "\\( 1.03 \\)",
@@ -958,7 +958,7 @@
             4700,
             "4700"
           ],
-          "rationale": "\\( 47\\\\times 100 = 4700 \\)."
+          "rationale": "\\( 47\\times 100 = 4700 \\)."
         },
         {
           "id": "m1q19",
@@ -970,7 +970,7 @@
             "169/9",
             18.7777777778
           ],
-          "rationale": "Ratio \\( = \\\\dfrac{(13x)^2}{(3x)^2}=\\\\dfrac{169}{9} \\)."
+          "rationale": "Ratio \\( = \\dfrac{(13x)^2}{(3x)^2}=\\dfrac{169}{9} \\)."
         },
         {
           "id": "m1q20",
@@ -982,12 +982,12 @@
             "45/8",
             5.625
           ],
-          "rationale": "Slope \\( m=\\\\tfrac{0-5}{9-1}=-\\\\tfrac{5}{8} \\). Then \\( b=5- m\\\\cdot 1=5+\\\\tfrac{5}{8}=\\\\tfrac{45}{8} \\)."
+          "rationale": "Slope \\( m=\\tfrac{0-5}{9-1}=-\\tfrac{5}{8} \\). Then \\( b=5- m\\cdot 1=5+\\tfrac{5}{8}=\\tfrac{45}{8} \\)."
         },
         {
           "id": "m1q21",
           "type": "gridin",
-          "prompt": "If \\( \\\\tfrac{2a}{b} = 6.5 \\) and \\( \\\\tfrac{a}{bn} = 26 \\), what is the value of \\( n \\)?",
+          "prompt": "If \\( \\tfrac{2a}{b} = 6.5 \\) and \\( \\tfrac{a}{bn} = 26 \\), what is the value of \\( n \\)?",
           "answerNumeric": 4,
           "tolerance": 0,
           "altNumeric": [
@@ -999,7 +999,7 @@
         {
           "id": "m1q22",
           "type": "mcq",
-          "prompt": "For two acute angles, \\( \\\\angle Q \\) and \\( \\\\angle R \\), \\( \\\\cos(Q)=\\\\sin(R) \\). The measures, in degrees, of \\( \\\\angle Q \\) and \\( \\\\angle R \\) are \\( x+61 \\) and \\( 4x+4 \\), respectively. What is the value of \\( x \\)?",
+          "prompt": "For two acute angles, \\( \\angle Q \\) and \\( \\angle R \\), \\( \\cos(Q)=\\sin(R) \\). The measures, in degrees, of \\( \\angle Q \\) and \\( \\angle R \\) are \\( x+61 \\) and \\( 4x+4 \\), respectively. What is the value of \\( x \\)?",
           "choices": [
             "\\( 5 \\)",
             "\\( 19 \\)",
@@ -1007,7 +1007,7 @@
             "\\( 29 \\)"
           ],
           "answer": 0,
-          "rationale": "For acute angles, \\( Q=90^{\\\\circ}-R \\). So \\( x+61=90-(4x+4) \\\\Rightarrow x=5 \\)."
+          "rationale": "For acute angles, \\( Q=90^{\\circ}-R \\). So \\( x+61=90-(4x+4) \\Rightarrow x=5 \\)."
         }
       ]
     },
@@ -1044,7 +1044,7 @@
         {
           "id": "m2q3",
           "type": "mcq",
-          "prompt": "At what point \\( (x, y) \\) do the graphs of the equations in the given system intersect?<br>\\( \\\\begin{aligned} x+5&=11 \\\\\\\\ y&=3x^2+3 \\\\end{aligned} \\)",
+          "prompt": "At what point \\( (x, y) \\) do the graphs of the equations in the given system intersect?<br>\\( \\begin{aligned} x+5&=11 \\ y&=3x^2+3 \\end{aligned} \\)",
           "choices": [
             "\\( (6,\\,108) \\)",
             "\\( (6,\\,111) \\)",
@@ -1064,7 +1064,7 @@
             343,
             "343"
           ],
-          "rationale": "Subtract \\( 42 \\): \\( \\tfrac{6}{7}p=42 \\Rightarrow p=42\\\\cdot\\\\tfrac{7}{6}=49 \\). Then \\( 7p=7\\\\cdot 49=343 \\)."
+          "rationale": "Subtract \\( 42 \\): \\( \\tfrac{6}{7}p=42 \\Rightarrow p=42\\cdot\\tfrac{7}{6}=49 \\). Then \\( 7p=7\\cdot 49=343 \\)."
         },
         {
           "id": "m2q5",
@@ -1082,37 +1082,37 @@
         {
           "id": "m2q6",
           "type": "mcq",
-          "prompt": "Circle \\( N \\) has a radius of \\( 6 \\) millimeters \\( (\\\\text {mm}) \\). Circle \\( M \\) has an area of \\( 121\\\\pi\\\\,\\\\text {mm}^2 \\). What is the total area, in \\( \\\\text {mm}^2 \\), of circles \\( N \\) and \\( M \\)?",
+          "prompt": "Circle \\( N \\) has a radius of \\( 6 \\) millimeters \\( (\\text {mm}) \\). Circle \\( M \\) has an area of \\( 121\\pi\\,\\text {mm}^2 \\). What is the total area, in \\( \\text {mm}^2 \\), of circles \\( N \\) and \\( M \\)?",
           "choices": [
-            "\\( 17\\\\pi \\)",
-            "\\( 133\\\\pi \\)",
-            "\\( 145\\\\pi \\)",
-            "\\( 157\\\\pi \\)"
+            "\\( 17\\pi \\)",
+            "\\( 133\\pi \\)",
+            "\\( 145\\pi \\)",
+            "\\( 157\\pi \\)"
           ],
           "answer": 3,
-          "rationale": "Areas: \\( 36\\\\pi \\) and \\( 121\\\\pi \\); sum \\( 157\\\\pi \\)."
+          "rationale": "Areas: \\( 36\\pi \\) and \\( 121\\pi \\); sum \\( 157\\pi \\)."
         },
         {
           "id": "m2q7",
           "type": "mcq",
-          "prompt": "What is the slope of the graph of \\( y=\\\\tfrac{1}{2}(27x+12)+7x \\) in the \\( xy \\)-plane?",
+          "prompt": "What is the slope of the graph of \\( y=\\tfrac{1}{2}(27x+12)+7x \\) in the \\( xy \\)-plane?",
           "choices": [
-            "\\( \\\\tfrac{27}{2} \\)",
-            "\\( \\\\tfrac{41}{2} \\)",
+            "\\( \\tfrac{27}{2} \\)",
+            "\\( \\tfrac{41}{2} \\)",
             "\\( 27 \\)",
             "\\( 34 \\)"
           ],
           "answer": 1,
-          "rationale": "Slope \\( = \\\\tfrac{27}{2}+7=\\\\tfrac{27}{2}+\\\\tfrac{14}{2}=\\\\tfrac{41}{2} \\)."
+          "rationale": "Slope \\( = \\tfrac{27}{2}+7=\\tfrac{27}{2}+\\tfrac{14}{2}=\\tfrac{41}{2} \\)."
         },
         {
           "id": "m2q8",
           "type": "mcq",
-          "prompt": "The function \\( f \\) is defined by \\( f(x)=\\\\dfrac{2^{a+4}}{x^{5}} \\), and \\( f(a)=-19 \\), where \\( a \\) is a constant. What is the value of \\( a \\)?",
+          "prompt": "The function \\( f \\) is defined by \\( f(x)=\\dfrac{2^{a+4}}{x^{5}} \\), and \\( f(a)=-19 \\), where \\( a \\) is a constant. What is the value of \\( a \\)?",
           "choices": [
             "\\( -111 \\)",
             "\\( -79 \\)",
-            "\\( -\\\\tfrac{29}{2} \\)",
+            "\\( -\\tfrac{29}{2} \\)",
             "\\( -8 \\)"
           ],
           "answer": 3,
@@ -1142,7 +1142,7 @@
             "\\( 8 \\)"
           ],
           "answer": 3,
-          "rationale": "From \\( p \\): \\( 34-(-2)=6(5-c) \\\\Rightarrow c=-1 \\). Then slope of \\( f \\): \\( \\\\dfrac{52-(-4)}{6-(-1)}=\\\\dfrac{56}{7}=8 \\)."
+          "rationale": "From \\( p \\): \\( 34-(-2)=6(5-c) \\Rightarrow c=-1 \\). Then slope of \\( f \\): \\( \\dfrac{52-(-4)}{6-(-1)}=\\dfrac{56}{7}=8 \\)."
         },
         {
           "id": "m2q11",
@@ -1154,7 +1154,7 @@
             8,
             "8"
           ],
-          "rationale": "Discriminant \\( = (-24)^2-4(18)c=0 \\\\Rightarrow c=8 \\)."
+          "rationale": "Discriminant \\( = (-24)^2-4(18)c=0 \\Rightarrow c=8 \\)."
         },
         {
           "id": "m2q12",
@@ -1167,12 +1167,12 @@
             "\\( V(x)=x(x+11)(x+1) \\)"
           ],
           "answer": 0,
-          "rationale": "Volume \\( = \\\\text{length}\\\\times\\\\text{width}\\\\times\\\\text{height}=x(x-1)\\\\cdot 11 \\)."
+          "rationale": "Volume \\( = \\text{length}\\times\\text{width}\\times\\text{height}=x(x-1)\\cdot 11 \\)."
         },
         {
           "id": "m2q13",
           "type": "gridin",
-          "prompt": "In the given equation, \\( k \\) is a constant. The solution to the given equation is \\( x=\\\\dfrac{15k}{3} \\). What is the value of \\( k \\)?<br>\\n\\( \\\\dfrac{x^2+1}{x}=k \\)",
+          "prompt": "In the given equation, \\( k \\) is a constant. The solution to the given equation is \\( x=\\dfrac{15k}{3} \\). What is the value of \\( k \\)?<br>\\n\\( \\dfrac{x^2+1}{x}=k \\)",
           "answerNumeric": 3,
           "tolerance": 0,
           "altNumeric": [
@@ -1188,7 +1188,7 @@
           "choices": [
             "\\( x<h \\)",
             "\\( x>k \\)",
-            "\\( x>k \\\\text{ or } x<h \\)",
+            "\\( x>k \\text{ or } x<h \\)",
             "\\( h<x<k \\)"
           ],
           "answer": 3,
@@ -1197,27 +1197,27 @@
         {
           "id": "m2q15",
           "type": "mcq",
-          "prompt": "One gallon of sealant costs \\( \\\\$29 \\) and will cover \\( 300 \\\\) square feet of a surface. A deck has a total surface area of \\( q \\) square feet. Which equation represents the cost \\( c \\), in dollars, of the sealant needed to cover the deck twice?",
+          "prompt": "One gallon of sealant costs \\( \\$29 \\) and will cover \\( 300 \\) square feet of a surface. A deck has a total surface area of \\( q \\) square feet. Which equation represents the cost \\( c \\), in dollars, of the sealant needed to cover the deck twice?",
           "choices": [
-            "\\( c=\\\\dfrac{29q}{300} \\)",
-            "\\( c=\\\\dfrac{29q}{2} \\)",
-            "\\( c=29\\\\left(\\\\dfrac{2q}{300}\\\\right) \\)",
-            "\\( c=\\\\dfrac{29(2q)}{30} \\)"
+            "\\( c=\\dfrac{29q}{300} \\)",
+            "\\( c=\\dfrac{29q}{2} \\)",
+            "\\( c=29\\left(\\dfrac{2q}{300}\\right) \\)",
+            "\\( c=\\dfrac{29(2q)}{30} \\)"
           ],
           "answer": 2,
-          "rationale": "Gallons needed \\( = \\\\dfrac{2q}{300} \\); cost \\( = 29\\\\cdot \\\\dfrac{2q}{300} \\)."
+          "rationale": "Gallons needed \\( = \\dfrac{2q}{300} \\); cost \\( = 29\\cdot \\dfrac{2q}{300} \\)."
         },
         {
           "id": "m2q16",
           "type": "gridin",
-          "prompt": "A triangular prism has a height of \\( 9 \\) centimeters \\( (\\\\text{cm}) \\) and a volume of \\( 234\\\\,\\\\text{cm}^3 \\). What is the area, in \\( \\\\text{cm}^2 \\), of the base of the prism? (The volume of a triangular prism is equal to \\( Bh \\), where \\( B \\) is the area of the base and \\( h \\) is the height of the prism.)",
+          "prompt": "A triangular prism has a height of \\( 9 \\) centimeters \\( (\\text{cm}) \\) and a volume of \\( 234\\,\\text{cm}^3 \\). What is the area, in \\( \\text{cm}^2 \\), of the base of the prism? (The volume of a triangular prism is equal to \\( Bh \\), where \\( B \\) is the area of the base and \\( h \\) is the height of the prism.)",
           "answerNumeric": 26,
           "tolerance": 0,
           "altNumeric": [
             26,
             "26"
           ],
-          "rationale": "Compute \\( B=\\\\dfrac{234}{9}=26 \\)."
+          "rationale": "Compute \\( B=\\dfrac{234}{9}=26 \\)."
         },
         {
           "id": "m2q17",
@@ -1229,7 +1229,7 @@
             192.1,
             "192.1"
           ],
-          "rationale": "Square the factor: \\( 1.852^2\\\\approx 3.4299 \\); \\( 56\\\\times 3.4299 \\\\approx 192.1 \\)."
+          "rationale": "Square the factor: \\( 1.852^2\\approx 3.4299 \\); \\( 56\\times 3.4299 \\approx 192.1 \\)."
         },
         {
           "id": "m2q18",
@@ -1241,25 +1241,25 @@
             -23,
             "-23"
           ],
-          "rationale": "Expand \\( (x+7)^2+(y-3)^2=81 \\\\Rightarrow x^2+y^2+14x-6y-23=0 \\)."
+          "rationale": "Expand \\( (x+7)^2+(y-3)^2=81 \\Rightarrow x^2+y^2+14x-6y-23=0 \\)."
         },
         {
           "id": "m2q19",
           "type": "mcq",
-          "prompt": "Consider the system \\( \\\\begin{aligned} y&=x-c \\\\\\\\ y&=-4(x-6)^2 \\\\end{aligned} \\), where \\( c \\) is a constant. The system has two distinct real solutions. Which of the following could be the value of \\( c \\)?",
+          "prompt": "Consider the system \\( \\begin{aligned} y&=x-c \\ y&=-4(x-6)^2 \\end{aligned} \\), where \\( c \\) is a constant. The system has two distinct real solutions. Which of the following could be the value of \\( c \\)?",
           "choices": [
             "\\( 1 \\)",
             "\\( 5 \\)",
-            "\\( \\\\tfrac{35}{10} \\)",
+            "\\( \\tfrac{35}{10} \\)",
             "\\( 11 \\)"
           ],
           "answer": 3,
-          "rationale": "Two intersections occur when the line passes below the vertex \\( (6,\\,0) \\): need \\( 6-c<0 \\\\Rightarrow c>6 \\)."
+          "rationale": "Two intersections occur when the line passes below the vertex \\( (6,\\,0) \\): need \\( 6-c<0 \\Rightarrow c>6 \\)."
         },
         {
           "id": "m2q20",
           "type": "mcq",
-          "prompt": "The functions \\( f \\) and \\( g \\) are defined by the equations shown, where \\( a \\) and \\( b \\) are integer constants, \\( a<b \\) and \\( b\\\\le 0 \\). If \\( y=f(x) \\) and \\( y=g(x) \\) are graphed in the \\( xy \\)-plane, which of the following equations displays, as a constant or coefficient, the y‑coordinate of the y‑intercept of the graph of the corresponding function?<br><br>I. \\( f(x)=a(4.2)^{x+b} \\)<br>II. \\( g(x)=a(4.2)^{x}+b \\)",
+          "prompt": "The functions \\( f \\) and \\( g \\) are defined by the equations shown, where \\( a \\) and \\( b \\) are integer constants, \\( a<b \\) and \\( b\\le 0 \\). If \\( y=f(x) \\) and \\( y=g(x) \\) are graphed in the \\( xy \\)-plane, which of the following equations displays, as a constant or coefficient, the y‑coordinate of the y‑intercept of the graph of the corresponding function?<br><br>I. \\( f(x)=a(4.2)^{x+b} \\)<br>II. \\( g(x)=a(4.2)^{x}+b \\)",
           "choices": [
             "I only",
             "II only",
@@ -1272,20 +1272,20 @@
         {
           "id": "m2q21",
           "type": "mcq",
-          "prompt": "For each real number \\( r \\), which of the following points lies on the graph of each equation in the \\( xy \\)-plane for the given system?<br>\\n\\( \\\\begin{aligned} 5x+4y&=3 \\\\\\\\ 15x+12y&=9 \\\\end{aligned} \\)",
+          "prompt": "For each real number \\( r \\), which of the following points lies on the graph of each equation in the \\( xy \\)-plane for the given system?<br>\\n\\( \\begin{aligned} 5x+4y&=3 \\ 15x+12y&=9 \\end{aligned} \\)",
           "choices": [
-            "\\( \\\\big(r,\\,-\\\\tfrac{5}{4}r+\\\\tfrac{3}{4}\\\\big) \\)",
-            "\\( \\\\big(r,\\\\,\\\\tfrac{5}{4}r+\\\\tfrac{3}{4}\\\\big) \\)",
-            "\\( \\\\big(-\\\\tfrac{4}{5}r+\\\\tfrac{3}{5},\\\\,r\\\\big) \\)",
-            "\\( \\\\big(\\\\tfrac{r}{3}+3,\\\\,-\\\\tfrac{r}{3}+9\\\\big) \\)"
+            "\\( \\big(r,\\,-\\tfrac{5}{4}r+\\tfrac{3}{4}\\big) \\)",
+            "\\( \\big(r,\\,\\tfrac{5}{4}r+\\tfrac{3}{4}\\big) \\)",
+            "\\( \\big(-\\tfrac{4}{5}r+\\tfrac{3}{5},\\,r\\big) \\)",
+            "\\( \\big(\\tfrac{r}{3}+3,\\,-\\tfrac{r}{3}+9\\big) \\)"
           ],
           "answer": 0,
-          "rationale": "Solve first equation for \\( y \\): \\( y=-\\\\tfrac{5}{4}x+\\\\tfrac{3}{4} \\)."
+          "rationale": "Solve first equation for \\( y \\): \\( y=-\\tfrac{5}{4}x+\\tfrac{3}{4} \\)."
         },
         {
           "id": "m2q22",
           "type": "mcq",
-          "prompt": "In triangle \\( ABC \\) and triangle \\( DEF \\), sides \\( AB \\) and \\( DE \\) each have a side length of \\( 10 \\) inches, and angles \\( A \\) and \\( D \\) each have an angle measure of \\( 40^{\\\\circ} \\). Which of the following additional pieces of information is/are sufficient to prove whether triangle \\( ABC \\) is congruent to triangle \\( DEF \\)?<br><br>I. The measures of angles \\( B \\) and \\( C \\) are equal.<br>II. The lengths of sides \\( AC \\) and \\( DF \\) are equal.<br>III. The lengths of sides \\( BC \\) and \\( EF \\) are equal.",
+          "prompt": "In triangle \\( ABC \\) and triangle \\( DEF \\), sides \\( AB \\) and \\( DE \\) each have a side length of \\( 10 \\) inches, and angles \\( A \\) and \\( D \\) each have an angle measure of \\( 40^{\\circ} \\). Which of the following additional pieces of information is/are sufficient to prove whether triangle \\( ABC \\) is congruent to triangle \\( DEF \\)?<br><br>I. The measures of angles \\( B \\) and \\( C \\) are equal.<br>II. The lengths of sides \\( AC \\) and \\( DF \\) are equal.<br>III. The lengths of sides \\( BC \\) and \\( EF \\) are equal.",
           "choices": [
             "I is sufficient, but II and III are not.",
             "II is sufficient, but I and III are not.",
@@ -1293,7 +1293,7 @@
             "II is sufficient and III is sufficient, but I is not."
           ],
           "answer": 1,
-          "rationale": "Given \\( AB \\\\cong DE \\) and \\( \\\\angle A \\\\cong \\\\angle D \\), knowing \\( AC \\\\cong DF \\) gives SAS congruence."
+          "rationale": "Given \\( AB \\cong DE \\) and \\( \\angle A \\cong \\angle D \\), knowing \\( AC \\cong DF \\) gives SAS congruence."
         }
       ]
     }
