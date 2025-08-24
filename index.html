@@ -159,8 +159,8 @@
   <div class="loader">
     <input id="path" type="text" value="./questions.json" />
     <button class="btn" id="loadBtn">Load set</button>
-  <!--  로컬 JSON 파일로 세트 불러오기 -->
-  <input id="file" type="file" accept=".json,application/json" style="margin-left:10px"/>
+    <!-- 로컬 JSON 파일로 세트 불러오기 (개발/테스트용) -->
+    <input id="file" type="file" accept=".json,application/json" style="margin-left:10px"/>
   </div>
   <div id="loadError" class="alert" style="display:none"></div>
 
@@ -313,7 +313,7 @@ document.addEventListener('click',e=>{
   if(!dirPanel.contains(e.target) && e.target!==dirBtn) dirPanel.style.display='none';
 });
 
-/* ===== 로드 ===== */
+/* ===== 로드 (URL/파일/랜딩 연동) ===== */
 async function loadSet(path){
   try{
     const res = await fetch(path, {cache:'no-store'});
@@ -324,31 +324,68 @@ async function loadSet(path){
     $('#loadError').style.display='block';
     return;
   }
-flags.clear(); answers={}; $('#scoreBox').innerHTML='';
-dirPanel.innerHTML = fmt(SET.metadata?.directions);
 
-// 저장본 불러오기
-RESTORE_CACHE = tryRestore();
-if(RESTORE_CACHE){
-  answers = RESTORE_CACHE.answers || {};
-  // 우선 해당 모듈부터 열고, 아래에서 qIdx를 당겨서 같은 문항으로 맞춤
-  const restoreMod = Math.min(RESTORE_CACHE.modIdx ?? 0, SET.modules.length-1);
-  startModule(restoreMod);
+  flags.clear(); answers={}; $('#scoreBox').innerHTML='';
+  dirPanel.innerHTML = fmt(SET.metadata?.directions);
 
-  // 같은 모듈의 남은 시간 복원(선택)
-  const savedSec = RESTORE_CACHE.timers?.[String(restoreMod)];
-  if(typeof savedSec === 'number' && !Number.isNaN(savedSec)){
-    timerSec = Math.max(0, savedSec|0);
-    $('#timer').textContent = fmtTime(timerSec);
- if (timerSec % 5 === 0) saveState(); // 5초에 한 번씩 저장
+  // 저장본 불러오기
+  RESTORE_CACHE = tryRestore();
+  if(RESTORE_CACHE){
+    answers = RESTORE_CACHE.answers || {};
+    const restoreMod = Math.min(RESTORE_CACHE.modIdx ?? 0, SET.modules.length-1);
+    startModule(restoreMod);
+
+    // 같은 모듈의 남은 시간 복원(선택)
+    const savedSec = RESTORE_CACHE.timers?.[String(restoreMod)];
+    if(typeof savedSec === 'number' && !Number.isNaN(savedSec)){
+      timerSec = Math.max(0, savedSec|0);
+      $('#timer').textContent = fmtTime(timerSec);
+    }
+
+    // 같은 문항으로 이동
+    qIdx = Math.min(RESTORE_CACHE.qIdx ?? 0, totalQ(modIdx)-1);
+    renderQuestion(); renderNavButton();
+  } else {
+    startModule(0);
   }
-
-  // 같은 문항으로 이동
-  qIdx = Math.min(RESTORE_CACHE.qIdx ?? 0, totalQ(modIdx)-1);
-  renderQuestion(); renderNavButton();
-} else {
-  startModule(0);
 }
+
+// 랜딩에서 넘긴 로컬 파일(JSON 텍스트)로 시작
+function bootFromBlob(){
+  const key = 'dsat_launch_blob';
+  const text = localStorage.getItem(key);
+  if(!text){
+    $('#loadError').textContent = 'No pending set. Please start from the landing page.';
+    $('#loadError').style.display = 'block';
+    return;
+  }
+  try{
+    SET = JSON.parse(text);
+    localStorage.removeItem(key); // 1회 사용 후 제거
+
+    $('#loadError').style.display='none';
+    flags.clear(); answers={}; $('#scoreBox').innerHTML='';
+    dirPanel.innerHTML = fmt(SET.metadata?.directions);
+
+    RESTORE_CACHE = tryRestore();
+    if(RESTORE_CACHE){
+      answers = RESTORE_CACHE.answers || {};
+      const restoreMod = Math.min(RESTORE_CACHE.modIdx ?? 0, (SET.modules?.length||1)-1);
+      startModule(restoreMod);
+      const savedSec = RESTORE_CACHE.timers?.[String(restoreMod)];
+      if(typeof savedSec === 'number' && !Number.isNaN(savedSec)){
+        timerSec = Math.max(0, savedSec|0);
+        $('#timer').textContent = fmtTime(timerSec);
+      }
+      qIdx = Math.min(RESTORE_CACHE.qIdx ?? 0, totalQ(modIdx)-1);
+      renderQuestion(); renderNavButton();
+    } else {
+      startModule(0);
+    }
+  }catch(e){
+    $('#loadError').textContent = 'Failed to parse set from landing page: ' + e.message;
+    $('#loadError').style.display='block';
+  }
 }
 
 /* ===== 모듈/타이머 ===== */
@@ -364,8 +401,7 @@ function startModule(idx){
     timerSec = Math.max(0, timerSec - 1);
     $('#timer').textContent = fmtTime(timerSec);
     if (timerSec % 5 === 0) saveState(); // 5초마다 스냅샷 저장
-
-   if (timerSec === 0) { clearInterval(tickId); openSubmitConfirm(); }
+    if (timerSec === 0) { clearInterval(tickId); openSubmitConfirm(); }
   }, 1000);
 
   $('#card').style.display='block';
@@ -434,21 +470,20 @@ function renderQuestion(){
           <div class="txt">${c}</div>`;
         if(String(answers[q.id])===String(i)) row.classList.add('selected');
         row.addEventListener('click',()=>{
- 		 answers[q.id]=i;
-		  saveState();
-  		renderQuestion(); renderNavButton();
-	});
+          answers[q.id]=i;
+          saveState();
+          renderQuestion(); renderNavButton();
+        });
         area.appendChild(row);
       });
     }else{
       const inp=document.createElement('input'); inp.className='gridin';
       inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
       inp.oninput=e=>{
-  	answers[q.id]=e.target.value.trim();
-  	saveState();
- 	 renderNavButton();
-     };
-
+        answers[q.id]=e.target.value.trim();
+        saveState();
+        renderNavButton();
+      };
       area.appendChild(inp);
     }
     right.appendChild(area);
@@ -469,21 +504,21 @@ function renderQuestion(){
           <div class="bubble">${bubbleABC(i)}</div>
           <div class="txt">${c}</div>`;
         if(String(answers[q.id])===String(i)) row.classList.add('selected');
-                row.addEventListener('click',()=>{
- 		 answers[q.id]=i;
-		  saveState();
-  		renderQuestion(); renderNavButton();
-	});
+        row.addEventListener('click',()=>{
+          answers[q.id]=i;
+          saveState();
+          renderQuestion(); renderNavButton();
+        });
         area.appendChild(row);
       });
     }else{
       const inp=document.createElement('input'); inp.className='gridin';
       inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
       inp.oninput=e=>{
- 	 answers[q.id]=e.target.value.trim();
-	  saveState();
- 	 renderNavButton();
-	};
+        answers[q.id]=e.target.value.trim();
+        saveState();
+        renderNavButton();
+      };
       area.appendChild(inp);
     }
     qc.appendChild(area);
@@ -573,17 +608,17 @@ function showFinalReport(){
   $('#ribbon').style.display='none';
   hideNavPopup();
 
-// 결과 상단 도구 모음 (CSV)
-const box = $('#scoreBox'); box.innerHTML='';
-const tool = document.createElement('div');
-tool.className = 'qcard';
-tool.innerHTML = `
-  <div class="result-title">
-    <div><b>${SET.metadata?.title || 'DSAT Practice'} — Combined Report</b></div>
-    <div><button class="btn" id="csvBtn">Download CSV</button></div>
-  </div>`;
-box.appendChild(tool);
-$('#csvBtn').onclick = downloadCSV;
+  // 결과 상단 도구 모음 (CSV)
+  const box = $('#scoreBox'); box.innerHTML='';
+  const tool = document.createElement('div');
+  tool.className = 'qcard';
+  tool.innerHTML = `
+    <div class="result-title">
+      <div><b>${SET.metadata?.title || 'DSAT Practice'} — Combined Report</b></div>
+      <div><button class="btn" id="csvBtn">Download CSV</button></div>
+    </div>`;
+  box.appendChild(tool);
+  $('#csvBtn').onclick = downloadCSV;
 
   // 섹션별 그룹화 (rw, math)
   const groups = {};
@@ -598,8 +633,6 @@ $('#csvBtn').onclick = downloadCSV;
     const rank = k => (k==='rw'?1 : k==='math'?2 : 9);
     return rank(a)-rank(b);
   });
-
-  const box = $('#scoreBox'); box.innerHTML='';
 
   // 섹션별 렌더링
   order.forEach(secKey=>{
@@ -690,7 +723,7 @@ function openExplain(secName, modNo, idx, q, ok){
 
   explainBody.innerHTML = `
     <div style="margin-bottom:8px; font-weight:800">${secName} · Module ${modNo} · Question ${idx} ${badge}</div>
-    <div style="margin-bottom:10px; color:var(--muted); font-size:13px">${q.type==='mcq'?'Multiple Choice':'Student‑Produced Response'}</div>
+    <div style="margin-bottom:10px; color:var(--muted); font-size:13px">${q.type==='mcq'?'Multiple Choice':'Student-Produced Response'}</div>
     ${passageBlock}
     <div class="qcard" style="margin-bottom:10px">
       <div class="qstem">${injectImages(fmt(q.prompt))}</div>
@@ -706,19 +739,18 @@ function openExplain(secName, modNo, idx, q, ok){
   typeset();
 }
 
-/* ===== 기타 ===== */
+/* ===== 기타: 수동 로드/파일 로드/부트스트랩 ===== */
 $('#loadBtn').onclick=()=>loadSet($('#path').value);
 $('#hideBtn').onclick=()=>{ const w=$('.wrap'); w.style.display = w.style.display==='none'?'block':'none'; };
-window.addEventListener('DOMContentLoaded',()=>loadSet($('#path').value));
 
-// 로컬 JSON 파일로 세트 불러오기
+// 파일로 세트 불러오기(개발/테스트용)
 async function loadSetFromFile(file){
   try{
     const text = await file.text();
     SET = JSON.parse(text);
     $('#loadError').style.display='none';
 
-    // ← loadSet() 성공 이후와 동일한 초기화 루틴
+    // loadSet() 이후와 동일 초기화
     flags.clear(); answers={}; $('#scoreBox').innerHTML='';
     dirPanel.innerHTML = fmt(SET.metadata?.directions);
 
@@ -742,7 +774,6 @@ async function loadSetFromFile(file){
     $('#loadError').style.display='block';
   }
 }
-
 $('#file').addEventListener('change', (e)=>{
   const f = e.target.files && e.target.files[0];
   if(f) loadSetFromFile(f);
@@ -770,7 +801,6 @@ function correctAnswerDisplay(q){
   }
   return (q.answerNumeric ?? (Array.isArray(q.altNumeric)? q.altNumeric[0] : '')) ?? '';
 }
-
 function buildCSV(){
   const header = ['Section','Module','Number','QuestionID','Type','Correct','YourAnswer','CorrectAnswer','Flagged'];
   const rows = [header];
@@ -809,7 +839,6 @@ function buildCSV(){
 
   return rows.map(r=> r.map(csvEscape).join(',')).join('\r\n');
 }
-
 function downloadCSV(){
   const csv = buildCSV();
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
@@ -824,10 +853,30 @@ function downloadCSV(){
   URL.revokeObjectURL(url);
 }
 
-
 // 팝업 외부 클릭 닫기 (네비)
 document.addEventListener('click', (e)=>{
   if(!$('#navPopup').contains(e.target) && e.target!==$('#navOpen')) hideNavPopup();
+});
+
+/* ===== 부트스트랩: 랜딩/쿼리 파라미터 기준으로만 시작 ===== */
+window.addEventListener('DOMContentLoaded', ()=>{
+  const qs = new URLSearchParams(location.search);
+  const url = qs.get('set');
+  const src = qs.get('source');
+
+  if (url) {
+    // URL 모드: 쿼리의 set= 을 사용
+    $('#path').value = url;
+    document.querySelector('.loader')?.style && (document.querySelector('.loader').style.display='none');
+    loadSet(url);
+  } else if (src === 'blob') {
+    // 파일 모드: 랜딩에서 넘긴 JSON 텍스트 사용
+    document.querySelector('.loader')?.style && (document.querySelector('.loader').style.display='none');
+    bootFromBlob();
+  } else {
+    // 아무 것도 자동 시작하지 않음(랜딩에서만 진입하도록)
+    // 개발 편의를 위해 상단 로더는 남겨둠
+  }
 });
 </script>
 </body>
