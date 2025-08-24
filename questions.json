@@ -139,7 +139,7 @@
           "id": "rw1q11",
           "type": "mcq",
           "layout": "split",
-          "passage": "A student is researching the trends in the topics submitted to a national science fair for high school students. The graph shows the number of submissions by topic that were made each year. Based on the data in the graph, the student claims that there were more medicine and health research topics submitted in 2019 than in any other year.\n\n<img src='graph_q11.png' alt='Total Science Research Submissions by Topic, 2016–2019'>",
+          "passage": "A student is researching the trends in the topics submitted to a national science fair for high school students. The graph shows the number of submissions by topic that were made each year. Based on the data in the graph, the student claims that there were more medicine and health research topics submitted in 2019 than in any other year.\n\n [[IMAGE: graph_q11.png|'Total Science Research Submissions by Topic, 2016–2019']]",
           "prompt": "Which choice most effectively uses data from the graph to support the underlined claim?",
           "choices": [
             "In 2016, the number of cellular and molecular biology topic submissions was the same as the number of animal science topic submissions.",
@@ -167,7 +167,7 @@
           "id": "rw1q13",
           "type": "mcq",
           "layout": "split",
-          "passage": "To understand the extent of deforestation in the Chorotega region of Costa Rica, Juan Pablo Arroyo-Mora and colleagues used historical aerial photography and remote sensing data to track changes in the annual mean size of forest patches across different land use capability classes (categories that indicate possible uses of forest land). Due to the Chorotega region’s varied land use, these changes differed substantially across the classes.\n\n<img src='graph_q13.png' alt='Annual Mean Forest Patch Size for Three Land Use Capability Classes in the Chorotega Region, Costa Rica (1960–2000)'>",
+          "passage": "To understand the extent of deforestation in the Chorotega region of Costa Rica, Juan Pablo Arroyo-Mora and colleagues used historical aerial photography and remote sensing data to track changes in the annual mean size of forest patches across different land use capability classes (categories that indicate possible uses of forest land). Due to the Chorotega region’s varied land use, these changes differed substantially across the classes.\n\n [[IMAGE: graph_q13.png|'Annual Mean Forest Patch Size for Three Land Use Capability Classes in the Chorotega Region, Costa Rica (1960–2000)']]",
           "prompt": "Which choice most effectively uses data from the graph to complete the assertion?",
           "choices": [
             "difference between mean forest patch size in Class VIII and in Class VI in 2000.",
