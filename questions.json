@@ -887,7 +887,7 @@
         {
           "id": "m1q13",
           "type": "mcq",
-          "prompt": "\\( \\begin{aligned} 2y&=5x+16 \\ \\ -2y&=7x-22 \\end{aligned} \\) <br> The solution to the given system of equations is \\( (x, y) \\). What is the value of \\( 24x \\)?",
+          "prompt": "\\( \\begin{aligned} 2y&=5x+16 \\\\\\ -2y&=7x-22 \\end{aligned} \\) <br> The solution to the given system of equations is \\( (x, y) \\). What is the value of \\( 24x \\)?",
           "choices": [
             "\\( -12 \\)",
             "\\( -6 \\)",
