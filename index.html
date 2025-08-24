@@ -347,7 +347,7 @@ if(RESTORE_CACHE){
 } else {
   startModule(0);
 }
-
+}
 
 /* ===== 모듈/타이머 ===== */
 function startModule(idx){
@@ -361,7 +361,9 @@ function startModule(idx){
   tickId = setInterval(()=>{
     timerSec = Math.max(0, timerSec - 1);
     $('#timer').textContent = fmtTime(timerSec);
-    if (timerSec === 0) { clearInterval(tickId); openSubmitConfirm(); }
+    if (timerSec % 5 === 0) saveState(); // 5초마다 스냅샷 저장
+
+   if (timerSec === 0) { clearInterval(tickId); openSubmitConfirm(); }
   }, 1000);
 
   $('#card').style.display='block';
