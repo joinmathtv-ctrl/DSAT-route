@@ -599,6 +599,90 @@ function isCorrect(q){
   if(q.type==='mcq') return Number(answers[q.id])===Number(q.answer);
   return gridinEqual(answers[q.id], q);
 }
+/* ===== 스킬 요약 유틸 ===== */
+// 각 문항의 스킬 코드 배열을 추출 (없으면 빈배열)
+// 사용 가능한 키: q.skills | q.tags | q.topics
+function getSkillCodes(q){
+  const raw = q.skills || q.tags || q.topics || [];
+  if (!Array.isArray(raw)) return [];
+  return raw.map(s=>String(s).trim()).filter(Boolean);
+}
+
+// 전체 세트의 스킬별 {correct,total} 집계
+function collectSkillStats(){
+  const stats = {}; // code -> {correct,total}
+  (SET.modules || []).forEach(m=>{
+    (m.questions || []).forEach(q=>{
+      const codes = getSkillCodes(q);
+      if(!codes.length) return;
+      const ok = isCorrect(q);
+      codes.forEach(code=>{
+        if(!stats[code]) stats[code] = {correct:0,total:0};
+        stats[code].total += 1;
+        if(ok) stats[code].correct += 1;
+      });
+    });
+  });
+  return stats;
+}
+
+// Top3/Bottom3 카드 엘리먼트 생성
+function buildSkillSummaryCard(minCount){
+  const stats = collectSkillStats();
+  const entries = Object.entries(stats).map(([code, v])=>({
+    code,
+    correct: v.correct,
+    total: v.total,
+    acc: v.total ? v.correct / v.total : 0
+  }));
+  const eligible = entries.filter(e=> e.total >= minCount).sort((a,b)=> b.acc - a.acc);
+
+  const wrap = document.createElement('div');
+  wrap.className = 'qcard';
+  const headNote = `<span style="color:var(--muted); font-size:13px">· 최소 ${minCount}문항 기준</span>`;
+
+  if(eligible.length === 0){
+    wrap.innerHTML = `
+      <div class="result-title">
+        <div><b>Skill Summary</b> ${headNote}</div>
+      </div>
+      <div style="margin-top:6px; color:var(--muted); font-size:14px">
+        스킬 태그가 감지되지 않았습니다. 문항 JSON에 <code>"skills": ["FUNC_LINEAR","RATIO"]</code> 형태로 태그를 추가하면 요약이 표시됩니다.
+      </div>`;
+    return wrap;
+  }
+
+  const strengths = eligible.slice(0,3);
+  const weaknesses = eligible.slice(-3).reverse();
+
+  const li = (e)=> `
+    <li style="display:flex; justify-content:space-between; gap:10px; border:1px solid var(--line);
+               border-radius:10px; padding:8px 10px; background:#fff">
+      <span>${e.code}</span>
+      <span style="font-variant-numeric:tabular-nums">${Math.round(e.acc*100)}% <span style="color:var(--muted)">(${e.correct}/${e.total})</span></span>
+    </li>`;
+
+  wrap.innerHTML = `
+    <div class="result-title">
+      <div><b>Skill Summary</b> ${headNote}</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px">
+      <div>
+        <div style="font-weight:700; color:#065f46; margin-bottom:6px">Top strengths</div>
+        <ul style="list-style:none; margin:0; padding:0; display:grid; gap:6px">
+          ${strengths.map(li).join('')}
+        </ul>
+      </div>
+      <div>
+        <div style="font-weight:700; color:#991b1b; margin-bottom:6px">Needs work</div>
+        <ul style="list-style:none; margin:0; padding:0; display:grid; gap:6px">
+          ${weaknesses.map(li).join('')}
+        </ul>
+      </div>
+    </div>`;
+  return wrap;
+}
+
 
 /* ===== 최종 결과표 & 해설 팝업 ===== */
 function showFinalReport(){
@@ -619,6 +703,9 @@ function showFinalReport(){
     </div>`;
   box.appendChild(tool);
   $('#csvBtn').onclick = downloadCSV;
+
+// 스킬 요약 카드(Top3/Bottom3) — 최소 2문항 이상인 스킬만 집계
+box.appendChild( buildSkillSummaryCard(2) );
 
   // 섹션별 그룹화 (rw, math)
   const groups = {};
