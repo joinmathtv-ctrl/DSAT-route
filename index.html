@@ -227,6 +227,40 @@ let SET=null, modIdx=0, qIdx=0;
 let flags=new Set(), answers={};
 let timerSec=0, tickId=null;
 
+/* ===== Auto-Save (localStorage) ===== */
+let RESTORE_CACHE = null; // 복원용 캐시(로드 직후 1회 사용)
+
+function storageKey(){
+  // 세트 식별자: 메타에 id가 있으면 우선 사용, 없으면 title 기반
+  const id = (SET?.metadata?.id || SET?.id || SET?.metadata?.title || 'default').toString();
+  return `dsat_autosave:${id}`;
+}
+
+function saveState(){
+  try{
+    const payload = {
+      modIdx,               // 현재 모듈 인덱스
+      qIdx,                 // 현재 문항 인덱스
+      answers,              // 문항별 내 답
+      timers: { [String(modIdx)]: timerSec } // 현재 모듈 남은 시간(선택)
+    };
+    localStorage.setItem(storageKey(), JSON.stringify(payload));
+  }catch(e){ /* 무시 */ }
+}
+
+function tryRestore(){
+  try{
+    const raw = localStorage.getItem(storageKey());
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(_e){ return null; }
+}
+
+function clearState(){
+  try{ localStorage.removeItem(storageKey()); }catch(_e){}
+}
+
+
 /* ===== 유틸 ===== */
 const $ = s=>document.querySelector(s);
 const bubbleABC = idx => "ABCD".charAt(idx);
@@ -288,10 +322,32 @@ async function loadSet(path){
     $('#loadError').style.display='block';
     return;
   }
-  flags.clear(); answers={}; $('#scoreBox').innerHTML='';
-  dirPanel.innerHTML = fmt(SET.metadata?.directions);
+flags.clear(); answers={}; $('#scoreBox').innerHTML='';
+dirPanel.innerHTML = fmt(SET.metadata?.directions);
+
+// 저장본 불러오기
+RESTORE_CACHE = tryRestore();
+if(RESTORE_CACHE){
+  answers = RESTORE_CACHE.answers || {};
+  // 우선 해당 모듈부터 열고, 아래에서 qIdx를 당겨서 같은 문항으로 맞춤
+  const restoreMod = Math.min(RESTORE_CACHE.modIdx ?? 0, SET.modules.length-1);
+  startModule(restoreMod);
+
+  // 같은 모듈의 남은 시간 복원(선택)
+  const savedSec = RESTORE_CACHE.timers?.[String(restoreMod)];
+  if(typeof savedSec === 'number' && !Number.isNaN(savedSec)){
+    timerSec = Math.max(0, savedSec|0);
+    $('#timer').textContent = fmtTime(timerSec);
+ if (timerSec % 5 === 0) saveState(); // 5초에 한 번씩 저장
+  }
+
+  // 같은 문항으로 이동
+  qIdx = Math.min(RESTORE_CACHE.qIdx ?? 0, totalQ(modIdx)-1);
+  renderQuestion(); renderNavButton();
+} else {
   startModule(0);
 }
+
 
 /* ===== 모듈/타이머 ===== */
 function startModule(idx){
@@ -373,13 +429,22 @@ function renderQuestion(){
           <div class="bubble">${bubbleABC(i)}</div>
           <div class="txt">${c}</div>`;
         if(String(answers[q.id])===String(i)) row.classList.add('selected');
-        row.addEventListener('click',()=>{ answers[q.id]=i; renderQuestion(); renderNavButton(); });
+        row.addEventListener('click',()=>{
+ 		 answers[q.id]=i;
+		  saveState();
+  		renderQuestion(); renderNavButton();
+	});
         area.appendChild(row);
       });
     }else{
       const inp=document.createElement('input'); inp.className='gridin';
       inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
-      inp.oninput=e=>{ answers[q.id]=e.target.value.trim(); renderNavButton(); };
+      inp.oninput=e=>{
+  	answers[q.id]=e.target.value.trim();
+  	saveState();
+ 	 renderNavButton();
+     };
+
       area.appendChild(inp);
     }
     right.appendChild(area);
@@ -400,13 +465,21 @@ function renderQuestion(){
           <div class="bubble">${bubbleABC(i)}</div>
           <div class="txt">${c}</div>`;
         if(String(answers[q.id])===String(i)) row.classList.add('selected');
-        row.addEventListener('click',()=>{ answers[q.id]=i; renderQuestion(); renderNavButton(); });
+                row.addEventListener('click',()=>{
+ 		 answers[q.id]=i;
+		  saveState();
+  		renderQuestion(); renderNavButton();
+	});
         area.appendChild(row);
       });
     }else{
       const inp=document.createElement('input'); inp.className='gridin';
       inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
-      inp.oninput=e=>{ answers[q.id]=e.target.value.trim(); renderNavButton(); };
+      inp.oninput=e=>{
+ 	 answers[q.id]=e.target.value.trim();
+	  saveState();
+ 	 renderNavButton();
+	};
       area.appendChild(inp);
     }
     qc.appendChild(area);
@@ -456,14 +529,15 @@ function openSubmitConfirm(){
 $('#confirmCancel').onclick = ()=> confirmBack.style.display='none';
 $('#confirmOk').onclick = ()=>{
   confirmBack.style.display='none';
+  saveState(); // 제출 직전 스냅샷
   gotoNextModule();
 };
 
 /* ===== 버튼 액션 ===== */
-$('#prevBtn').onclick=()=>{ if(qIdx>0){ qIdx--; renderQuestion(); } hideNavPopup(); };
+$('#prevBtn').onclick=()=>{ if(qIdx>0){ qIdx--; saveState(); renderQuestion(); } hideNavPopup(); };
 $('#nextBtn').onclick=()=>{
   const n=totalQ(modIdx);
-  if(qIdx<n-1){ qIdx++; renderQuestion(); hideNavPopup(); }
+  if(qIdx<n-1){ qIdx++; saveState(); renderQuestion(); hideNavPopup(); }
   else{ openSubmitConfirm(); }
 };
 
@@ -490,6 +564,7 @@ function isCorrect(q){
 /* ===== 최종 결과표 & 해설 팝업 ===== */
 function showFinalReport(){
   clearInterval(tickId);
+  clearState(); // 이 세트의 자동 저장본 제거(선택)
   $('#card').style.display='none';
   $('#ribbon').style.display='none';
   hideNavPopup();
