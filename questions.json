@@ -1044,7 +1044,7 @@
         {
           "id": "m2q3",
           "type": "mcq",
-          "prompt": " \\( \\begin{aligned} x+5&=11 \\\\\\\ y&=3x^2+3 \\end{aligned} \\) <br> At what point \\( (x, y) \\) do the graphs of the equations in the given system intersect?",
+          "prompt": " \\( \\begin{aligned} x+5&=11 \\\\\\\\ y&=3x^2+3 \\end{aligned} \\) <br> At what point \\( (x, y) \\) do the graphs of the equations in the given system intersect?",
           "choices": [
             "\\( (6,\\,108) \\)",
             "\\( (6,\\,111) \\)",
