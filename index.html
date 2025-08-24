@@ -38,6 +38,7 @@
     position:absolute; left:14px; top:44px; width:520px; background:#fff; border:1px solid var(--line);
     border-radius:12px; padding:12px; font-size:14px; line-height:1.45; box-shadow:0 12px 32px rgba(0,0,0,.08); display:none;
   }
+
   .dash{ height:6px; background:repeating-linear-gradient(90deg,
       #d9ead3 0 46px, #fff 46px 54px,
       #f9e1ae 54px 98px, #fff 98px 106px,
@@ -72,10 +73,8 @@
 
   .gridin{ width:260px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; font-size:16px; background:#fff }
 
-  /* ===== 2분할 레이아웃 ===== */
-  .gridwrap{
-    display:grid; grid-template-columns:1.1fr 1.2fr; gap:14px;
-  }
+  /* ===== 2분할 레이아웃 (RW/가이드) ===== */
+  .gridwrap{ display:grid; grid-template-columns:1.1fr 1.2fr; gap:14px; }
   .spr-left{ border:1px dashed var(--line); background:#fff; border-radius:12px; padding:12px; overflow:auto; max-height:60vh }
   .spr-right{}
   @media (max-width:900px){
@@ -89,7 +88,7 @@
     display:flex; align-items:center; justify-content:space-between;
     gap:10px; padding:10px 12px; background:#fff; border-top:1px solid var(--line);
   }
-  .r-left,.r-right{ display:flex; gap:20px; align-items:center } /* Prev/Next 간격 넓힘 */
+  .r-left,.r-right{ display:flex; gap:20px; align-items:center }
   .r-center{ display:flex; justify-content:center; flex:1 }
   #navOpen{ min-width:120px; font-weight:700 }
 
@@ -107,7 +106,7 @@
 
   /* 제출 확인 모달 */
   .modal-back{ position:fixed; inset:0; background:rgba(0,0,0,.36); display:none; z-index:20; }
-  .modal{ width:min(520px, 92vw); margin:10vh auto; background:#fff; border-radius:14px; border:1px solid var(--line); padding:14px }
+  .modal{ width:min(560px, 92vw); margin:10vh auto; background:#fff; border-radius:14px; border:1px solid var(--line); padding:14px }
   .modal .head{ font-weight:800; font-size:18px; margin-bottom:6px }
   .modal .body{ font-size:14px; color:var(--ink) }
   .modal .foot{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px }
@@ -139,7 +138,7 @@
 <div class="topbar">
   <div class="topbar-row">
     <div class="dir-zone">
-      <div class="crumb" id="crumb">Section 2, Module 1: Math</div>
+      <div class="crumb" id="crumb">Section — Module</div>
       <button class="dir-btn" id="dirToggle">Directions ▾</button>
       <div class="dir-panel" id="dirPanel"></div>
     </div>
@@ -170,7 +169,6 @@
       <button id="flagBtn" class="flag-btn">Mark for Review</button>
     </div>
     <div class="qtitle" id="qtitle"></div>
-    <!-- 본문 영역은 renderQuestion에서 단일/2분할로 동적 구성 -->
     <div id="qcontainer"></div>
   </div>
 
@@ -192,7 +190,7 @@
 
 <!-- 네비 팝업 -->
 <div class="nav-popup" id="navPopup">
-  <div style="font-weight:700; margin-bottom:8px">Module <span id="navMod">1</span></div>
+  <div style="font-weight:700; margin-bottom:8px"><span id="navSection">Section</span> · Module <span id="navMod">1</span></div>
   <div class="nav-grid" id="navGrid"></div>
 </div>
 
@@ -201,11 +199,11 @@
   <div class="modal">
     <div class="head">Submit now?</div>
     <div class="body">
-      <div style="margin-bottom:8px">You are submitting <b id="confirmModLabel">Module 1</b>.</div>
+      <div style="margin-bottom:8px">You are submitting <b id="confirmModLabel">Section · Module</b>.</div>
       <ul style="margin:0; padding-left:18px; color:var(--muted); font-size:14px">
         <li>After submission, answers for this module can no longer be changed.</li>
-        <li>Submitting Module 1 will automatically start Module 2.</li>
-        <li>Submitting Module 2 will show the combined report and explanations.</li>
+        <li>If this is Module 1 in a section, Module 2 in the same section will start automatically.</li>
+        <li>After the final module (Math Module 2), a combined report and explanations will be shown.</li>
       </ul>
     </div>
     <div class="foot">
@@ -215,7 +213,7 @@
   </div>
 </div>
 
-<!-- ===== 해설 팝업 (결과표에서만 생성/표시) ===== -->
+<!-- ===== 해설 팝업 ===== -->
 <div class="explain-back" id="explainBack">
   <div class="explain">
     <button class="x" id="explainClose">Close</button>
@@ -239,6 +237,36 @@ const injectImages = html =>
   (html||"").replace(/\[\[IMAGE:\s*([^|\]]+)(?:\|([^\]]+))?\]\]/g,
     (_m,src,alt)=>`<img src="./img/${src.trim()}" alt="${(alt||'problem image').trim()}" style="max-width:100%">`);
 
+/* RW 지문 통합 수집 */
+function getPassageHTML(q){
+  const base = q.passageHtml || q.passage || q.passageText || "";
+  const imgOne = q.passageImage ? `[[IMAGE: ${q.passageImage}]]` : "";
+  const imgMany = Array.isArray(q.passageImages)
+    ? q.passageImages.map(fn=>`[[IMAGE: ${fn}]]`).join("<br>")
+    : "";
+  const all = base + (imgOne || imgMany ? `<div>${imgOne}${imgMany}</div>` : "");
+  return injectImages(fmt(all));
+}
+
+/* 섹션 라벨/타이머 */
+function sectionLabel(key){
+  const k=(key||'').toLowerCase();
+  if(k==='rw'||k==='readingwriting'||k==='reading & writing') return 'Reading & Writing';
+  if(k==='math') return 'Math';
+  return key || 'Section';
+}
+function getDurationFor(idx){
+  const m = SET.modules[idx] || {};
+  const md = SET.metadata?.durationMinutesPerModule;
+  if(Array.isArray(md)) return md[idx] ?? 35;
+  if(md && typeof md==='object'){
+    const key=(m.section||'').toLowerCase();
+    const arr=md[key];
+    const mi=(m.module? m.module-1 : 0);
+    if(Array.isArray(arr)) return arr[mi] ?? 35;
+  }
+  return 35;
+}
 function totalQ(mod){ return SET.modules[mod].questions.length; }
 function currentQ(){ return SET.modules[modIdx].questions[qIdx]; }
 
@@ -268,9 +296,11 @@ async function loadSet(path){
 /* ===== 모듈/타이머 ===== */
 function startModule(idx){
   modIdx = idx; qIdx = 0;
-  $('#crumb').textContent = `${SET.metadata?.title || 'Math'} — Module ${modIdx+1}`;
+  const m=SET.modules[modIdx];
+  const secTxt = sectionLabel(m.section);
+  $('#crumb').textContent = `${SET.metadata?.title || 'DSAT Practice'} — ${secTxt} · Module ${m.module||1}`;
   clearInterval(tickId);
-  timerSec = (SET.metadata?.durationMinutesPerModule?.[modIdx] ?? 35) * 60;
+  timerSec = getDurationFor(modIdx) * 60;
   $('#timer').textContent = fmtTime(timerSec);
   tickId = setInterval(()=>{
     timerSec = Math.max(0, timerSec - 1);
@@ -285,7 +315,6 @@ function startModule(idx){
   hideNavPopup();
   $('#scoreBox').innerHTML='';
 }
-
 function gotoNextModule(){
   const last = SET.modules.length - 1;
   if (modIdx < last){
@@ -309,33 +338,28 @@ function renderQuestion(){
   $('#qtitle').innerHTML = q.title || '';
 
   const qc = $('#qcontainer');
-  qc.innerHTML = ''; // 구조를 통으로 다시 그림
+  qc.innerHTML = '';
 
-  // ---- 2분할 분기: (1) RW: passageHtml가 있으면 2분할
-  // ----            (2) Math grid-in 중 안내가 있는 경우(q.gridGuideHtml 또는 q.gridGuideImage) 2분할
-  const needSplit = !!q.passageHtml || (q.type==='gridin' && (q.gridGuideHtml || q.gridGuideImage));
+  const hasPassage = !!(q.passageHtml || q.passage || q.passageText || q.passageImage || (q.passageImages && q.passageImages.length));
+  const hasGridGuide = (q.type==='gridin') && !!(q.gridGuideHtml || q.gridGuideImage);
+  const needSplit = (q.layout === 'split') || hasPassage || hasGridGuide;
 
   if(needSplit){
     const wrap = document.createElement('div');
     wrap.className='gridwrap';
-    const left = document.createElement('div'); left.className='spr-left';
-    const right = document.createElement('div'); right.className='spr-right';
 
-    // 왼쪽 패널: RW passage 또는 grid-in 가이드
-    if(q.passageHtml){
-      left.innerHTML = injectImages(fmt(q.passageHtml));
+    const left = document.createElement('div'); left.className='spr-left';
+    if(hasPassage){
+      left.innerHTML = getPassageHTML(q);
+    }else if(hasGridGuide){
+      left.innerHTML = q.gridGuideHtml
+        ? injectImages(fmt(q.gridGuideHtml))
+        : injectImages(`[[IMAGE: ${q.gridGuideImage}|grid guide]]`);
     }else{
-      // grid-in 안내
-      if(q.gridGuideHtml){
-        left.innerHTML = injectImages(fmt(q.gridGuideHtml));
-      }else if(q.gridGuideImage){
-        left.innerHTML = injectImages(`[[IMAGE: ${q.gridGuideImage}|grid guide]]`);
-      }else{
-        left.innerHTML = `<div style="color:var(--muted)">No guide</div>`;
-      }
+      left.innerHTML = `<div style="color:var(--muted)">No passage</div>`;
     }
 
-    // 오른쪽 패널: 문제/선지/입력
+    const right = document.createElement('div'); right.className='spr-right';
     const stem = document.createElement('div'); stem.className='qstem';
     stem.innerHTML = injectImages(fmt(q.prompt));
     right.appendChild(stem);
@@ -363,7 +387,6 @@ function renderQuestion(){
     wrap.appendChild(left); wrap.appendChild(right);
     qc.appendChild(wrap);
   }else{
-    // 단일 컬럼 (Math 기본 및 RW 아닌 문항)
     const stem = document.createElement('div'); stem.className='qstem';
     stem.innerHTML = injectImages(fmt(q.prompt));
     qc.appendChild(stem);
@@ -397,7 +420,9 @@ function renderQuestion(){
 function renderNavButton(){
   const total = totalQ(modIdx);
   $('#navOpen').textContent = `${qIdx+1} / ${total} ▾`;
-  $('#navMod').textContent = (modIdx+1);
+  const m=SET.modules[modIdx];
+  $('#navSection').textContent = sectionLabel(m.section);
+  $('#navMod').textContent = (m.module || 1);
 }
 const navPopup = $('#navPopup');
 $('#navOpen').onclick = ()=>{
@@ -424,7 +449,8 @@ function hideNavPopup(){ navPopup.style.display='none'; }
 /* ===== 제출(모듈 경계) ===== */
 const confirmBack = $('#confirmBack');
 function openSubmitConfirm(){
-  $('#confirmModLabel').textContent = `Module ${modIdx+1}`;
+  const m=SET.modules[modIdx];
+  $('#confirmModLabel').textContent = `${sectionLabel(m.section)} — Module ${m.module||1}`;
   confirmBack.style.display='block';
 }
 $('#confirmCancel').onclick = ()=> confirmBack.style.display='none';
@@ -438,7 +464,7 @@ $('#prevBtn').onclick=()=>{ if(qIdx>0){ qIdx--; renderQuestion(); } hideNavPopup
 $('#nextBtn').onclick=()=>{
   const n=totalQ(modIdx);
   if(qIdx<n-1){ qIdx++; renderQuestion(); hideNavPopup(); }
-  else{ openSubmitConfirm(); } // 마지막 문항이면 제출 확인
+  else{ openSubmitConfirm(); }
 };
 
 /* ===== 채점 ===== */
@@ -468,59 +494,82 @@ function showFinalReport(){
   $('#ribbon').style.display='none';
   hideNavPopup();
 
-  // 모듈별 채점 수집
-  const perModule = SET.modules.map((m,mi)=>{
-    const detail = m.questions.map((q,qi)=>({
-      id:q.id, number:qi+1, ok:isCorrect(q), q
-    }));
-    const correct = detail.filter(d=>d.ok).length;
-    return {mod:mi+1, total:m.questions.length, correct, detail};
+  // 섹션별 그룹화 (rw, math)
+  const groups = {};
+  SET.modules.forEach((m,mi)=>{
+    const key=(m.section||'misc').toLowerCase();
+    if(!groups[key]) groups[key]=[];
+    groups[key].push({mi, module:m.module||1, questions:m.questions});
   });
-  const grand = perModule.reduce((a,m)=>({total:a.total+m.total, correct:a.correct+m.correct}), {total:0, correct:0});
 
-  // 종합 + 모듈별 정오표 렌더
-  const box = $('#scoreBox');
-  const headerHTML = `
-    <div class="qcard" style="margin-top:10px">
+  // 섹션 순서 보존 (rw -> math -> 기타)
+  const order = Object.keys(groups).sort((a,b)=>{
+    const rank = k => (k==='rw'?1 : k==='math'?2 : 9);
+    return rank(a)-rank(b);
+  });
+
+  const box = $('#scoreBox'); box.innerHTML='';
+
+  // 섹션별 렌더링
+  order.forEach(secKey=>{
+    const secName = sectionLabel(secKey);
+    const mods = groups[secKey].sort((a,b)=>a.module-b.module);
+    // 섹션 총계
+    let secTotal=0, secCorrect=0;
+    const perModule=[];
+    mods.forEach(m=>{
+      const detail = m.questions.map((q,qi)=>({
+        id:q.id, number:qi+1, ok:isCorrect(q), q
+      }));
+      const corr = detail.filter(d=>d.ok).length;
+      perModule.push({module:m.module, total:m.questions.length, correct:corr, detail});
+      secTotal += m.questions.length; secCorrect += corr;
+    });
+
+    // 섹션 헤더 + 섹션 정오표(모듈1,2)
+    const header = document.createElement('div');
+    header.className='qcard';
+    header.style.marginTop='10px';
+    header.innerHTML = `
       <div class="result-title">
-        <div><b>Combined Score:</b> ${grand.correct} / ${grand.total}</div>
+        <div><b>${secName} — Total:</b> ${secCorrect} / ${secTotal}</div>
         <div><span class="badge ok">Correct</span> <span class="badge bad" style="margin-left:8px">Wrong</span></div>
       </div>
       <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap">
-        <div class="qcard" style="flex:1">
-          <div><b>Module 1</b></div>
-          <div style="margin-top:6px">${perModule[0].correct} / ${perModule[0].total}</div>
-        </div>
-        <div class="qcard" style="flex:1">
-          <div><b>Module 2</b></div>
-          <div style="margin-top:6px">${perModule[1].correct} / ${perModule[1].total}</div>
-        </div>
-      </div>
-    </div>`;
-
-  function modulePanel(mi){
-    const det = perModule[mi].detail;
-    const cells = det.map(d=>{
-      const cls = d.ok ? 'ok' : 'bad';
-      const flag = flags.has(d.id) ? ' flag' : '';
-      return `<button class="result-dot ${cls}${flag}" data-mod="${mi+1}" data-num="${d.number}" title="Module ${mi+1} · Q${d.number}">${d.number}</button>`;
-    }).join('');
-    return `
-      <div class="qcard result-section">
-        <b>Module ${mi+1} — 정오표</b>
-        <div class="result-grid" style="margin-top:10px">${cells}</div>
+        ${perModule.map(pm=>`
+          <div class="qcard" style="flex:1; min-width:180px">
+            <div><b>Module ${pm.module}</b></div>
+            <div style="margin-top:6px">${pm.correct} / ${pm.total}</div>
+          </div>`).join('')}
       </div>`;
-  }
+    box.appendChild(header);
 
-  box.innerHTML = headerHTML + modulePanel(0) + modulePanel(1);
+    // 모듈별 정오표
+    perModule.forEach(pm=>{
+      const wrap=document.createElement('div'); wrap.className='qcard result-section';
+      const cells = pm.detail.map(d=>{
+        const cls = d.ok ? 'ok' : 'bad';
+        const flag = flags.has(d.id) ? ' flag' : '';
+        return `<button class="result-dot ${cls}${flag}" data-section="${secKey}" data-module="${pm.module}" data-num="${d.number}" title="${secName} · Module ${pm.module} · Q${d.number}">${d.number}</button>`;
+      }).join('');
+      wrap.innerHTML = `
+        <b>${secName} — Module ${pm.module} · 정오표</b>
+        <div class="result-grid" style="margin-top:10px">${cells}</div>`;
+      box.appendChild(wrap);
+    });
+  });
 
-  // 클릭 이벤트 바인딩 (결과버튼 → 해설 팝업)
+  // 클릭 바인딩 (해설 팝업)
   document.querySelectorAll('.result-dot').forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      const mi = Number(btn.getAttribute('data-mod')) - 1;
-      const num = Number(btn.getAttribute('data-num')) - 1;
-      const q = SET.modules[mi].questions[num];
-      openExplain(mi+1, num+1, q, isCorrect(q));
+      const secKey=btn.getAttribute('data-section');
+      const modNo=Number(btn.getAttribute('data-module'));
+      const num=Number(btn.getAttribute('data-num'));
+      const modRec = SET.modules.find(m => (m.section||'').toLowerCase()===secKey && Number(m.module||1)===modNo);
+      if(!modRec) return;
+      const mi = SET.modules.indexOf(modRec);
+      const q = SET.modules[mi].questions[num-1];
+      openExplain(sectionLabel(secKey), modNo, num, q, isCorrect(q));
     });
   });
 }
@@ -529,17 +578,16 @@ const explainBack = $('#explainBack');
 const explainBody = $('#explainBody');
 $('#explainClose').onclick = ()=>{ explainBack.style.display='none'; explainBody.innerHTML=''; };
 
-function openExplain(mod, idx, q, ok){
+function openExplain(secName, modNo, idx, q, ok){
   const your = answers[q.id];
   const yourDisp = (q.type==='mcq' && your!==undefined) ? q.choices[Number(your)] : (your ?? '');
   const correctDisp = (q.type==='mcq') ? (Array.isArray(q.choices)? q.choices[q.answer] : q.answer) : (q.answerNumeric ?? q.altNumeric?.[0] ?? '');
   const badge = ok?'<span class="badge ok">Correct</span>':'<span class="badge bad">Wrong</span>';
 
-  // 본문(지문+문항)을 팝업에서도 재현 (passageHtml 있을 경우 2분할로 요약 표시)
-  const passageBlock = q.passageHtml ? `
+  const passageBlock = (q.passageHtml || q.passage || q.passageText || q.passageImage || (q.passageImages&&q.passageImages.length)) ? `
     <div class="qcard" style="margin-bottom:10px">
       <div style="font-weight:700; margin-bottom:6px">Passage</div>
-      <div class="qstem">${injectImages(fmt(q.passageHtml))}</div>
+      <div class="qstem">${getPassageHTML(q)}</div>
     </div>` : '';
 
   const choicesBlock = (q.type==='mcq')
@@ -550,7 +598,7 @@ function openExplain(mod, idx, q, ok){
     : '';
 
   explainBody.innerHTML = `
-    <div style="margin-bottom:8px; font-weight:800">Module ${mod} · Question ${idx} ${badge}</div>
+    <div style="margin-bottom:8px; font-weight:800">${secName} · Module ${modNo} · Question ${idx} ${badge}</div>
     <div style="margin-bottom:10px; color:var(--muted); font-size:13px">${q.type==='mcq'?'Multiple Choice':'Student‑Produced Response'}</div>
     ${passageBlock}
     <div class="qcard" style="margin-bottom:10px">
