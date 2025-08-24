@@ -2,7 +2,7 @@
   "metadata": {
     "title": "Digital SAT Full Practice Test",
     "sections": ["rw", "math"],
-    "directions": "Answer each question. For Reading & Writing, read the   passage on the left and answer the question(s) on the right. For Math, solve the problem and choose or enter the correct answer.",
+    "directions": "Answer each question. For Reading & Writing, read the passage on the left and answer the question(s) on the right. For Math, solve the problem and choose or enter the correct answer.",
     "durationMinutesPerModule": { "rw": [32, 32], "math": [35, 35] }
   },
   "modules": [
@@ -14,7 +14,7 @@
           "id": "rw1q1",
           "type": "mcq",
           "layout": "split",
-          "  passage": "Dragon against Tiger is an important work of Nihonga, or classical Japanese painting. Unlike Wada Eisaku, who adopted traditional European methods such as painting with oil on canvas, Hashimoto Gaho ______ traditional Japanese approaches. For instance, Hashimoto produced Dragon against Tiger by applying color pigments to a silk surface.",
+          "passage": "Dragon against Tiger is an important work of Nihonga, or classical Japanese painting. Unlike Wada Eisaku, who adopted traditional European methods such as painting with oil on canvas, Hashimoto Gaho ______ traditional Japanese approaches. For instance, Hashimoto produced Dragon against Tiger by applying color pigments to a silk surface.",
           "prompt": "Which choice completes the text with the most logical and precise word or phrase?",
           "choices": ["overlooked", "distrusted", "embraced", "released"],
           "answer": 2
@@ -23,7 +23,7 @@
           "id": "rw1q2",
           "type": "mcq",
           "layout": "split",
-          "  passage": "The following text is from Kenneth Grahame’s 1908 novel *The Wind in the Willows*. The Mole is returning home after a visit to Mr. Badger’s house.\n\nAs he hurried along, eagerly anticipating the moment when he would be at home again among the things he knew and liked, the Mole saw clearly that he was an animal of tilled field and hedgerow, linked to the ploughed furrow, the frequented pasture, the lane of evening lingerers, the cultivated garden plot.",
+          "passage": "The following text is from Kenneth Grahame’s 1908 novel *The Wind in the Willows*. The Mole is returning home after a visit to Mr. Badger’s house.\n\nAs he hurried along, eagerly anticipating the moment when he would be at home again among the things he knew and liked, the Mole saw clearly that he was an animal of tilled field and hedgerow, linked to the ploughed furrow, the frequented pasture, the lane of evening lingerers, the cultivated garden plot.",
           "prompt": "As used in the text, what does the word *anticipating* most nearly mean?",
           "choices": ["Describing", "Getting ahead of", "Looking forward to", "Instructing"],
           "answer": 2
@@ -32,7 +32,7 @@
           "id": "rw1q3",
           "type": "mcq",
           "layout": "split",
-          "  passage": "The human body has three types of muscle ______ cardiac, and skeletal. The levator anguli oris is a skeletal muscle—of which the body contains more than six hundred—and it helps with raising the corners of the mouth.",
+          "passage": "The human body has three types of muscle ______ cardiac, and skeletal. The levator anguli oris is a skeletal muscle—of which the body contains more than six hundred—and it helps with raising the corners of the mouth.",
           "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
           "choices": [
             "tissue and smooth,",
@@ -46,7 +46,7 @@
           "id": "rw1q4",
           "type": "mcq",
           "layout": "split",
-          "  passage": "The Fly River delta is a remarkably ______ landscape; it is a constantly evolving network of channels and strips of land that change in size and shape as the river deposits new sedimentary particles where the river meets the waters of the Gulf of Papua.",
+          "passage": "The Fly River delta is a remarkably ______ landscape; it is a constantly evolving network of channels and strips of land that change in size and shape as the river deposits new sedimentary particles where the river meets the waters of the Gulf of Papua.",
           "prompt": "Which choice completes the text with the most logical and precise word or phrase?",
           "choices": ["mutable", "habitable", "secluded", "homogeneous"],
           "answer": 0
@@ -55,7 +55,7 @@
           "id": "rw1q5",
           "type": "mcq",
           "layout": "split",
-          "  passage": "Benjamin Prud’homme and colleagues have explained how convergent evolution—a phenomenon that occurs when the same trait evolves independently in two reproductively separate lineages—can result from a genetic mechanism shared by both lineages. Meanwhile, Patricia J. Wittkopp and colleagues have investigated how convergence occurs through different genetic mechanisms, but the relative prevalence of convergence through shared and different genetic processes is still poorly understood. This motivated biologists D. Stern and V. Orgogozo to evaluate both types of convergence in a single study for their 2012 paper.",
+          "passage": "Benjamin Prud’homme and colleagues have explained how convergent evolution—a phenomenon that occurs when the same trait evolves independently in two reproductively separate lineages—can result from a genetic mechanism shared by both lineages. Meanwhile, Patricia J. Wittkopp and colleagues have investigated how convergence occurs through different genetic mechanisms, but the relative prevalence of convergence through shared and different genetic processes is still poorly understood. This motivated biologists D. Stern and V. Orgogozo to evaluate both types of convergence in a single study for their 2012 paper.",
           "prompt": "Which choice best states the function of the underlined portion in the text as a whole?",
           "choices": [
             "It provides examples of how a phenomenon was studied by scientists in the field before Stern and Orgogozo’s study.",
@@ -69,7 +69,7 @@
           "id": "rw1q6",
           "type": "mcq",
           "layout": "split",
-          "  passage": "In what is now Washington state, the Tulalip Tribes operate the Hibulb Cultural Center. Relying on traditional knowledge to guide the design of exhibits, this institution presents Tulalip history and culture to the tribes’ citizens. The Turtle Mountain Band of Chippewa, a tribe in North Dakota, employs a similar strategy in its own cultural center. Both centers contrast with museums that aren’t Indigenous-led; when displaying Indigenous artifacts, such museums tend to anticipate mainly non-Indigenous audiences and rely on Eurocentric strategies for designing exhibits.",
+          "passage": "In what is now Washington state, the Tulalip Tribes operate the Hibulb Cultural Center. Relying on traditional knowledge to guide the design of exhibits, this institution presents Tulalip history and culture to the tribes’ citizens. The Turtle Mountain Band of Chippewa, a tribe in North Dakota, employs a similar strategy in its own cultural center. Both centers contrast with museums that aren’t Indigenous-led; when displaying Indigenous artifacts, such museums tend to anticipate mainly non-Indigenous audiences and rely on Eurocentric strategies for designing exhibits.",
           "prompt": "Which choice best describes the overall structure of the text?",
           "choices": [
             "It describes how tribal cultural centers designed exhibits of a particular set of artifacts, then analyzes how non-Indigenous institutions designed exhibits of the same artifacts.",
@@ -83,7 +83,7 @@
           "id": "rw1q7",
           "type": "mcq",
           "layout": "split",
-          "  passage": "Text 1\nUisdean Nicholson and his team have discovered evidence in seismic data of a 90 kilometer-wide submarine crater beneath nearly a kilometer of water off the coast of West Africa. The team has named Nadir, which exhibits all the telltale signs of an asteroid impact, including an extreme circular shape, a terraced floor, and a pronounced zone of uplift at its center.\n\nText 2\nWhether tectonic dissolution and subsurface salt withdrawal can cause craters resembling depressions without the need for a high-velocity impact, however, demands consideration. It seems very unlikely to have occurred in the vicinity of Nadir, and although subsurface salt withdrawal could have plausibly occurred in this area and would have resulted in a seafloor depression with a terraced floor or a circular shape, it would not exhibit the zone of central uplift seen at Nadir.",
+          "passage": "Text 1\nUisdean Nicholson and his team have discovered evidence in seismic data of a 90 kilometer-wide submarine crater beneath nearly a kilometer of water off the coast of West Africa. The team has named Nadir, which exhibits all the telltale signs of an asteroid impact, including an extreme circular shape, a terraced floor, and a pronounced zone of uplift at its center.\n\nText 2\nWhether tectonic dissolution and subsurface salt withdrawal can cause craters resembling depressions without the need for a high-velocity impact, however, demands consideration. It seems very unlikely to have occurred in the vicinity of Nadir, and although subsurface salt withdrawal could have plausibly occurred in this area and would have resulted in a seafloor depression with a terraced floor or a circular shape, it would not exhibit the zone of central uplift seen at Nadir.",
           "prompt": "Which choice best describes a difference between the approach of Text 1 and the approach of Text 2?",
           "choices": [
             "Text 1 dispassionately describes Nicholson and colleagues’ findings and conclusions, whereas Text 2 attempts to convey the researchers’ excitement on discovering Nadir.",
@@ -97,7 +97,7 @@
           "id": "rw1q8",
           "type": "mcq",
           "layout": "split",
-          "  passage": "“Cocoa” is an example of a loanword—that is, a word that originated in one language and was later adopted by another. The word came to English indirectly from *cacao*, the Spanish word for the plant that chocolate is made from. Spanish had borrowed it from Nahuatl, an Indigenous language of Central Mexico, in which the word’s original form is *cacahuatl*. “Puma” is also Indigenous in origin and entered English through Spanish. But in this case, the original source was Quechua, a language of South America, in which the word for the mountain lion is also *puma*.",
+          "passage": "“Cocoa” is an example of a loanword—that is, a word that originated in one language and was later adopted by another. The word came to English indirectly from *cacao*, the Spanish word for the plant that chocolate is made from. Spanish had borrowed it from Nahuatl, an Indigenous language of Central Mexico, in which the word’s original form is *cacahuatl*. “Puma” is also Indigenous in origin and entered English through Spanish. But in this case, the original source was Quechua, a language of South America, in which the word for the mountain lion is also *puma*.",
           "prompt": "The author makes which point about the Spanish language?",
           "choices": [
             "It has served as a medium through which Indigenous languages have influenced English.",
@@ -111,7 +111,7 @@
           "id": "rw1q9",
           "type": "mcq",
           "layout": "split",
-          "  passage": "Motivated to sell as many paintings as possible, Alfred Hair, an influential figure among the landscape artists known as the Florida Highwaymen, pioneered “fast painting,” which in part involved working across multiple canvases at once. That many of Hair’s acolytes, including Isaac Knight, imitated these techniques accounts in part for the impressionistic qualities that are now synonymous with the group’s output. But not all Highwaymen fully embraced this approach: for instance, though Willie Reagan was also prolific, his paintings were executed with greater attention to detail.",
+          "passage": "Motivated to sell as many paintings as possible, Alfred Hair, an influential figure among the landscape artists known as the Florida Highwaymen, pioneered “fast painting,” which in part involved working across multiple canvases at once. That many of Hair’s acolytes, including Isaac Knight, imitated these techniques accounts in part for the impressionistic qualities that are now synonymous with the group’s output. But not all Highwaymen fully embraced this approach: for instance, though Willie Reagan was also prolific, his paintings were executed with greater attention to detail.",
           "prompt": "What does the text most strongly suggest about paintings by Knight?",
           "choices": [
             "Because of the manner in which they were created, they likely have visual qualities that are regarded as more typical of Florida Highwaymen paintings than the qualities in works by Reagan are.",
@@ -125,7 +125,7 @@
           "id": "rw1q10",
           "type": "mcq",
           "layout": "split",
-          "  passage": "The following text is adapted from Daniel Defoe’s 1704 nonfiction book *The Storm.*\n\nThe sermon is a sound of words spoken to the ear, and prepared only for present meditation, and extends no farther than the strength of memory can convey it: a book printed is a record, remaining in every man’s possession, always ready to renew its acquaintance with his memory, and always ready to be produced as an authority or voucher to any reports he makes out of it, and conveys its contents for ages to come, to the eternity of mortal time, when the author is forgotten in his grave.",
+          "passage": "The following text is adapted from Daniel Defoe’s 1704 nonfiction book *The Storm.*\n\nThe sermon is a sound of words spoken to the ear, and prepared only for present meditation, and extends no farther than the strength of memory can convey it: a book printed is a record, remaining in every man’s possession, always ready to renew its acquaintance with his memory, and always ready to be produced as an authority or voucher to any reports he makes out of it, and conveys its contents for ages to come, to the eternity of mortal time, when the author is forgotten in his grave.",
           "prompt": "Which choice best states the main idea of the text?",
           "choices": [
             "Words committed to print have a greater permanence than messages that are merely spoken aloud.",
@@ -139,7 +139,7 @@
           "id": "rw1q11",
           "type": "mcq",
           "layout": "split",
-          "  passage": "A student is researching the trends in the topics submitted to a national science fair for high school students. The graph shows the number of submissions by topic that were made each year. Based on the data in the graph, the student claims that there were more medicine and health research topics submitted in 2019 than in any other year.\n\n<img src='graph_q11.png' alt='Total Science Research Submissions by Topic, 2016–2019'>",
+          "passage": "A student is researching the trends in the topics submitted to a national science fair for high school students. The graph shows the number of submissions by topic that were made each year. Based on the data in the graph, the student claims that there were more medicine and health research topics submitted in 2019 than in any other year.\n\n<img src='graph_q11.png' alt='Total Science Research Submissions by Topic, 2016–2019'>",
           "prompt": "Which choice most effectively uses data from the graph to support the underlined claim?",
           "choices": [
             "In 2016, the number of cellular and molecular biology topic submissions was the same as the number of animal science topic submissions.",
@@ -153,7 +153,7 @@
           "id": "rw1q12",
           "type": "mcq",
           "layout": "split",
-          "  passage": "*Poems* is an 1855 collection of poetry by Frances E.W. Harper. In one of Harper’s poems, the speaker criticizes activists who champion humanitarian causes in other countries while overlooking local concerns, saying ______",
+          "passage": "*Poems* is an 1855 collection of poetry by Frances E.W. Harper. In one of Harper’s poems, the speaker criticizes activists who champion humanitarian causes in other countries while overlooking local concerns, saying ______",
           "prompt": "Which quotation from *Poems* most effectively illustrates the claim?",
           "choices": [
             "“Men may tread down the poor and lowly, / May crush them in anger and hate, / But surely the mills of God’s justice / Will grind out the grist of their fate.” (from “An Appeal to My Countrywomen”)",
@@ -167,7 +167,7 @@
           "id": "rw1q13",
           "type": "mcq",
           "layout": "split",
-          "  passage": "To understand the extent of deforestation in the Chorotega region of Costa Rica, Juan Pablo Arroyo-Mora and colleagues used historical aerial photography and remote sensing data to track changes in the annual mean size of forest patches across different land use capability classes (categories that indicate possible uses of forest land). Due to the Chorotega region’s varied land use, these changes differed substantially across the classes.\n\n<img src='graph_q13.png' alt='Annual Mean Forest Patch Size for Three Land Use Capability Classes in the Chorotega Region, Costa Rica (1960–2000)'>",
+          "passage": "To understand the extent of deforestation in the Chorotega region of Costa Rica, Juan Pablo Arroyo-Mora and colleagues used historical aerial photography and remote sensing data to track changes in the annual mean size of forest patches across different land use capability classes (categories that indicate possible uses of forest land). Due to the Chorotega region’s varied land use, these changes differed substantially across the classes.\n\n<img src='graph_q13.png' alt='Annual Mean Forest Patch Size for Three Land Use Capability Classes in the Chorotega Region, Costa Rica (1960–2000)'>",
           "prompt": "Which choice most effectively uses data from the graph to complete the assertion?",
           "choices": [
             "difference between mean forest patch size in Class VIII and in Class VI in 2000.",
@@ -181,7 +181,7 @@
           "id": "rw1q14",
           "type": "mcq",
           "layout": "split",
-          "  passage": "Veronica L. Bura, Akito Y. Kawahara, and Jayne E. Yack investigated the evolution and function of sound production in silk moth and hawk moth caterpillars. They found that during harmless simulated attacks on isolated caterpillars, 33% of the tested species produced sound, which ranged from clicks in Actias luna to whistles in Rothschildia aurota. Although some insects use sound to communicate with members of the same species, the researchers claim that the caterpillar sounds recorded in their study are directed primarily at predators.",
+          "passage": "Veronica L. Bura, Akito Y. Kawahara, and Jayne E. Yack investigated the evolution and function of sound production in silk moth and hawk moth caterpillars. They found that during harmless simulated attacks on isolated caterpillars, 33% of the tested species produced sound, which ranged from clicks in Actias luna to whistles in Rothschildia aurota. Although some insects use sound to communicate with members of the same species, the researchers claim that the caterpillar sounds recorded in their study are directed primarily at predators.",
           "prompt": "Which finding, if true, would most directly support Bura and colleagues’ claim?",
           "choices": [
             "In most cases, the sound that a caterpillar species produced during simulated attacks was not produced by other caterpillar species during simulated attacks.",
@@ -195,7 +195,7 @@
           "id": "rw1q15",
           "type": "mcq",
           "layout": "split",
-          "  passage": "In dialects of English spoken in Scotland, the “r” sound is strongly emphasized when it appears at the end of syllables (as in “car”) or before other consonant sounds (as in “bird”). English dialects of the Upland South, a region stretching from Oklahoma to western Virginia, place similar emphasis on “r” at the ends of syllables and before other consonant sounds. Historical records show that the Upland South was colonized largely by people whose ancestors came from Scotland. Thus, linguists have concluded that ______",
+          "passage": "In dialects of English spoken in Scotland, the “r” sound is strongly emphasized when it appears at the end of syllables (as in “car”) or before other consonant sounds (as in “bird”). English dialects of the Upland South, a region stretching from Oklahoma to western Virginia, place similar emphasis on “r” at the ends of syllables and before other consonant sounds. Historical records show that the Upland South was colonized largely by people whose ancestors came from Scotland. Thus, linguists have concluded that ______",
           "prompt": "Which choice most logically completes the text?",
           "choices": [
             "the English dialects spoken in the Upland South acquired their emphasis on the “r” sound from dialects spoken in Scotland.",
@@ -209,7 +209,7 @@
           "id": "rw1q16",
           "type": "mcq",
           "layout": "split",
-          "  passage": "What makes the theremin a unique musical instrument? You play it without touching it. When you place your ______ the pitch will shift as your hands move through the air.",
+          "passage": "What makes the theremin a unique musical instrument? You play it without touching it. When you place your ______ the pitch will shift as your hands move through the air.",
           "prompt": "Which choice completes the text with the most logical transition?",
           "choices": [
             "hands between the two antenna’s,",
@@ -223,7 +223,7 @@
           "id": "rw1q17",
           "type": "mcq",
           "layout": "split",
-          "  passage": "Round Rock Chapter is one of the 110 chapters of the Navajo Nation (*Naabeehó Bináhásdzo*). The chapter, known as *Tse’nikáni* in the Navajo language (*Diné bizaad*), was the subject of a profile ______ in the *Navajo Times* on February 13, 2014.",
+          "passage": "Round Rock Chapter is one of the 110 chapters of the Navajo Nation (*Naabeehó Bináhásdzo*). The chapter, known as *Tse’nikáni* in the Navajo language (*Diné bizaad*), was the subject of a profile ______ in the *Navajo Times* on February 13, 2014.",
           "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
           "choices": [
             "appeared",
@@ -237,7 +237,7 @@
           "id": "rw1q18",
           "type": "mcq",
           "layout": "split",
-          "  passage": "San Juan High School and Grand County High School are two of several Utah ______ enormous geoglyph of the letters SJ overlooks San Juan High, while a geoglyph of the letter G overlooks Grand County High.",
+          "passage": "San Juan High School and Grand County High School are two of several Utah ______ enormous geoglyph of the letters SJ overlooks San Juan High, while a geoglyph of the letter G overlooks Grand County High.",
           "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
           "choices": [
             "schools that have their own hillside geoglyphs. An",
@@ -251,7 +251,7 @@
           "id": "rw1q19",
           "type": "mcq",
           "layout": "split",
-          "  passage": "Deposits of crushed orange limestone and other organic matter lend the sand at Porto Ferro Beach in Italy an unusual orange tint that dazzles. ______ they take a bit of sand home, though, it disturbs the beach’s ecosystem by contributing to erosion.",
+          "passage": "Deposits of crushed orange limestone and other organic matter lend the sand at Porto Ferro Beach in Italy an unusual orange tint that dazzles. ______ they take a bit of sand home, though, it disturbs the beach’s ecosystem by contributing to erosion.",
           "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
           "choices": [
             "visitors. when",
@@ -265,7 +265,7 @@
           "id": "rw1q20",
           "type": "mcq",
           "layout": "split",
-          "  passage": "Consider the mechanics of the pinhole camera: light passes through a small hole, resulting in a focused projected image. A ray diagram reveals how this ______ the hole’s small size restricts light to a single ray. All light passing through the hole can only arrive at a single destination, eliminating diffraction and ensuring a clear image.",
+          "passage": "Consider the mechanics of the pinhole camera: light passes through a small hole, resulting in a focused projected image. A ray diagram reveals how this ______ the hole’s small size restricts light to a single ray. All light passing through the hole can only arrive at a single destination, eliminating diffraction and ensuring a clear image.",
           "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
           "choices": [
             "works because",
@@ -279,7 +279,7 @@
           "id": "rw1q21",
           "type": "mcq",
           "layout": "split",
-          "  passage": "While the greater adjutant can be found in places like the Central Taniintharyi Coast in Myanmar and the Prek Toal Bird Sanctuary in Cambodia, more than 80 percent of this endangered stork species is found in Assam, India. There, wildlife biologist Dr. Purnima Devi Barman is on the front lines of conservation efforts that, through community involvement and scientific ______ aim to bring adjutants back from near extinction.",
+          "passage": "While the greater adjutant can be found in places like the Central Taniintharyi Coast in Myanmar and the Prek Toal Bird Sanctuary in Cambodia, more than 80 percent of this endangered stork species is found in Assam, India. There, wildlife biologist Dr. Purnima Devi Barman is on the front lines of conservation efforts that, through community involvement and scientific ______ aim to bring adjutants back from near extinction.",
           "prompt": "Which choice completes the text so that it conforms to the conventions of Standard English?",
           "choices": [
             "study.",
@@ -293,7 +293,7 @@
           "id": "rw1q22",
           "type": "mcq",
           "layout": "split",
-          "  passage": "Extracts from the leaves of *Azadirachta indica*—also known as neem—are commonly used in traditional remedies for skin diseases and other ailments. Neem is even used as an insecticide. For example, neem extracts have been shown to ______ the growth of *Leishmania donovani*, a parasite transmitted by sand flies that causes disease in humans.",
+          "passage": "Extracts from the leaves of *Azadirachta indica*—also known as neem—are commonly used in traditional remedies for skin diseases and other ailments. Neem is even used as an insecticide. For example, neem extracts have been shown to ______ the growth of *Leishmania donovani*, a parasite transmitted by sand flies that causes disease in humans.",
           "prompt": "Which choice completes the text with the most logical and precise word or phrase?",
           "choices": [
             "deter",
@@ -307,7 +307,7 @@
           "id": "rw1q23",
           "type": "mcq",
           "layout": "split",
-          "  passage": "The following text is from Zitkála-Šá’s 1900 autobiography *Impressions of an Indian Childhood.*\n\nThen I lost my spirit. Since the day I was taken from my mother I had suffered extreme indignities. People had stared at me. I had been tossed about in the air like a wooden puppet. And now my long hair was shingled like a coward’s! In my anguish I moaned for my mother, but no one came to comfort me. Not a soul reasoned quietly with me, as my own mother used to do.",
+          "passage": "The following text is from Zitkála-Šá’s 1900 autobiography *Impressions of an Indian Childhood.*\n\nThen I lost my spirit. Since the day I was taken from my mother I had suffered extreme indignities. People had stared at me. I had been tossed about in the air like a wooden puppet. And now my long hair was shingled like a coward’s! In my anguish I moaned for my mother, but no one came to comfort me. Not a soul reasoned quietly with me, as my own mother used to do.",
           "prompt": "Which choice best states the main idea of the text?",
           "choices": [
             "The speaker feels humiliated and abandoned after being forcibly separated from her family and culture.",
@@ -321,7 +321,7 @@
           "id": "rw1q24",
           "type": "mcq",
           "layout": "split",
-          "  passage": "A team of ecologists set out to determine whether mangrove trees provide a significant buffer against coastal erosion. The team compared areas with dense mangrove cover to nearby areas without mangroves. Over a five-year period, they found that coastal erosion rates in areas with mangroves were 25 percent lower on average than in areas without mangroves.",
+          "passage": "A team of ecologists set out to determine whether mangrove trees provide a significant buffer against coastal erosion. The team compared areas with dense mangrove cover to nearby areas without mangroves. Over a five-year period, they found that coastal erosion rates in areas with mangroves were 25 percent lower on average than in areas without mangroves.",
           "prompt": "Which choice best describes the function of the underlined portion in the text as a whole?",
           "choices": [
             "It provides the conclusion the ecologists drew from their research.",
@@ -335,7 +335,7 @@
           "id": "rw1q25",
           "type": "mcq",
           "layout": "split",
-          "  passage": "Some ecologists argue that beavers should be reintroduced to areas where they have long been absent. Beavers build dams that create ponds and wetlands, which in turn support a diversity of plant and animal life. Critics counter that beaver activity can also flood farmland and damage infrastructure. Still, supporters emphasize that the ecological benefits outweigh the drawbacks.",
+          "passage": "Some ecologists argue that beavers should be reintroduced to areas where they have long been absent. Beavers build dams that create ponds and wetlands, which in turn support a diversity of plant and animal life. Critics counter that beaver activity can also flood farmland and damage infrastructure. Still, supporters emphasize that the ecological benefits outweigh the drawbacks.",
           "prompt": "Which choice best describes the overall structure of the text?",
           "choices": [
             "It describes the ecological role of beavers and then presents evidence that reintroduction has already succeeded in several areas.",
@@ -349,7 +349,7 @@
           "id": "rw1q26",
           "type": "mcq",
           "layout": "split",
-          "  passage": "The word “volcano” comes from Vulcan, the Roman god of fire. Around the world, more than 1,500 volcanoes are considered potentially active today. Some scientists monitor these volcanoes closely, using seismographs and gas sensors to track activity. ______, scientists can issue warnings that may save lives in the event of an eruption.",
+          "passage": "The word “volcano” comes from Vulcan, the Roman god of fire. Around the world, more than 1,500 volcanoes are considered potentially active today. Some scientists monitor these volcanoes closely, using seismographs and gas sensors to track activity. ______, scientists can issue warnings that may save lives in the event of an eruption.",
           "prompt": "Which choice completes the text with the most logical transition?",
           "choices": [
             "Similarly",
@@ -363,7 +363,7 @@
           "id": "rw1q27",
           "type": "mcq",
           "layout": "split",
-          "  passage": "The following text is from Mary Shelley’s 1818 novel *Frankenstein.*\n\nI saw the dull yellow eye of the creature open; it breathed hard, and a convulsive motion agitated its limbs. How can I describe my emotions at this catastrophe, or how delineate the wretch whom with such infinite pains and care I had endeavored to form? His limbs were in proportion, and I had selected his features as beautiful. Beautiful! Great God! His yellow skin scarcely covered the work of muscles and arteries beneath; his hair was of a lustrous black, and flowing; his teeth of a pearly whiteness; but these luxuriances only formed a more horrid contrast with his watery eyes, that seemed almost of the same color as the dun-white sockets in which they were set, his shriveled complexion, and straight black lips.",
+          "passage": "The following text is from Mary Shelley’s 1818 novel *Frankenstein.*\n\nI saw the dull yellow eye of the creature open; it breathed hard, and a convulsive motion agitated its limbs. How can I describe my emotions at this catastrophe, or how delineate the wretch whom with such infinite pains and care I had endeavored to form? His limbs were in proportion, and I had selected his features as beautiful. Beautiful! Great God! His yellow skin scarcely covered the work of muscles and arteries beneath; his hair was of a lustrous black, and flowing; his teeth of a pearly whiteness; but these luxuriances only formed a more horrid contrast with his watery eyes, that seemed almost of the same color as the dun-white sockets in which they were set, his shriveled complexion, and straight black lips.",
           "prompt": "Which choice best states the main idea of the text?",
           "choices": [
             "The narrator is horrified to discover that the being he created is grotesque despite his efforts to make it beautiful.",
@@ -383,7 +383,7 @@
           "id": "rw2q1",
           "type": "mcq",
           "layout": "split",
-          "  passage": "Whether the reign of a French monarch such as Francis II or Louis XI was considered...",
+          "passage": "Whether the reign of a French monarch such as Francis II or Louis XI was considered...",
           "prompt": "Which choice completes the text with the most logical and precise word or phrase?",
           "choices": [
             "momentous",
@@ -397,7 +397,7 @@
           "id": "rw2q2",
           "type": "mcq",
           "layout": "split",
-          "  passage": "In the 2010s, the price of vintage Teenage Mutant Ninja Turtles action figures rose dramatically...",
+          "passage": "In the 2010s, the price of vintage Teenage Mutant Ninja Turtles action figures rose dramatically...",
           "prompt": "Which choice completes the text with the most logical and precise word or phrase?",
           "choices": [
             "monetizing",
