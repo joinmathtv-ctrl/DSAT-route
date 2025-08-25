@@ -240,6 +240,9 @@ let SET=null, modIdx=0, qIdx=0;
 let flags=new Set(), answers={};
 let timerSec=0, tickId=null;
 
+// 리뷰 세션에서 사용할 타이머 선호 설정
+window.REVIEW_TIMER_PREF = window.REVIEW_TIMER_PREF || { mode: 'default', minutes: null };
+
 /* ===== Auto-Save (localStorage) ===== */
 let RESTORE_CACHE = null; // 복원용 캐시(로드 직후 1회 사용)
 
@@ -398,16 +401,51 @@ function startModule(idx){
   const m=SET.modules[modIdx];
   const secTxt = sectionLabel(m.section);
   $('#crumb').textContent = `${SET.metadata?.title || 'DSAT Practice'} — ${secTxt} · Module ${m.module||1}`;
-  clearInterval(tickId);
-  timerSec = getDurationFor(modIdx) * 60;
-  $('#timer').textContent = fmtTime(timerSec);
-  tickId = setInterval(()=>{
-    timerSec = Math.max(0, timerSec - 1);
-    $('#timer').textContent = fmtTime(timerSec);
-    if (timerSec % 5 === 0) saveState();
-    if (timerSec === 0) { clearInterval(tickId); openSubmitConfirm(); }
-  }, 1000);
 
+  // ===== 타이머 세팅 =====
+  clearInterval(tickId);
+
+  // 기본 분: 세트 설정 기반
+  let minutes = getDurationFor(modIdx);
+
+  // 리뷰 세션이면 사용자 설정 적용
+  if (SET.__isReviewSession && window.REVIEW_TIMER_PREF) {
+    const pref = window.REVIEW_TIMER_PREF;
+    if (pref.mode === 'infinite') {
+      minutes = null; // 무제한
+    } else if (pref.mode === 'custom' && pref.minutes && pref.minutes > 0) {
+      minutes = pref.minutes; // 커스텀 분
+    }
+  }
+
+  if (minutes === null) {
+    // 무제한 모드
+    timerSec = null;
+    $('#timer').textContent = '∞';
+
+    // 1초 주기 틱: 시간 감소 없이 5초마다 자동 저장만 수행
+    tickId = setInterval(()=>{
+      const now = Date.now();
+      const last = window.__lastSaveTs || 0;
+      if (now - last > 5000) {
+        saveState();
+        window.__lastSaveTs = now;
+      }
+    }, 1000);
+
+  } else {
+    // 카운트다운 모드
+    timerSec = minutes * 60;
+    $('#timer').textContent = fmtTime(timerSec);
+    tickId = setInterval(()=>{
+      timerSec = Math.max(0, timerSec - 1);
+      $('#timer').textContent = fmtTime(timerSec);
+      if (timerSec % 5 === 0) saveState();
+      if (timerSec === 0) { clearInterval(tickId); openSubmitConfirm(); }
+    }, 1000);
+  }
+
+  // ===== 화면 렌더 =====
   $('#card').style.display='block';
   $('#ribbon').style.display='flex';
   renderQuestion();
@@ -415,6 +453,7 @@ function startModule(idx){
   hideNavPopup();
   $('#scoreBox').innerHTML='';
 }
+
 function gotoNextModule(){
   const last = SET.modules.length - 1;
   if (modIdx < last){
@@ -786,6 +825,9 @@ function startReviewSession({ mode, skill }){
 
   // 상태 초기화 후 시작
   SET = newSet;
+
+  SET.__isReviewSession = true;
+
   flags = new Set();
   answers = {};
   buildQIndex();   // 비슷한 문항/해설 점프 등을 위한 인덱스 갱신
@@ -810,6 +852,16 @@ tool.innerHTML = `
   <div class="result-title">
     <div><b>${SET.metadata?.title || 'DSAT Practice'} — Combined Report</b></div>
     <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+      <!-- ▼ 리뷰 타이머 옵션 -->
+      <select id="reviewTimerMode" class="btn">
+        <option value="default">Timer: Default</option>
+        <option value="infinite">Timer: ∞ (No limit)</option>
+        <option value="custom">Timer: Custom…</option>
+      </select>
+      <input id="reviewTimerMin" type="number" min="1" max="180" placeholder="min"
+             class="btn" style="width:90px; display:none"/>
+
+      <!-- ▼ 리뷰 시작/CSV -->
       <select id="skillFilter" class="btn">
         <option value="">Skill…</option>
       </select>
@@ -832,6 +884,29 @@ const $skill = document.getElementById('skillFilter');
   const opt = document.createElement('option');
   opt.value = s; opt.textContent = s;
   $skill.appendChild(opt);
+});
+
+// === 리뷰 타이머 UI 바인딩 ===
+const $mode = document.getElementById('reviewTimerMode');
+const $min  = document.getElementById('reviewTimerMin');
+
+// 이전 선택 복원(있다면)
+if (window.REVIEW_TIMER_PREF) {
+  $mode.value = window.REVIEW_TIMER_PREF.mode || 'default';
+  if (window.REVIEW_TIMER_PREF.mode === 'custom') {
+    $min.style.display = '';
+    if (window.REVIEW_TIMER_PREF.minutes) $min.value = window.REVIEW_TIMER_PREF.minutes;
+  }
+}
+
+$mode.addEventListener('change', ()=>{
+  if ($mode.value === 'custom') $min.style.display = '';
+  else $min.style.display = 'none';
+  // 즉시 저장
+  window.REVIEW_TIMER_PREF = { mode: $mode.value, minutes: Number($min.value)||null };
+});
+$min.addEventListener('input', ()=>{
+  window.REVIEW_TIMER_PREF = { mode: $mode.value, minutes: Number($min.value)||null };
 });
 
 // 리뷰 버튼 핸들러
