@@ -138,6 +138,14 @@
   .similar-ok{ background:#e9fbe7; border-color:#b7f4be }
   .similar-bad{ background:#fee2e2; border-color:#fecaca }
 
+  /* ===== Notes UI ===== */
+  .dot.note{ box-shadow: inset 0 0 0 2px var(--accent); }
+  .qnote-wrap{ margin-top:10px }
+  .qnote-wrap textarea{
+    width:100%; min-height:84px; padding:10px 12px; border:1px solid var(--line);
+    border-radius:10px; font-size:14px; background:#fff; resize:vertical
+  }
+
   @media (max-width:560px){
     .nav-grid{ grid-template-columns:repeat(8, 36px) }
   }
@@ -237,7 +245,7 @@
 <script>
 /* ===== 상태 ===== */
 let SET=null, modIdx=0, qIdx=0;
-let flags=new Set(), answers={};
+let flags=new Set(), answers={}, notes={}; // notes 추가
 let timerSec=0, tickId=null;
 
 // 리뷰 세션에서 사용할 타이머 선호 설정
@@ -255,7 +263,7 @@ function storageKey(){
 function saveState(){
   try{
     const payload = {
-      modIdx, qIdx, answers,
+      modIdx, qIdx, answers, notes,                 // notes 저장
       timers: { [String(modIdx)]: timerSec }
     };
     localStorage.setItem(storageKey(), JSON.stringify(payload));
@@ -302,18 +310,15 @@ function overallTotals(){
   return { total, correct, acc: total? correct/total : 0 };
 }
 function summarizeSkills(){
-  // 기존 collectSkillStats() 재사용해 비율만 만들어서 반환
-  const stats = collectSkillStats(); // code -> {correct,total}
+  const stats = collectSkillStats();
   const bySkill = {};
   Object.entries(stats).forEach(([code, v])=>{
     bySkill[code] = { correct:v.correct, total:v.total, acc: v.total? v.correct/v.total : 0 };
   });
   return bySkill;
 }
-// 현재 세트를 하나의 "시도"로 저장
 function recordAttempt(){
   const isReview = !!SET.__isReviewSession;
-  // baseId(비교용): 리뷰면 parentId, 아니면 세트 id/title
   const baseId = isReview
     ? (SET.metadata?.parentId || 'base')
     : (SET.metadata?.id || SET.metadata?.title || 'base');
@@ -332,8 +337,6 @@ function recordAttempt(){
   saveAttempts(list);
   return attempt;
 }
-
-// 특정 baseId에 대해 최신 base / review 시도 1개씩 조회
 function getLatestPair(baseId){
   const list = loadAttempts().filter(a=> a.baseId===baseId);
   let lastBase=null, lastReview=null;
@@ -343,7 +346,6 @@ function getLatestPair(baseId){
   });
   return { lastBase, lastReview };
 }
-
 
 /* RW 지문 통합 수집 */
 function getPassageHTML(q){
@@ -397,14 +399,14 @@ async function loadSet(path){
     return;
   }
 
-  flags.clear(); answers={}; $('#scoreBox').innerHTML='';
+  flags.clear(); answers={}; notes={}; $('#scoreBox').innerHTML='';
   dirPanel.innerHTML = fmt(SET.metadata?.directions);
-  buildQIndex(); // ★ 인덱스 빌드 추가
+  buildQIndex();
 
-  // 저장본 불러오기
   RESTORE_CACHE = tryRestore();
   if(RESTORE_CACHE){
     answers = RESTORE_CACHE.answers || {};
+    notes   = RESTORE_CACHE.notes   || {};
     const restoreMod = Math.min(RESTORE_CACHE.modIdx ?? 0, SET.modules.length-1);
     startModule(restoreMod);
     const savedSec = RESTORE_CACHE.timers?.[String(restoreMod)];
@@ -430,16 +432,17 @@ function bootFromBlob(){
   }
   try{
     SET = JSON.parse(text);
-    localStorage.removeItem(key); // 1회 사용 후 제거
+    localStorage.removeItem(key);
 
     $('#loadError').style.display='none';
-    flags.clear(); answers={}; $('#scoreBox').innerHTML='';
+    flags.clear(); answers={}; notes={}; $('#scoreBox').innerHTML='';
     dirPanel.innerHTML = fmt(SET.metadata?.directions);
-    buildQIndex(); // ★ 인덱스 빌드 추가
+    buildQIndex();
 
     RESTORE_CACHE = tryRestore();
     if(RESTORE_CACHE){
       answers = RESTORE_CACHE.answers || {};
+      notes   = RESTORE_CACHE.notes   || {};
       const restoreMod = Math.min(RESTORE_CACHE.modIdx ?? 0, (SET.modules?.length||1)-1);
       startModule(restoreMod);
       const savedSec = RESTORE_CACHE.timers?.[String(restoreMod)];
@@ -465,28 +468,21 @@ function startModule(idx){
   const secTxt = sectionLabel(m.section);
   $('#crumb').textContent = `${SET.metadata?.title || 'DSAT Practice'} — ${secTxt} · Module ${m.module||1}`;
 
-  // ===== 타이머 세팅 =====
   clearInterval(tickId);
 
-  // 기본 분: 세트 설정 기반
   let minutes = getDurationFor(modIdx);
-
-  // 리뷰 세션이면 사용자 설정 적용
   if (SET.__isReviewSession && window.REVIEW_TIMER_PREF) {
     const pref = window.REVIEW_TIMER_PREF;
     if (pref.mode === 'infinite') {
-      minutes = null; // 무제한
+      minutes = null;
     } else if (pref.mode === 'custom' && pref.minutes && pref.minutes > 0) {
-      minutes = pref.minutes; // 커스텀 분
+      minutes = pref.minutes;
     }
   }
 
   if (minutes === null) {
-    // 무제한 모드
     timerSec = null;
     $('#timer').textContent = '∞';
-
-    // 1초 주기 틱: 시간 감소 없이 5초마다 자동 저장만 수행
     tickId = setInterval(()=>{
       const now = Date.now();
       const last = window.__lastSaveTs || 0;
@@ -495,9 +491,7 @@ function startModule(idx){
         window.__lastSaveTs = now;
       }
     }, 1000);
-
   } else {
-    // 카운트다운 모드
     timerSec = minutes * 60;
     $('#timer').textContent = fmtTime(timerSec);
     tickId = setInterval(()=>{
@@ -508,7 +502,6 @@ function startModule(idx){
     }, 1000);
   }
 
-  // ===== 화면 렌더 =====
   $('#card').style.display='block';
   $('#ribbon').style.display='flex';
   renderQuestion();
@@ -516,7 +509,6 @@ function startModule(idx){
   hideNavPopup();
   $('#scoreBox').innerHTML='';
 }
-
 function gotoNextModule(){
   const last = SET.modules.length - 1;
   if (modIdx < last){
@@ -546,6 +538,36 @@ function renderQuestion(){
   const hasGridGuide = (q.type==='gridin') && !!(q.gridGuideHtml || q.gridGuideImage);
   const needSplit = (q.layout === 'split') || hasPassage || hasGridGuide;
 
+  const buildChoices = ()=>{
+    const area = document.createElement('div'); area.className='choices';
+    if(q.type==='mcq'){
+      (q.choices||[]).forEach((c,i)=>{
+        const row=document.createElement('label'); row.className='choice';
+        row.innerHTML = `
+          <input type="radio" name="ans" value="${i}" ${String(answers[q.id])===String(i)?'checked':''}/>
+          <div class="bubble">${bubbleABC(i)}</div>
+          <div class="txt">${c}</div>`;
+        if(String(answers[q.id])===String(i)) row.classList.add('selected');
+        row.addEventListener('click',()=>{
+          answers[q.id]=i;
+          saveState();
+          renderQuestion(); renderNavButton();
+        });
+        area.appendChild(row);
+      });
+    }else{
+      const inp=document.createElement('input'); inp.className='gridin';
+      inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
+      inp.oninput=e=>{
+        answers[q.id]=e.target.value.trim();
+        saveState();
+        renderNavButton();
+      };
+      area.appendChild(inp);
+    }
+    return area;
+  };
+
   if(needSplit){
     const wrap = document.createElement('div');
     wrap.className='gridwrap';
@@ -566,69 +588,36 @@ function renderQuestion(){
     stem.innerHTML = injectImages(fmt(q.prompt));
     right.appendChild(stem);
 
-    const area = document.createElement('div'); area.className='choices';
-    if(q.type==='mcq'){
-      (q.choices||[]).forEach((c,i)=>{
-        const row=document.createElement('label'); row.className='choice';
-        row.innerHTML = `
-          <input type="radio" name="ans" value="${i}" ${String(answers[q.id])===String(i)?'checked':''}/>
-          <div class="bubble">${bubbleABC(i)}</div>
-          <div class="txt">${c}</div>`;
-        if(String(answers[q.id])===String(i)) row.classList.add('selected');
-        row.addEventListener('click',()=>{
-          answers[q.id]=i;
-          saveState();
-          renderQuestion(); renderNavButton();
-        });
-        area.appendChild(row);
-      });
-    }else{
-      const inp=document.createElement('input'); inp.className='gridin';
-      inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
-      inp.oninput=e=>{
-        answers[q.id]=e.target.value.trim();
-        saveState();
-        renderNavButton();
-      };
-      area.appendChild(inp);
-    }
-    right.appendChild(area);
-
+    right.appendChild(buildChoices());
     wrap.appendChild(left); wrap.appendChild(right);
     qc.appendChild(wrap);
   }else{
     const stem = document.createElement('div'); stem.className='qstem';
     stem.innerHTML = injectImages(fmt(q.prompt));
     qc.appendChild(stem);
-
-    const area = document.createElement('div'); area.className='choices';
-    if(q.type==='mcq'){
-      (q.choices||[]).forEach((c,i)=>{
-        const row=document.createElement('label'); row.className='choice';
-        row.innerHTML = `
-          <input type="radio" name="ans" value="${i}" ${String(answers[q.id])===String(i)?'checked':''}/>
-          <div class="bubble">${bubbleABC(i)}</div>
-          <div class="txt">${c}</div>`;
-        if(String(answers[q.id])===String(i)) row.classList.add('selected');
-        row.addEventListener('click',()=>{
-          answers[q.id]=i;
-          saveState();
-          renderQuestion(); renderNavButton();
-        });
-        area.appendChild(row);
-      });
-    }else{
-      const inp=document.createElement('input'); inp.className='gridin';
-      inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
-      inp.oninput=e=>{
-        answers[q.id]=e.target.value.trim();
-        saveState();
-        renderNavButton();
-      };
-      area.appendChild(inp);
-    }
-    qc.appendChild(area);
+    qc.appendChild(buildChoices());
   }
+
+  // === 문항별 메모(오답노트)
+  const noteWrap = document.createElement('div');
+  noteWrap.className = 'qnote-wrap';
+  noteWrap.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:space-between; margin:8px 0 6px">
+      <div style="font-weight:600">My note</div>
+      <div style="color:var(--muted); font-size:12px">자동 저장</div>
+    </div>
+    <textarea id="qnote"></textarea>
+  `;
+  qc.appendChild(noteWrap);
+
+  const nt = noteWrap.querySelector('#qnote');
+  nt.value = notes[q.id] || '';
+  let ntTimer=null;
+  nt.addEventListener('input', e=>{
+    notes[q.id] = e.target.value;
+    if(ntTimer) clearTimeout(ntTimer);
+    ntTimer = setTimeout(()=> saveState(), 300);
+  });
 
   typeset();
   renderNavButton();
@@ -656,6 +645,7 @@ function showNavPopup(){
     if(i===qIdx) b.classList.add('active');
     if(flags.has(q.id)) b.classList.add('flag');
     if(answers[q.id]!==undefined && answers[q.id]!=='' ) b.classList.add('answered');
+    if(notes[q.id] && String(notes[q.id]).trim()!=='') b.classList.add('note'); // 메모 표시
     b.textContent=i+1;
     b.onclick=()=>{ qIdx=i; renderQuestion(); showNavPopup(); };
     grid.appendChild(b);
@@ -712,7 +702,6 @@ function getSkillCodes(q){
   if (!Array.isArray(raw)) return [];
   return raw.map(s=>String(s).trim()).filter(Boolean);
 }
-// 문항 위치 인덱스: q.id -> { mi, qi, section, module }
 let QINDEX = {};
 function buildQIndex(){
   QINDEX = {};
@@ -722,7 +711,6 @@ function buildQIndex(){
     });
   });
 }
-// 공통 스킬 겹침 기반 유사 문항 (현재 문항 제외)
 function findSimilarQuestions(currentQ, limit=6){
   const target = new Set(getSkillCodes(currentQ));
   if(target.size===0) return [];
@@ -828,7 +816,7 @@ function buildSkillSummaryCard(minCount){
   return wrap;
 }
 
-// ===================== Progress Card (Base vs Review) =====================
+/* ===== Progress Card (Base vs Review) ===== */
 function buildProgressCard(baseId, maxSkills=5){
   const { lastBase, lastReview } = getLatestPair(baseId);
   const wrap = document.createElement('div');
@@ -843,24 +831,22 @@ function buildProgressCard(baseId, maxSkills=5){
     return wrap;
   }
 
-  // 상단 요약(전체 점수 변화)
   const baseAcc = lastBase?.overall?.acc ?? null;
   const revAcc  = lastReview?.overall?.acc ?? null;
   let headerHTML = `<div class="result-title"><div><b>Progress</b></div></div>`;
   if(baseAcc!==null || revAcc!==null){
-    const fmt = v=> (v===null? '—' : `${Math.round(v*100)}%`);
+    const fmtp = v=> (v===null? '—' : `${Math.round(v*100)}%`);
     const delta = (baseAcc!==null && revAcc!==null) ? Math.round((revAcc-baseAcc)*100) : null;
     const deltaTxt = (delta===null? '' : ` <span style="font-weight:700; color:${delta>=0?'#065f46':'#991b1b'}">(${delta>=0?'+':''}${delta} pp)</span>`);
     headerHTML = `
       <div class="result-title">
         <div><b>Progress</b></div>
         <div style="font-variant-numeric:tabular-nums">
-          Base: ${fmt(baseAcc)} → Review: ${fmt(revAcc)}${deltaTxt}
+          Base: ${fmtp(baseAcc)} → Review: ${fmtp(revAcc)}${deltaTxt}
         </div>
       </div>`;
   }
 
-  // 스킬별 변화 계산
   const baseSkills = lastBase?.skills || {};
   const revSkills  = lastReview?.skills || {};
   const union = new Set([...Object.keys(baseSkills), ...Object.keys(revSkills)]);
@@ -873,7 +859,6 @@ function buildProgressCard(baseId, maxSkills=5){
     changes.push({ code, base:b, review:r, delta:d });
   });
 
-  // 개선 TopN / 아직 약한 TopN
   const improved = changes
     .filter(x=> x.delta!==null)
     .sort((a,b)=> (b.delta - a.delta))
@@ -914,10 +899,7 @@ function buildProgressCard(baseId, maxSkills=5){
   return wrap;
 }
 
-
-// ===================== Review Session Utilities =====================
-
-// 선택 기준으로 문항 필터링
+/* ===== Review Session Utilities ===== */
 function pickReviewQuestions({ mode, skill }){
   const picked = [];
   (SET.modules||[]).forEach((m)=>{
@@ -929,8 +911,6 @@ function pickReviewQuestions({ mode, skill }){
   });
   return picked;
 }
-
-// 섹션별로 묶어 임시 세트 구성(섹션마다 모듈 1개)
 function buildAdHocSet(items, titleNote){
   const bySec = {};
   items.forEach(it=>{
@@ -946,7 +926,6 @@ function buildAdHocSet(items, titleNote){
       module: 1,
       questions: arr.map((q) => ({
         ...q,
-        // id 충돌 방지: 임시 접두사
         id: `review:${q.id}`
       }))
     });
@@ -955,7 +934,7 @@ function buildAdHocSet(items, titleNote){
   return {
     metadata: {
       id: `review-${Date.now()}`,
-      parentId: (SET?.metadata?.id || SET?.metadata?.title || 'base'), 
+      parentId: (SET?.metadata?.id || SET?.metadata?.title || 'base'),
       title: `${SET.metadata?.title || 'DSAT Practice'} — Review ${titleNote}`,
       directions: 'Review selected items.',
       durationMinutesPerModule: SET.metadata?.durationMinutesPerModule || { rw:[32,32], math:[35,35] }
@@ -963,8 +942,6 @@ function buildAdHocSet(items, titleNote){
     modules
   };
 }
-
-// 리뷰 세션 시작(현 페이지에서 새 SET으로 교체)
 function startReviewSession({ mode, skill }){
   const items = pickReviewQuestions({ mode, skill });
   if(items.length===0){
@@ -974,14 +951,13 @@ function startReviewSession({ mode, skill }){
   const titleNote = (mode==='skill') ? `(Skill: ${skill})` : `(${mode})`;
   const newSet = buildAdHocSet(items, titleNote);
 
-  // 상태 초기화 후 시작
   SET = newSet;
-
   SET.__isReviewSession = true;
 
   flags = new Set();
   answers = {};
-  buildQIndex();   // 비슷한 문항/해설 점프 등을 위한 인덱스 갱신
+  notes = {};
+  buildQIndex();
   startModule(0);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -991,22 +967,20 @@ function showFinalReport(){
   clearInterval(tickId);
   buildQIndex();
 
-   const justLogged = recordAttempt();
+  const justLogged = recordAttempt();
 
   clearState();
   $('#card').style.display='none';
   $('#ribbon').style.display='none';
   hideNavPopup();
 
-  // 결과 상단 도구 모음 (CSV)
   const box = $('#scoreBox'); box.innerHTML='';
-const tool = document.createElement('div');
-tool.className = 'qcard';
-tool.innerHTML = `
+  const tool = document.createElement('div');
+  tool.className = 'qcard';
+  tool.innerHTML = `
   <div class="result-title">
     <div><b>${SET.metadata?.title || 'DSAT Practice'} — Combined Report</b></div>
     <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
-      <!-- ▼ 리뷰 타이머 옵션 -->
       <select id="reviewTimerMode" class="btn">
         <option value="default">Timer: Default</option>
         <option value="infinite">Timer: ∞ (No limit)</option>
@@ -1015,7 +989,6 @@ tool.innerHTML = `
       <input id="reviewTimerMin" type="number" min="1" max="180" placeholder="min"
              class="btn" style="width:90px; display:none"/>
 
-      <!-- ▼ 리뷰 시작/CSV -->
       <select id="skillFilter" class="btn">
         <option value="">Skill…</option>
       </select>
@@ -1025,64 +998,53 @@ tool.innerHTML = `
       <button class="btn" id="csvBtn">Download CSV</button>
     </div>
   </div>`;
-// 결과 상단 도구 모음 (CSV + 리뷰 옵션) 생성 뒤 …
-box.appendChild(tool);
+  box.appendChild(tool);
 
-// 진행도 카드 삽입 (baseId는 현 세트 기준으로 추정)
-const baseIdForCompare = SET.__isReviewSession
-  ? (SET.metadata?.parentId || 'base')
-  : (SET.metadata?.id || SET.metadata?.title || 'base');
-box.appendChild( buildProgressCard(baseIdForCompare, 5) );
+  const baseIdForCompare = SET.__isReviewSession
+    ? (SET.metadata?.parentId || 'base')
+    : (SET.metadata?.id || SET.metadata?.title || 'base');
+  box.appendChild( buildProgressCard(baseIdForCompare, 5) );
 
-// 스킬 요약 카드(Top3/Bottom3)
-box.appendChild( buildSkillSummaryCard(2) );
+  box.appendChild( buildSkillSummaryCard(2) );
 
-// CSV 버튼
-$('#csvBtn').onclick = downloadCSV;
+  $('#csvBtn').onclick = downloadCSV;
 
-// 스킬 드롭다운 채우기
-const allSkills = new Set();
-(SET.modules||[]).forEach(m => (m.questions||[]).forEach(q => getSkillCodes(q).forEach(s => allSkills.add(s))));
-const $skill = document.getElementById('skillFilter');
-[...allSkills].sort().forEach(s=>{
-  const opt = document.createElement('option');
-  opt.value = s; opt.textContent = s;
-  $skill.appendChild(opt);
-});
+  const allSkills = new Set();
+  (SET.modules||[]).forEach(m => (m.questions||[]).forEach(q => getSkillCodes(q).forEach(s => allSkills.add(s))));
+  const $skill = document.getElementById('skillFilter');
+  [...allSkills].sort().forEach(s=>{
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = s;
+    $skill.appendChild(opt);
+  });
 
-// === 리뷰 타이머 UI 바인딩 ===
-const $mode = document.getElementById('reviewTimerMode');
-const $min  = document.getElementById('reviewTimerMin');
+  const $mode = document.getElementById('reviewTimerMode');
+  const $min  = document.getElementById('reviewTimerMin');
 
-// 이전 선택 복원(있다면)
-if (window.REVIEW_TIMER_PREF) {
-  $mode.value = window.REVIEW_TIMER_PREF.mode || 'default';
-  if (window.REVIEW_TIMER_PREF.mode === 'custom') {
-    $min.style.display = '';
-    if (window.REVIEW_TIMER_PREF.minutes) $min.value = window.REVIEW_TIMER_PREF.minutes;
+  if (window.REVIEW_TIMER_PREF) {
+    $mode.value = window.REVIEW_TIMER_PREF.mode || 'default';
+    if (window.REVIEW_TIMER_PREF.mode === 'custom') {
+      $min.style.display = '';
+      if (window.REVIEW_TIMER_PREF.minutes) $min.value = window.REVIEW_TIMER_PREF.minutes;
+    }
   }
-}
 
-$mode.addEventListener('change', ()=>{
-  if ($mode.value === 'custom') $min.style.display = '';
-  else $min.style.display = 'none';
-  // 즉시 저장
-  window.REVIEW_TIMER_PREF = { mode: $mode.value, minutes: Number($min.value)||null };
-});
-$min.addEventListener('input', ()=>{
-  window.REVIEW_TIMER_PREF = { mode: $mode.value, minutes: Number($min.value)||null };
-});
+  $mode.addEventListener('change', ()=>{
+    if ($mode.value === 'custom') $min.style.display = '';
+    else $min.style.display = 'none';
+    window.REVIEW_TIMER_PREF = { mode: $mode.value, minutes: Number($min.value)||null };
+  });
+  $min.addEventListener('input', ()=>{
+    window.REVIEW_TIMER_PREF = { mode: $mode.value, minutes: Number($min.value)||null };
+  });
 
-// 리뷰 버튼 핸들러
-document.getElementById('reviewWrongBtn').onclick = ()=> startReviewSession({ mode:'wrong' });
-document.getElementById('reviewFlagBtn').onclick  = ()=> startReviewSession({ mode:'flagged' });
-document.getElementById('reviewSkillBtn').onclick = ()=>{
-  const code = $skill.value;
-  if(code) startReviewSession({ mode:'skill', skill:code });
-};
+  document.getElementById('reviewWrongBtn').onclick = ()=> startReviewSession({ mode:'wrong' });
+  document.getElementById('reviewFlagBtn').onclick  = ()=> startReviewSession({ mode:'flagged' });
+  document.getElementById('reviewSkillBtn').onclick = ()=>{
+    const code = $skill.value;
+    if(code) startReviewSession({ mode:'skill', skill:code });
+  };
 
-
-  // 섹션별 그룹화
   const groups = {};
   SET.modules.forEach((m,mi)=>{
     const key=(m.section||'misc').toLowerCase();
@@ -1094,7 +1056,6 @@ document.getElementById('reviewSkillBtn').onclick = ()=>{
     return rank(a)-rank(b);
   });
 
-  // 섹션별 렌더링
   order.forEach(secKey=>{
     const secName = sectionLabel(secKey);
     const mods = groups[secKey].sort((a,b)=>a.module-b.module);
@@ -1140,7 +1101,6 @@ document.getElementById('reviewSkillBtn').onclick = ()=>{
     });
   });
 
-  // 클릭 바인딩 (해설 팝업)
   document.querySelectorAll('.result-dot').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const secKey=btn.getAttribute('data-section');
@@ -1193,7 +1153,29 @@ function openExplain(secName, modNo, idx, q, ok){
     ${q.rationale ? `<div class="qcard"><b>Explanation</b><div style="margin-top:6px">${fmt(q.rationale)}</div></div>`:''}
   `;
 
-  /* === 스킬 배지 + 유사문항 (플래그 가드) === */
+  // === 해설 팝업 내 메모
+  const noteBlock = document.createElement('div');
+  noteBlock.className = 'qcard';
+  noteBlock.style.marginBottom = '10px';
+  noteBlock.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px">
+      <b>My note</b>
+      <span style="color:var(--muted); font-size:12px">자동 저장</span>
+    </div>
+    <textarea id="expNote" style="width:100%; min-height:92px; padding:10px 12px; border:1px solid var(--line); border-radius:10px"></textarea>
+  `;
+  explainBody.insertBefore(noteBlock, explainBody.children[2] || null);
+
+  const expNT = noteBlock.querySelector('#expNote');
+  expNT.value = notes[q.id] || '';
+  let expTimer=null;
+  expNT.addEventListener('input', e=>{
+    notes[q.id] = e.target.value;
+    if(expTimer) clearTimeout(expTimer);
+    expTimer = setTimeout(()=> saveState(), 300);
+  });
+
+  /* === 스킬 배지 + (옵션) 유사문항 === */
   const skills = getSkillCodes(q);
   const skillBadges = skills.length
     ? `<div class="skill-badges">${skills.map(s=>`<span class="skill-badge">${s}</span>`).join('')}</div>`
@@ -1224,7 +1206,6 @@ function openExplain(secName, modNo, idx, q, ok){
   }
   if (simGrid) {
     explainBody.insertAdjacentHTML('beforeend', simGrid);
-    // 유사문항 클릭 핸들러
     explainBody.querySelectorAll('.similar-card').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const qid = btn.getAttribute('data-qid');
@@ -1241,20 +1222,20 @@ function openExplain(secName, modNo, idx, q, ok){
 $('#loadBtn').onclick=()=>loadSet($('#path').value);
 $('#hideBtn').onclick=()=>{ const w=$('.wrap'); w.style.display = w.style.display==='none'?'block':'none'; };
 
-// 파일로 세트 불러오기(개발/테스트용)
 async function loadSetFromFile(file){
   try{
     const text = await file.text();
     SET = JSON.parse(text);
     $('#loadError').style.display='none';
 
-    flags.clear(); answers={}; $('#scoreBox').innerHTML='';
+    flags.clear(); answers={}; notes={}; $('#scoreBox').innerHTML='';
     dirPanel.innerHTML = fmt(SET.metadata?.directions);
     buildQIndex();
 
     RESTORE_CACHE = tryRestore();
     if(RESTORE_CACHE){
       answers = RESTORE_CACHE.answers || {};
+      notes   = RESTORE_CACHE.notes   || {};
       const restoreMod = Math.min(RESTORE_CACHE.modIdx ?? 0, SET.modules.length-1);
       startModule(restoreMod);
       const savedSec = RESTORE_CACHE.timers?.[String(restoreMod)];
@@ -1300,7 +1281,7 @@ function correctAnswerDisplay(q){
   return (q.answerNumeric ?? (Array.isArray(q.altNumeric)? q.altNumeric[0] : '')) ?? '';
 }
 function buildCSV(){
-  const header = ['Section','Module','Number','QuestionID','Type','Correct','YourAnswer','CorrectAnswer','Flagged'];
+  const header = ['Section','Module','Number','QuestionID','Type','Correct','YourAnswer','CorrectAnswer','Flagged','Note'];
   const rows = [header];
 
   const groups = {};
@@ -1328,7 +1309,8 @@ function buildCSV(){
           isCorrect(q) ? 'Y' : 'N',
           userAnswerDisplay(q),
           correctAnswerDisplay(q),
-          flags.has(q.id) ? 'Y' : 'N'
+          flags.has(q.id) ? 'Y' : 'N',
+          notes[q.id] || ''
         ]);
       });
     });
@@ -1355,7 +1337,7 @@ document.addEventListener('click', (e)=>{
   if(!$('#navPopup').contains(e.target) && e.target!==$('#navOpen')) hideNavPopup();
 });
 
-/* ===== 부트스트랩: 랜딩/쿼리 파라미터 기준으로만 시작 ===== */
+/* ===== 부트스트랩 ===== */
 window.addEventListener('DOMContentLoaded', ()=>{
   const qs = new URLSearchParams(location.search);
   const url = qs.get('set');
