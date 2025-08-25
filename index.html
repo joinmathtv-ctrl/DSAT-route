@@ -7,6 +7,10 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <script defer id="MathJax-script"
         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<!-- ★ 커브 프리셋 파일을 메인 스크립트보다 먼저 로드 -->
+<script src="./curves.presets.js"></script>
+
 <style>
   :root{
     --bg:#fafbfe; --card:#fff; --ink:#1f2937; --muted:#6b7280;
@@ -45,7 +49,7 @@
       #cfe2f3 106px 152px, #fff 152px 160px); opacity:.95 }
 
   /* ===== 메인 ===== */
-  .wrap{ max-width:1060px; margin:12px auto 88px; padding:0 14px } /* 리본 높이만큼 아래 여백 */
+  .wrap{ max-width:1060px; margin:12px auto 88px; padding:0 14px }
   .loader{ display:flex; gap:8px; margin:6px 0 12px 0 }
   input[type="text"]#path{ width:330px; padding:7px 10px; border:1px solid var(--line); border-radius:8px }
   .btn{ border:1px solid var(--line); background:#fff; padding:8px 12px; border-radius:10px; cursor:pointer }
@@ -171,7 +175,6 @@
   <div class="loader">
     <input id="path" type="text" value="./questions.json" />
     <button class="btn" id="loadBtn">Load set</button>
-    <!-- 로컬 JSON 파일로 세트 불러오기 (개발/테스트용) -->
     <input id="file" type="file" accept=".json,application/json" style="margin-left:10px"/>
   </div>
   <div id="loadError" class="alert" style="display:none"></div>
@@ -245,9 +248,9 @@ let timerSec=0, tickId=null;
 window.REVIEW_TIMER_PREF = window.REVIEW_TIMER_PREF || { mode: 'default', minutes: null };
 
 /* ===== Auto-Save (localStorage) ===== */
-let RESTORE_CACHE = null; // 복원용 캐시(로드 직후 1회 사용)
+let RESTORE_CACHE = null;
 
-const FEATURE_SIMILAR = false; // 나중에 뱅크 준비되면 true로
+const FEATURE_SIMILAR = false;
 
 function storageKey(){
   const id = (SET?.metadata?.id || SET?.id || SET?.metadata?.title || 'default').toString();
@@ -255,10 +258,7 @@ function storageKey(){
 }
 function saveState(){
   try{
-    const payload = {
-      modIdx, qIdx, answers,
-      timers: { [String(modIdx)]: timerSec }
-    };
+    const payload = { modIdx, qIdx, answers, timers: { [String(modIdx)]: timerSec } };
     localStorage.setItem(storageKey(), JSON.stringify(payload));
   }catch(e){}
 }
@@ -283,30 +283,28 @@ const injectImages = html =>
   (html||"").replace(/\[\[IMAGE:\s*([^|\]]+)(?:\|([^\]]+))?\]\]/g,
     (_m,src,alt)=>`<img src="./img/${src.trim()}" alt="${(alt||'problem image').trim()}" style="max-width:100%">`);
 
-
-// ===== SAT Score Curves & Helpers =====
-// 커브는 세트 메타(SET.metadata.curves)로 덮어쓰기 가능
-// 포맷 예시:
-// metadata.curves = {
-//   rw:   [[0,200],[20,300],[40,400],[60,550],[80,700],[100,800]],   // %도메인
-//   math: [[0,200],[20,300],[40,450],[60,600],[80,720],[100,800]]    // %도메인
-// }
-// ※ x축이 0~100이면 %도메인, 그보다 크면 '맞힌 개수' 도메인으로 자동 판단합니다.
-const DEFAULT_CURVES = {
-  rw:   [[0,200],[20,300],[40,400],[60,550],[80,700],[100,800]],
-  math: [[0,200],[20,300],[40,450],[60,600],[80,720],[100,800]]
-};
-
+/* ===== SAT Score Curves & Helpers =====
+   우선순위: metadata.curves > metadata.curvePreset(프리셋 이름) > PRESETS.default > 안전 기본값 */
 function getCurves(){
-  const c = (SET?.metadata?.curves) || {};
-  return {
-    rw:   Array.isArray(c.rw)   ? c.rw   : DEFAULT_CURVES.rw,
-    math: Array.isArray(c.math) ? c.math : DEFAULT_CURVES.math
-  };
+  const PRESETS = (window.CURVE_PRESETS || {});
+  const meta = SET?.metadata || {};
+
+  if (meta.curves) {
+    return {
+      rw:   Array.isArray(meta.curves.rw)   ? meta.curves.rw   : (PRESETS.default?.rw || []),
+      math: Array.isArray(meta.curves.math) ? meta.curves.math : (PRESETS.default?.math || [])
+    };
+  }
+  if (meta.curvePreset && PRESETS[meta.curvePreset]) return PRESETS[meta.curvePreset];
+  if (PRESETS.default) return PRESETS.default;
+
+  // 안전장치
+  return { rw: [[0,200],[100,800]], math: [[0,200],[100,800]] };
 }
 
 function interp(points, x){
   const pts = [...points].sort((a,b)=>a[0]-b[0]);
+  if (pts.length===0) return 0;
   if (x <= pts[0][0]) return Math.round(pts[0][1]);
   if (x >= pts[pts.length-1][0]) return Math.round(pts[pts.length-1][1]);
   for (let i=1;i<pts.length;i++){
@@ -323,12 +321,11 @@ function scaledFromCurve(points, rawCorrect, rawTotal){
   const maxX = Math.max(...points.map(p=>p[0]));
   const x = (maxX <= 100)
     ? (rawTotal ? (rawCorrect/rawTotal*100) : 0) // % 도메인
-    : rawCorrect;                                // 원점수(맞힌 개수) 도메인
+    : rawCorrect;                                // 원점수 도메인
   return interp(points, x);
 }
 
 function accumulateSectionTotals(){
-  // 섹션별 맞힌 개수/전체 개수 집계
   const t = { rw:{correct:0,total:0}, math:{correct:0,total:0} };
   (SET.modules||[]).forEach((m)=>{
     const key = (m.section||'').toLowerCase();
@@ -341,16 +338,10 @@ function accumulateSectionTotals(){
   return t;
 }
 
-
-// ===================== Attempt Log Utils =====================
+/* ===== Attempt Log ===== */
 const ATTEMPT_KEY = 'dsat_attempts_v1';
-
-function loadAttempts(){
-  try{ return JSON.parse(localStorage.getItem(ATTEMPT_KEY) || '[]'); }catch(_e){ return []; }
-}
-function saveAttempts(arr){
-  try{ localStorage.setItem(ATTEMPT_KEY, JSON.stringify(arr)); }catch(_e){}
-}
+function loadAttempts(){ try{ return JSON.parse(localStorage.getItem(ATTEMPT_KEY) || '[]'); }catch(_e){ return []; } }
+function saveAttempts(arr){ try{ localStorage.setItem(ATTEMPT_KEY, JSON.stringify(arr)); }catch(_e){} }
 function overallTotals(){
   let total=0, correct=0;
   (SET.modules||[]).forEach(m=>{
@@ -361,8 +352,24 @@ function overallTotals(){
   });
   return { total, correct, acc: total? correct/total : 0 };
 }
+function collectSkillStats(){
+  const stats = {};
+  (SET.modules || []).forEach(m=>{
+    (m.questions || []).forEach(q=>{
+      const codes = getSkillCodes(q);
+      if(!codes.length) return;
+      const ok = isCorrect(q);
+      codes.forEach(code=>{
+        if(!stats[code]) stats[code] = {correct:0,total:0};
+        stats[code].total += 1;
+        if(ok) stats[code].correct += 1;
+      });
+    });
+  });
+  return stats;
+}
 function summarizeSkills(){
-  const stats = collectSkillStats(); // code -> {correct,total}
+  const stats = collectSkillStats();
   const bySkill = {};
   Object.entries(stats).forEach(([code, v])=>{
     bySkill[code] = { correct:v.correct, total:v.total, acc: v.total? v.correct/v.total : 0 };
@@ -399,7 +406,7 @@ function getLatestPair(baseId){
   return { lastBase, lastReview };
 }
 
-/* RW 지문 통합 수집 */
+/* ===== RW 지문 수집 ===== */
 function getPassageHTML(q){
   const base = q.passageHtml || q.passage || q.passageText || "";
   const imgOne = q.passageImage ? `[[IMAGE: ${q.passageImage}]]` : "";
@@ -410,7 +417,7 @@ function getPassageHTML(q){
   return injectImages(fmt(all));
 }
 
-/* 섹션 라벨/타이머 */
+/* ===== 섹션/타이머 ===== */
 function sectionLabel(key){
   const k=(key||'').toLowerCase();
   if(k==='rw'||k==='readingwriting'||k==='reading & writing') return 'Reading & Writing';
@@ -439,7 +446,7 @@ document.addEventListener('click',e=>{
   if(!dirPanel.contains(e.target) && e.target!==dirBtn) dirPanel.style.display='none';
 });
 
-/* ===== 로드 (URL/파일/랜딩 연동) ===== */
+/* ===== 로드 ===== */
 async function loadSet(path){
   try{
     const res = await fetch(path, {cache:'no-store'});
@@ -453,7 +460,7 @@ async function loadSet(path){
 
   flags.clear(); answers={}; $('#scoreBox').innerHTML='';
   dirPanel.innerHTML = fmt(SET.metadata?.directions);
-  buildQIndex(); // ★ 인덱스 빌드 추가
+  buildQIndex();
 
   RESTORE_CACHE = tryRestore();
   if(RESTORE_CACHE){
@@ -472,7 +479,6 @@ async function loadSet(path){
   }
 }
 
-// 랜딩에서 넘긴 로컬 파일(JSON 텍스트)로 시작
 function bootFromBlob(){
   const key = 'dsat_launch_blob';
   const text = localStorage.getItem(key);
@@ -518,18 +524,13 @@ function startModule(idx){
   const secTxt = sectionLabel(m.section);
   $('#crumb').textContent = `${SET.metadata?.title || 'DSAT Practice'} — ${secTxt} · Module ${m.module||1}`;
 
-  // ===== 타이머 세팅 =====
   clearInterval(tickId);
 
   let minutes = getDurationFor(modIdx);
-
   if (SET.__isReviewSession && window.REVIEW_TIMER_PREF) {
     const pref = window.REVIEW_TIMER_PREF;
-    if (pref.mode === 'infinite') {
-      minutes = null;
-    } else if (pref.mode === 'custom' && pref.minutes && pref.minutes > 0) {
-      minutes = pref.minutes;
-    }
+    if (pref.mode === 'infinite') minutes = null;
+    else if (pref.mode === 'custom' && pref.minutes && pref.minutes > 0) minutes = pref.minutes;
   }
 
   if (minutes === null) {
@@ -538,10 +539,7 @@ function startModule(idx){
     tickId = setInterval(()=>{
       const now = Date.now();
       const last = window.__lastSaveTs || 0;
-      if (now - last > 5000) {
-        saveState();
-        window.__lastSaveTs = now;
-      }
+      if (now - last > 5000) { saveState(); window.__lastSaveTs = now; }
     }, 1000);
   } else {
     timerSec = minutes * 60;
@@ -554,10 +552,9 @@ function startModule(idx){
     }, 1000);
   }
 
-  // ===== 화면 렌더 =====
   $('#card').style.display='block';
   $('#ribbon').style.display='flex';
-  bindPrevNext();   // ← Prev/Next 안전 재바인딩
+  bindPrevNext();   // 안전 재바인딩
   renderQuestion();
   renderNavButton();
   hideNavPopup();
@@ -623,9 +620,7 @@ function renderQuestion(){
           <div class="txt">${c}</div>`;
         if(String(answers[q.id])===String(i)) row.classList.add('selected');
         row.addEventListener('click',()=>{
-          answers[q.id]=i;
-          saveState();
-          renderQuestion(); renderNavButton();
+          answers[q.id]=i; saveState(); renderQuestion(); renderNavButton();
         });
         area.appendChild(row);
       });
@@ -633,9 +628,7 @@ function renderQuestion(){
       const inp=document.createElement('input'); inp.className='gridin';
       inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
       inp.oninput=e=>{
-        answers[q.id]=e.target.value.trim();
-        saveState();
-        renderNavButton();
+        answers[q.id]=e.target.value.trim(); saveState(); renderNavButton();
       };
       area.appendChild(inp);
     }
@@ -658,9 +651,7 @@ function renderQuestion(){
           <div class="txt">${c}</div>`;
         if(String(answers[q.id])===String(i)) row.classList.add('selected');
         row.addEventListener('click',()=>{
-          answers[q.id]=i;
-          saveState();
-          renderQuestion(); renderNavButton();
+          answers[q.id]=i; saveState(); renderQuestion(); renderNavButton();
         });
         area.appendChild(row);
       });
@@ -668,9 +659,7 @@ function renderQuestion(){
       const inp=document.createElement('input'); inp.className='gridin';
       inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
       inp.oninput=e=>{
-        answers[q.id]=e.target.value.trim();
-        saveState();
-        renderNavButton();
+        answers[q.id]=e.target.value.trim(); saveState(); renderNavButton();
       };
       area.appendChild(inp);
     }
@@ -731,7 +720,6 @@ function bindPrevNext(){
   const next = $('#nextBtn');
   if(!prev || !next) return;
 
-  // 기존 리스너 제거(중복 방지)
   const prevClone = prev.cloneNode(true);
   const nextClone = next.cloneNode(true);
   prev.parentNode.replaceChild(prevClone, prev);
@@ -740,9 +728,7 @@ function bindPrevNext(){
   prevClone.addEventListener('click', (e)=>{
     e.preventDefault(); e.stopPropagation();
     if(qIdx > 0){
-      qIdx--;
-      saveState();
-      renderQuestion();
+      qIdx--; saveState(); renderQuestion();
     }
     hideNavPopup();
   });
@@ -751,10 +737,7 @@ function bindPrevNext(){
     e.preventDefault(); e.stopPropagation();
     const n = totalQ(modIdx);
     if(qIdx < n-1){
-      qIdx++;
-      saveState();
-      renderQuestion();
-      hideNavPopup();
+      qIdx++; saveState(); renderQuestion(); hideNavPopup();
     }else{
       openSubmitConfirm();
     }
@@ -830,28 +813,11 @@ function openExplainById(qid){
   openExplain(sectionLabel(section), module, qi+1, q, ok);
 }
 
-/* ===== 스킬 요약(Top3/Bottom3) ===== */
-function collectSkillStats(){
-  const stats = {};
-  (SET.modules || []).forEach(m=>{
-    (m.questions || []).forEach(q=>{
-      const codes = getSkillCodes(q);
-      if(!codes.length) return;
-      const ok = isCorrect(q);
-      codes.forEach(code=>{
-        if(!stats[code]) stats[code] = {correct:0,total:0};
-        stats[code].total += 1;
-        if(ok) stats[code].correct += 1;
-      });
-    });
-  });
-  return stats;
-}
+/* ===== 스킬 요약 카드 ===== */
 function buildSkillSummaryCard(minCount){
   const stats = collectSkillStats();
   const entries = Object.entries(stats).map(([code, v])=>({
-    code, correct: v.correct, total: v.total,
-    acc: v.total ? v.correct / v.total : 0
+    code, correct: v.correct, total: v.total, acc: v.total ? v.correct / v.total : 0
   }));
   const eligible = entries.filter(e=> e.total >= minCount).sort((a,b)=> b.acc - a.acc);
 
@@ -861,9 +827,7 @@ function buildSkillSummaryCard(minCount){
 
   if(eligible.length === 0){
     wrap.innerHTML = `
-      <div class="result-title">
-        <div><b>Skill Summary</b> ${headNote}</div>
-      </div>
+      <div class="result-title"><div><b>Skill Summary</b> ${headNote}</div></div>
       <div style="margin-top:6px; color:var(--muted); font-size:14px">
         스킬 태그가 감지되지 않았습니다. 문항 JSON에 <code>"skills": ["FUNC_LINEAR","RATIO"]</code> 형태로 태그를 추가하면 요약이 표시됩니다.
       </div>`;
@@ -881,9 +845,7 @@ function buildSkillSummaryCard(minCount){
     </li>`;
 
   wrap.innerHTML = `
-    <div class="result-title">
-      <div><b>Skill Summary</b> ${headNote}</div>
-    </div>
+    <div class="result-title"><div><b>Skill Summary</b> ${headNote}</div></div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px">
       <div>
         <div style="font-weight:700; color:#065f46; margin-bottom:6px">Top strengths</div>
@@ -901,7 +863,7 @@ function buildSkillSummaryCard(minCount){
   return wrap;
 }
 
-/* ===================== Progress Card (Base vs Review) ===================== */
+/* ===== Progress Card ===== */
 function buildProgressCard(baseId, maxSkills=5){
   const { lastBase, lastReview } = getLatestPair(baseId);
   const wrap = document.createElement('div');
@@ -909,9 +871,7 @@ function buildProgressCard(baseId, maxSkills=5){
 
   if(!lastBase && !lastReview){
     wrap.innerHTML = `
-      <div class="result-title">
-        <div><b>Progress</b></div>
-      </div>
+      <div class="result-title"><div><b>Progress</b></div></div>
       <div style="margin-top:6px; color:var(--muted)">기록된 시도가 없습니다.</div>`;
     return wrap;
   }
@@ -944,15 +904,8 @@ function buildProgressCard(baseId, maxSkills=5){
     changes.push({ code, base:b, review:r, delta:d });
   });
 
-  const improved = changes
-    .filter(x=> x.delta!==null)
-    .sort((a,b)=> (b.delta - a.delta))
-    .slice(0, maxSkills);
-
-  const weakNow = changes
-    .filter(x=> x.review!==null)
-    .sort((a,b)=> (a.review - b.review))
-    .slice(0, maxSkills);
+  const improved = changes.filter(x=> x.delta!==null).sort((a,b)=> (b.delta - a.delta)).slice(0, maxSkills);
+  const weakNow = changes.filter(x=> x.review!==null).sort((a,b)=> (a.review - b.review)).slice(0, maxSkills);
 
   const row = (e)=>`
     <li style="display:flex; justify-content:space-between; gap:10px; border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:#fff">
@@ -961,7 +914,7 @@ function buildProgressCard(baseId, maxSkills=5){
         ${e.base===null?'—':Math.round(e.base*100)+'%'}
         →
         ${e.review===null?'—':Math.round(e.review*100)+'%'}
-        ${e.delta===null?'':` <b style="color:${e.delta>=0?'#065f46':'#991b1b'}">(${e.delta>=0?'+':''}${Math.round(e.delta*100)/100} )</b>`}
+        ${e.delta===null?'':` <b style="color:${e.delta>=0?'#065f46':'#991b1b'}">(${e.delta>=0?'+':''}${Math.round(e.delta*100)/100})</b>`}
       </span>
     </li>`;
 
@@ -984,7 +937,7 @@ function buildProgressCard(baseId, maxSkills=5){
   return wrap;
 }
 
-/* ===================== Review Session Utilities ===================== */
+/* ===== Review Session ===== */
 function pickReviewQuestions({ mode, skill }){
   const picked = [];
   (SET.modules||[]).forEach((m)=>{
@@ -1009,10 +962,7 @@ function buildAdHocSet(items, titleNote){
     modules.push({
       section: sec,
       module: 1,
-      questions: arr.map((q) => ({
-        ...q,
-        id: `review:${q.id}`
-      }))
+      questions: arr.map((q) => ({ ...q, id: `review:${q.id}` }))
     });
   });
 
@@ -1051,7 +1001,7 @@ function showFinalReport(){
   clearInterval(tickId);
   buildQIndex();
 
-  const justLogged = recordAttempt();
+  recordAttempt();
 
   clearState();
   $('#card').style.display='none';
@@ -1072,7 +1022,6 @@ function showFinalReport(){
       </select>
       <input id="reviewTimerMin" type="number" min="1" max="180" placeholder="min"
              class="btn" style="width:90px; display:none"/>
-
       <select id="skillFilter" class="btn">
         <option value="">Skill…</option>
       </select>
@@ -1084,58 +1033,60 @@ function showFinalReport(){
   </div>`;
   box.appendChild(tool);
 
-// === SAT 환산 점수 카드 삽입 ===
-(function renderSATCard(){
-  const totals = accumulateSectionTotals();
-  const curves = getCurves();
+  // === SAT 환산 점수 카드 ===
+  (function renderSATCard(){
+    const totals = accumulateSectionTotals();
+    const curves = getCurves();
 
-  const rwScaled   = scaledFromCurve(curves.rw,   totals.rw.correct,   totals.rw.total);
-  const mathScaled = scaledFromCurve(curves.math, totals.math.correct, totals.math.total);
-  const totalSAT   = (isFinite(rwScaled)?rwScaled:0) + (isFinite(mathScaled)?mathScaled:0);
+    const rwScaled   = scaledFromCurve(curves.rw,   totals.rw.correct,   totals.rw.total);
+    const mathScaled = scaledFromCurve(curves.math, totals.math.correct, totals.math.total);
+    const totalSAT   = (isFinite(rwScaled)?rwScaled:0) + (isFinite(mathScaled)?mathScaled:0);
 
-  const sat = document.createElement('div');
-  sat.className = 'qcard';
-  sat.innerHTML = `
-    <div class="result-title">
-      <div><b>SAT Converted Score</b></div>
-      <div style="font-variant-numeric:tabular-nums; font-weight:700; font-size:18px">${totalSAT}</div>
-    </div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px">
-      <div style="border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:#fff">
-        <div style="font-weight:700; margin-bottom:4px">Reading & Writing</div>
-        <div style="font-variant-numeric:tabular-nums">
-          Raw: ${totals.rw.correct} / ${totals.rw.total}
-          <span style="color:var(--muted)"> · </span>
-          Scaled: <b>${rwScaled}</b>
+    const sat = document.createElement('div');
+    sat.className = 'qcard';
+    sat.innerHTML = `
+      <div class="result-title">
+        <div><b>SAT Converted Score</b></div>
+        <div style="font-variant-numeric:tabular-nums; font-weight:700; font-size:18px">${totalSAT}</div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px">
+        <div style="border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:#fff">
+          <div style="font-weight:700; margin-bottom:4px">Reading & Writing</div>
+          <div style="font-variant-numeric:tabular-nums">
+            Raw: ${totals.rw.correct} / ${totals.rw.total}
+            <span style="color:var(--muted)"> · </span>
+            Scaled: <b>${rwScaled}</b>
+          </div>
+        </div>
+        <div style="border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:#fff">
+          <div style="font-weight:700; margin-bottom:4px">Math</div>
+          <div style="font-variant-numeric:tabular-nums">
+            Raw: ${totals.math.correct} / ${totals.math.total}
+            <span style="color:var(--muted)"> · </span>
+            Scaled: <b>${mathScaled}</b>
+          </div>
         </div>
       </div>
-      <div style="border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:#fff">
-        <div style="font-weight:700; margin-bottom:4px">Math</div>
-        <div style="font-variant-numeric:tabular-nums">
-          Raw: ${totals.math.correct} / ${totals.math.total}
-          <span style="color:var(--muted)"> · </span>
-          Scaled: <b>${mathScaled}</b>
-        </div>
+      <div style="margin-top:8px; color:var(--muted); font-size:12px">
+        * 커브는 세트의 <code>metadata.curves</code> 또는 <code>metadata.curvePreset</code>로 제어됩니다.
       </div>
-    </div>
-    <div style="margin-top:8px; color:var(--muted); font-size:12px">
-      * 커브는 세트의 <code>metadata.curves</code>에서 조정할 수 있습니다.
-    </div>
-  `;
-  box.appendChild(sat);
-})();
+    `;
+    box.appendChild(sat);
+  })();
 
-
-
+  // 진행도 카드
   const baseIdForCompare = SET.__isReviewSession
     ? (SET.metadata?.parentId || 'base')
     : (SET.metadata?.id || SET.metadata?.title || 'base');
   box.appendChild( buildProgressCard(baseIdForCompare, 5) );
 
+  // 스킬 요약
   box.appendChild( buildSkillSummaryCard(2) );
 
+  // CSV
   $('#csvBtn').onclick = downloadCSV;
 
+  // 스킬 드롭다운
   const allSkills = new Set();
   (SET.modules||[]).forEach(m => (m.questions||[]).forEach(q => getSkillCodes(q).forEach(s => allSkills.add(s))));
   const $skill = document.getElementById('skillFilter');
@@ -1145,6 +1096,7 @@ function showFinalReport(){
     $skill.appendChild(opt);
   });
 
+  // 리뷰 타이머 UI
   const $mode = document.getElementById('reviewTimerMode');
   const $min  = document.getElementById('reviewTimerMin');
   if (window.REVIEW_TIMER_PREF) {
@@ -1163,6 +1115,7 @@ function showFinalReport(){
     window.REVIEW_TIMER_PREF = { mode: $mode.value, minutes: Number($min.value)||null };
   });
 
+  // 리뷰 버튼
   document.getElementById('reviewWrongBtn').onclick = ()=> startReviewSession({ mode:'wrong' });
   document.getElementById('reviewFlagBtn').onclick  = ()=> startReviewSession({ mode:'flagged' });
   document.getElementById('reviewSkillBtn').onclick = ()=>{
@@ -1170,6 +1123,7 @@ function showFinalReport(){
     if(code) startReviewSession({ mode:'skill', skill:code });
   };
 
+  // 섹션별 정오표
   const groups = {};
   SET.modules.forEach((m,mi)=>{
     const key=(m.section||'misc').toLowerCase();
@@ -1284,10 +1238,9 @@ function openExplain(secName, modNo, idx, q, ok){
     : `<div class="skill-badges"><span class="skill-badge" style="opacity:.7">NO_SKILLS_TAGGED</span></div>`;
   explainBody.insertAdjacentHTML('afterbegin', skillBadges);
 
-  let simGrid = '';
   if (FEATURE_SIMILAR && skills.length){
     const sims = findSimilarQuestions(q, 6);
-    simGrid = sims.length ? `
+    const simGrid = sims.length ? `
       <div class="similar-wrap">
         <div style="font-weight:700; margin-bottom:6px">Similar questions by skill overlap</div>
         <div class="similar-grid">
@@ -1300,13 +1253,10 @@ function openExplain(secName, modNo, idx, q, ok){
               <button class="similar-card ${cls}" data-qid="${qq.id}" title="${label}">
                 <div style="font-weight:700; margin-bottom:4px">${label}</div>
                 <div class="similar-meta">${skillsTxt || 'NO_SKILLS'}</div>
-              </button>
-            `;
+              </button>`;
           }).join('')}
         </div>
       </div>` : `<div class="similar-wrap" style="color:var(--muted); font-size:13px">추천 문항이 아직 없습니다.</div>`;
-  }
-  if (simGrid) {
     explainBody.insertAdjacentHTML('beforeend', simGrid);
     explainBody.querySelectorAll('.similar-card').forEach(btn=>{
       btn.addEventListener('click', ()=>{
@@ -1320,7 +1270,7 @@ function openExplain(secName, modNo, idx, q, ok){
   typeset();
 }
 
-/* ===== 기타: 수동 로드/파일 로드/부트스트랩 ===== */
+/* ===== 수동 로드/파일 로드 ===== */
 $('#loadBtn').onclick=()=>loadSet($('#path').value);
 $('#hideBtn').onclick=()=>{ const w=$('.wrap'); w.style.display = w.style.display==='none'?'block':'none'; };
 
@@ -1359,7 +1309,7 @@ $('#file').addEventListener('change', (e)=>{
   if(f) loadSetFromFile(f);
 });
 
-// ===== CSV 내보내기 =====
+/* ===== CSV ===== */
 function csvEscape(v){
   const s = (v===undefined || v===null) ? '' : String(v);
   return `"${s.replace(/"/g, '""')}"`;
@@ -1432,6 +1382,7 @@ function downloadCSV(){
   URL.revokeObjectURL(url);
 }
 
+/* ===== 팝업 외부 클릭 닫기 ===== */
 document.addEventListener('click', (e)=>{
   if(!$('#navPopup').contains(e.target) && e.target!==$('#navOpen')) hideNavPopup();
 });
@@ -1449,11 +1400,9 @@ window.addEventListener('DOMContentLoaded', ()=>{
   } else if (src === 'blob') {
     document.querySelector('.loader')?.style && (document.querySelector('.loader').style.display='none');
     bootFromBlob();
-  } else {
-    // 개발 편의를 위해 상단 로더는 남겨둠
   }
 
-  // Prev/Next 초기 바인딩(안전)
+  // Prev/Next 초기 바인딩
   bindPrevNext();
 });
 </script>
