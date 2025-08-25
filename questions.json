@@ -1,6 +1,7 @@
 {
   "metadata": {
     "title": "Digital SAT Full Practice Test",
+	"curvePreset": "hard"
     "sections": ["rw", "math"],
     "directions": "Answer each question. For Reading & Writing, read the passage on the left and answer the question(s) on the right. For Math, solve the problem and choose or enter the correct answer.",
     "durationMinutesPerModule": { "rw": [32, 32], "math": [35, 35] }
