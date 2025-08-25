@@ -7,10 +7,6 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <script defer id="MathJax-script"
         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-<!-- ▲ 수식 -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<!-- ▲ 시각화(Chart.js) 추가 -->
-
 <style>
   :root{
     --bg:#fafbfe; --card:#fff; --ink:#1f2937; --muted:#6b7280;
@@ -112,7 +108,7 @@
   .modal-back{ position:fixed; inset:0; background:rgba(0,0,0,.36); display:none; z-index:20; }
   .modal{ width:min(560px, 92vw); margin:10vh auto; background:#fff; border-radius:14px; border:1px solid var(--line); padding:14px }
   .modal .head{ font-weight:800; font-size:18px; margin-bottom:6px }
-  .modal .body{ font-size:14px; color:var(--ink) }
+  .modal .body{ font-size:14px; color:#1f2937 }
   .modal .foot{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px }
 
   /* 결과/해설 오버레이 (팝업/스크롤 가능) */
@@ -195,13 +191,13 @@
 <!-- ===== 하단 고정 리본 ===== -->
 <div class="ribbon" id="ribbon" style="display:none">
   <div class="r-left">
-    <button class="btn" id="prevBtn">← Prev</button>
+    <button type="button" class="btn" id="prevBtn">← Prev</button>
   </div>
   <div class="r-center">
     <button class="btn ghost" id="navOpen">1 / 22 ▾</button>
   </div>
   <div class="r-right">
-    <button class="btn" id="nextBtn">Next →</button>
+    <button type="button" class="btn" id="nextBtn">Next →</button>
   </div>
 </div>
 
@@ -306,7 +302,7 @@ function overallTotals(){
   return { total, correct, acc: total? correct/total : 0 };
 }
 function summarizeSkills(){
-  const stats = collectSkillStats();
+  const stats = collectSkillStats(); // code -> {correct,total}
   const bySkill = {};
   Object.entries(stats).forEach(([code, v])=>{
     bySkill[code] = { correct:v.correct, total:v.total, acc: v.total? v.correct/v.total : 0 };
@@ -397,7 +393,7 @@ async function loadSet(path){
 
   flags.clear(); answers={}; $('#scoreBox').innerHTML='';
   dirPanel.innerHTML = fmt(SET.metadata?.directions);
-  buildQIndex();
+  buildQIndex(); // ★ 인덱스 빌드 추가
 
   RESTORE_CACHE = tryRestore();
   if(RESTORE_CACHE){
@@ -462,9 +458,11 @@ function startModule(idx){
   const secTxt = sectionLabel(m.section);
   $('#crumb').textContent = `${SET.metadata?.title || 'DSAT Practice'} — ${secTxt} · Module ${m.module||1}`;
 
+  // ===== 타이머 세팅 =====
   clearInterval(tickId);
 
   let minutes = getDurationFor(modIdx);
+
   if (SET.__isReviewSession && window.REVIEW_TIMER_PREF) {
     const pref = window.REVIEW_TIMER_PREF;
     if (pref.mode === 'infinite') {
@@ -480,7 +478,10 @@ function startModule(idx){
     tickId = setInterval(()=>{
       const now = Date.now();
       const last = window.__lastSaveTs || 0;
-      if (now - last > 5000) { saveState(); window.__lastSaveTs = now; }
+      if (now - last > 5000) {
+        saveState();
+        window.__lastSaveTs = now;
+      }
     }, 1000);
   } else {
     timerSec = minutes * 60;
@@ -493,13 +494,16 @@ function startModule(idx){
     }, 1000);
   }
 
+  // ===== 화면 렌더 =====
   $('#card').style.display='block';
   $('#ribbon').style.display='flex';
+  bindPrevNext();   // ← Prev/Next 안전 재바인딩
   renderQuestion();
   renderNavButton();
   hideNavPopup();
   $('#scoreBox').innerHTML='';
 }
+
 function gotoNextModule(){
   const last = SET.modules.length - 1;
   if (modIdx < last){
@@ -559,7 +563,9 @@ function renderQuestion(){
           <div class="txt">${c}</div>`;
         if(String(answers[q.id])===String(i)) row.classList.add('selected');
         row.addEventListener('click',()=>{
-          answers[q.id]=i; saveState(); renderQuestion(); renderNavButton();
+          answers[q.id]=i;
+          saveState();
+          renderQuestion(); renderNavButton();
         });
         area.appendChild(row);
       });
@@ -567,7 +573,9 @@ function renderQuestion(){
       const inp=document.createElement('input'); inp.className='gridin';
       inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
       inp.oninput=e=>{
-        answers[q.id]=e.target.value.trim(); saveState(); renderNavButton();
+        answers[q.id]=e.target.value.trim();
+        saveState();
+        renderNavButton();
       };
       area.appendChild(inp);
     }
@@ -590,7 +598,9 @@ function renderQuestion(){
           <div class="txt">${c}</div>`;
         if(String(answers[q.id])===String(i)) row.classList.add('selected');
         row.addEventListener('click',()=>{
-          answers[q.id]=i; saveState(); renderQuestion(); renderNavButton();
+          answers[q.id]=i;
+          saveState();
+          renderQuestion(); renderNavButton();
         });
         area.appendChild(row);
       });
@@ -598,7 +608,9 @@ function renderQuestion(){
       const inp=document.createElement('input'); inp.className='gridin';
       inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
       inp.oninput=e=>{
-        answers[q.id]=e.target.value.trim(); saveState(); renderNavButton();
+        answers[q.id]=e.target.value.trim();
+        saveState();
+        renderNavButton();
       };
       area.appendChild(inp);
     }
@@ -652,6 +664,42 @@ $('#confirmOk').onclick = ()=>{
   saveState();
   gotoNextModule();
 };
+
+/* ===== Prev/Next 안전 재바인딩 ===== */
+function bindPrevNext(){
+  const prev = $('#prevBtn');
+  const next = $('#nextBtn');
+  if(!prev || !next) return;
+
+  // 기존 리스너 제거(중복 방지)
+  const prevClone = prev.cloneNode(true);
+  const nextClone = next.cloneNode(true);
+  prev.parentNode.replaceChild(prevClone, prev);
+  next.parentNode.replaceChild(nextClone, next);
+
+  prevClone.addEventListener('click', (e)=>{
+    e.preventDefault(); e.stopPropagation();
+    if(qIdx > 0){
+      qIdx--;
+      saveState();
+      renderQuestion();
+    }
+    hideNavPopup();
+  });
+
+  nextClone.addEventListener('click', (e)=>{
+    e.preventDefault(); e.stopPropagation();
+    const n = totalQ(modIdx);
+    if(qIdx < n-1){
+      qIdx++;
+      saveState();
+      renderQuestion();
+      hideNavPopup();
+    }else{
+      openSubmitConfirm();
+    }
+  });
+}
 
 /* ===== 채점 ===== */
 function gridinEqual(user,q){
@@ -722,7 +770,7 @@ function openExplainById(qid){
   openExplain(sectionLabel(section), module, qi+1, q, ok);
 }
 
-/* ===== 스킬 요약(Top3/Bottom3) + 차트 ===== */
+/* ===== 스킬 요약(Top3/Bottom3) ===== */
 function collectSkillStats(){
   const stats = {};
   (SET.modules || []).forEach(m=>{
@@ -790,34 +838,10 @@ function buildSkillSummaryCard(minCount){
         </ul>
       </div>
     </div>`;
-
-  // ▼ 막대 차트 (eligible 전체 기준 정확도%)
-  const canvas = document.createElement('canvas');
-  canvas.height = 220;
-  canvas.style.marginTop = '10px';
-  wrap.appendChild(canvas);
-
-  const labels = eligible.map(e=>e.code);
-  const accs   = eligible.map(e=>Math.round(e.acc*100));
-  setTimeout(()=>{
-    new Chart(canvas.getContext('2d'), {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [{ label: 'Accuracy %', data: accs, backgroundColor: '#3b82f6' }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero:true, max:100, ticks:{ stepSize:20 } } }
-      }
-    });
-  },0);
-
   return wrap;
 }
 
-/* ===== 진행도 카드 (Base vs Review) ===== */
+/* ===================== Progress Card (Base vs Review) ===================== */
 function buildProgressCard(baseId, maxSkills=5){
   const { lastBase, lastReview } = getLatestPair(baseId);
   const wrap = document.createElement('div');
@@ -836,19 +860,18 @@ function buildProgressCard(baseId, maxSkills=5){
   const revAcc  = lastReview?.overall?.acc ?? null;
   let headerHTML = `<div class="result-title"><div><b>Progress</b></div></div>`;
   if(baseAcc!==null || revAcc!==null){
-    const fmt = v=> (v===null? '—' : `${Math.round(v*100)}%`);
+    const fmtPct = v=> (v===null? '—' : `${Math.round(v*100)}%`);
     const delta = (baseAcc!==null && revAcc!==null) ? Math.round((revAcc-baseAcc)*100) : null;
     const deltaTxt = (delta===null? '' : ` <span style="font-weight:700; color:${delta>=0?'#065f46':'#991b1b'}">(${delta>=0?'+':''}${delta} pp)</span>`);
     headerHTML = `
       <div class="result-title">
         <div><b>Progress</b></div>
         <div style="font-variant-numeric:tabular-nums">
-          Base: ${fmt(baseAcc)} → Review: ${fmt(revAcc)}${deltaTxt}
+          Base: ${fmtPct(baseAcc)} → Review: ${fmtPct(revAcc)}${deltaTxt}
         </div>
       </div>`;
   }
 
-  // 스킬별 변화 계산
   const baseSkills = lastBase?.skills || {};
   const revSkills  = lastReview?.skills || {};
   const union = new Set([...Object.keys(baseSkills), ...Object.keys(revSkills)]);
@@ -861,16 +884,24 @@ function buildProgressCard(baseId, maxSkills=5){
     changes.push({ code, base:b, review:r, delta:d });
   });
 
-  const improved = changes.filter(x=> x.delta!==null).sort((a,b)=> (b.delta - a.delta)).slice(0, maxSkills);
-  const weakNow  = changes.filter(x=> x.review!==null).sort((a,b)=> (a.review - b.review)).slice(0, maxSkills);
+  const improved = changes
+    .filter(x=> x.delta!==null)
+    .sort((a,b)=> (b.delta - a.delta))
+    .slice(0, maxSkills);
+
+  const weakNow = changes
+    .filter(x=> x.review!==null)
+    .sort((a,b)=> (a.review - b.review))
+    .slice(0, maxSkills);
 
   const row = (e)=>`
     <li style="display:flex; justify-content:space-between; gap:10px; border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:#fff">
       <span>${e.code}</span>
       <span style="font-variant-numeric:tabular-nums">
-        ${e.base===null?'—':Math.round(e.base*100)+'%'} →
+        ${e.base===null?'—':Math.round(e.base*100)+'%'}
+        →
         ${e.review===null?'—':Math.round(e.review*100)+'%'}
-        ${e.delta===null?'':` <b style="color:${e.delta>=0?'#065f46':'#991b1b'}">(${e.delta>=0?'+':''}${Math.round(e.delta*100)} pp)</b>`}
+        ${e.delta===null?'':` <b style="color:${e.delta>=0?'#065f46':'#991b1b'}">(${e.delta>=0?'+':''}${Math.round(e.delta*100)/100} )</b>`}
       </span>
     </li>`;
 
@@ -890,36 +921,10 @@ function buildProgressCard(baseId, maxSkills=5){
         </ul>
       </div>
     </div>`;
-
-  // ▼ 시도 추세선(전체 정확도 %)
-  const trendCanvas = document.createElement('canvas');
-  trendCanvas.height = 180;
-  trendCanvas.style.marginTop = '10px';
-  wrap.appendChild(trendCanvas);
-
-  const all = loadAttempts().filter(a=> a.baseId===baseId).sort((a,b)=> a.ts-b.ts);
-  const tlabels = all.map(a=> new Date(a.ts).toLocaleDateString());
-  const tdata   = all.map(a=> Math.round((a.overall?.acc||0)*100));
-
-  setTimeout(()=>{
-    new Chart(trendCanvas.getContext('2d'), {
-      type: 'line',
-      data: {
-        labels: tlabels,
-        datasets: [{ label:'Overall %', data:tdata, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,.15)', fill:true, tension:.25 }]
-      },
-      options: {
-        responsive:true,
-        plugins:{ legend:{ display:false } },
-        scales:{ y:{ beginAtZero:true, max:100 } }
-      }
-    });
-  },0);
-
   return wrap;
 }
 
-/* ===== 리뷰 세션 유틸 ===== */
+/* ===================== Review Session Utilities ===================== */
 function pickReviewQuestions({ mode, skill }){
   const picked = [];
   (SET.modules||[]).forEach((m)=>{
@@ -1019,17 +1024,15 @@ function showFinalReport(){
   </div>`;
   box.appendChild(tool);
 
-  // 진행도 카드 + 스킬 요약 카드
   const baseIdForCompare = SET.__isReviewSession
     ? (SET.metadata?.parentId || 'base')
     : (SET.metadata?.id || SET.metadata?.title || 'base');
   box.appendChild( buildProgressCard(baseIdForCompare, 5) );
+
   box.appendChild( buildSkillSummaryCard(2) );
 
-  // CSV 버튼
   $('#csvBtn').onclick = downloadCSV;
 
-  // 스킬 드롭다운
   const allSkills = new Set();
   (SET.modules||[]).forEach(m => (m.questions||[]).forEach(q => getSkillCodes(q).forEach(s => allSkills.add(s))));
   const $skill = document.getElementById('skillFilter');
@@ -1039,7 +1042,6 @@ function showFinalReport(){
     $skill.appendChild(opt);
   });
 
-  // 리뷰 타이머 UI 바인딩
   const $mode = document.getElementById('reviewTimerMode');
   const $min  = document.getElementById('reviewTimerMin');
   if (window.REVIEW_TIMER_PREF) {
@@ -1065,7 +1067,6 @@ function showFinalReport(){
     if(code) startReviewSession({ mode:'skill', skill:code });
   };
 
-  // 섹션별 그룹화
   const groups = {};
   SET.modules.forEach((m,mi)=>{
     const key=(m.section||'misc').toLowerCase();
@@ -1077,7 +1078,6 @@ function showFinalReport(){
     return rank(a)-rank(b);
   });
 
-  // 섹션별 렌더링 + 도넛 차트
   order.forEach(secKey=>{
     const secName = sectionLabel(secKey);
     const mods = groups[secKey].sort((a,b)=>a.module-b.module);
@@ -1100,34 +1100,15 @@ function showFinalReport(){
         <div><b>${secName} — Total:</b> ${secCorrect} / ${secTotal}</div>
         <div><span class="badge ok">Correct</span> <span class="badge bad" style="margin-left:8px">Wrong</span></div>
       </div>
-      <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center">
+      <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap">
         ${perModule.map(pm=>`
           <div class="qcard" style="flex:1; min-width:180px">
             <div><b>Module ${pm.module}</b></div>
             <div style="margin-top:6px">${pm.correct} / ${pm.total}</div>
           </div>`).join('')}
-        <div style="flex:1; min-width:220px">
-          <canvas id="pie_${secKey}" height="160"></canvas>
-        </div>
       </div>`;
     box.appendChild(header);
 
-    // ▼ 섹션 도넛
-    setTimeout(()=>{
-      const ctx = document.getElementById(`pie_${secKey}`);
-      if(ctx){
-        new Chart(ctx.getContext('2d'), {
-          type:'doughnut',
-          data:{
-            labels:['Correct','Wrong'],
-            datasets:[{ data:[secCorrect, secTotal-secCorrect], backgroundColor:['#16a34a','#ef4444'] }]
-          },
-          options:{ plugins:{ legend:{ position:'bottom' } } }
-        });
-      }
-    },0);
-
-    // 모듈별 정오표
     perModule.forEach(pm=>{
       const wrap=document.createElement('div'); wrap.className='qcard result-section';
       const cells = pm.detail.map(d=>{
@@ -1142,7 +1123,6 @@ function showFinalReport(){
     });
   });
 
-  // 해설 팝업 바인딩
   document.querySelectorAll('.result-dot').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const secKey=btn.getAttribute('data-section');
@@ -1349,7 +1329,6 @@ function downloadCSV(){
   URL.revokeObjectURL(url);
 }
 
-// 팝업 외부 클릭 닫기 (네비)
 document.addEventListener('click', (e)=>{
   if(!$('#navPopup').contains(e.target) && e.target!==$('#navOpen')) hideNavPopup();
 });
@@ -1367,7 +1346,12 @@ window.addEventListener('DOMContentLoaded', ()=>{
   } else if (src === 'blob') {
     document.querySelector('.loader')?.style && (document.querySelector('.loader').style.display='none');
     bootFromBlob();
+  } else {
+    // 개발 편의를 위해 상단 로더는 남겨둠
   }
+
+  // Prev/Next 초기 바인딩(안전)
+  bindPrevNext();
 });
 </script>
 </body>
