@@ -127,6 +127,17 @@
   .result-dot.ok{ background:#e9fbe7; border-color:#b7f4be }
   .result-dot.bad{ background:#fee2e2; border-color:#fecaca }
 
+  /* ===== Skill Badges & Similar Panel ===== */
+  .skill-badges{ display:flex; gap:6px; flex-wrap:wrap; margin:8px 0 4px }
+  .skill-badge{ font-size:12px; padding:3px 8px; border-radius:999px;
+    border:1px solid var(--line); background:#f8fafc; color:#0f172a }
+  .similar-wrap{ margin-top:12px }
+  .similar-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(160px,1fr)); gap:8px }
+  .similar-card{ border:1px solid var(--line); background:#fff; border-radius:10px; padding:8px 10px; text-align:left; cursor:pointer }
+  .similar-meta{ font-size:12px; color:var(--muted) }
+  .similar-ok{ background:#e9fbe7; border-color:#b7f4be }
+  .similar-bad{ background:#fee2e2; border-color:#fecaca }
+
   @media (max-width:560px){
     .nav-grid{ grid-template-columns:repeat(8, 36px) }
   }
@@ -232,24 +243,21 @@ let timerSec=0, tickId=null;
 /* ===== Auto-Save (localStorage) ===== */
 let RESTORE_CACHE = null; // 복원용 캐시(로드 직후 1회 사용)
 
+const FEATURE_SIMILAR = false; // 나중에 뱅크 준비되면 true로
+
 function storageKey(){
-  // 세트 식별자: 메타에 id가 있으면 우선 사용, 없으면 title 기반
   const id = (SET?.metadata?.id || SET?.id || SET?.metadata?.title || 'default').toString();
   return `dsat_autosave:${id}`;
 }
-
 function saveState(){
   try{
     const payload = {
-      modIdx,               // 현재 모듈 인덱스
-      qIdx,                 // 현재 문항 인덱스
-      answers,              // 문항별 내 답
-      timers: { [String(modIdx)]: timerSec } // 현재 모듈 남은 시간(선택)
+      modIdx, qIdx, answers,
+      timers: { [String(modIdx)]: timerSec }
     };
     localStorage.setItem(storageKey(), JSON.stringify(payload));
-  }catch(e){ /* 무시 */ }
+  }catch(e){}
 }
-
 function tryRestore(){
   try{
     const raw = localStorage.getItem(storageKey());
@@ -257,11 +265,9 @@ function tryRestore(){
     return JSON.parse(raw);
   }catch(_e){ return null; }
 }
-
 function clearState(){
   try{ localStorage.removeItem(storageKey()); }catch(_e){}
 }
-
 
 /* ===== 유틸 ===== */
 const $ = s=>document.querySelector(s);
@@ -327,6 +333,7 @@ async function loadSet(path){
 
   flags.clear(); answers={}; $('#scoreBox').innerHTML='';
   dirPanel.innerHTML = fmt(SET.metadata?.directions);
+  buildQIndex(); // ★ 인덱스 빌드 추가
 
   // 저장본 불러오기
   RESTORE_CACHE = tryRestore();
@@ -334,15 +341,11 @@ async function loadSet(path){
     answers = RESTORE_CACHE.answers || {};
     const restoreMod = Math.min(RESTORE_CACHE.modIdx ?? 0, SET.modules.length-1);
     startModule(restoreMod);
-
-    // 같은 모듈의 남은 시간 복원(선택)
     const savedSec = RESTORE_CACHE.timers?.[String(restoreMod)];
     if(typeof savedSec === 'number' && !Number.isNaN(savedSec)){
       timerSec = Math.max(0, savedSec|0);
       $('#timer').textContent = fmtTime(timerSec);
     }
-
-    // 같은 문항으로 이동
     qIdx = Math.min(RESTORE_CACHE.qIdx ?? 0, totalQ(modIdx)-1);
     renderQuestion(); renderNavButton();
   } else {
@@ -366,6 +369,7 @@ function bootFromBlob(){
     $('#loadError').style.display='none';
     flags.clear(); answers={}; $('#scoreBox').innerHTML='';
     dirPanel.innerHTML = fmt(SET.metadata?.directions);
+    buildQIndex(); // ★ 인덱스 빌드 추가
 
     RESTORE_CACHE = tryRestore();
     if(RESTORE_CACHE){
@@ -400,7 +404,7 @@ function startModule(idx){
   tickId = setInterval(()=>{
     timerSec = Math.max(0, timerSec - 1);
     $('#timer').textContent = fmtTime(timerSec);
-    if (timerSec % 5 === 0) saveState(); // 5초마다 스냅샷 저장
+    if (timerSec % 5 === 0) saveState();
     if (timerSec === 0) { clearInterval(tickId); openSubmitConfirm(); }
   }, 1000);
 
@@ -568,7 +572,7 @@ function openSubmitConfirm(){
 $('#confirmCancel').onclick = ()=> confirmBack.style.display='none';
 $('#confirmOk').onclick = ()=>{
   confirmBack.style.display='none';
-  saveState(); // 제출 직전 스냅샷
+  saveState();
   gotoNextModule();
 };
 
@@ -599,18 +603,61 @@ function isCorrect(q){
   if(q.type==='mcq') return Number(answers[q.id])===Number(q.answer);
   return gridinEqual(answers[q.id], q);
 }
-/* ===== 스킬 요약 유틸 ===== */
-// 각 문항의 스킬 코드 배열을 추출 (없으면 빈배열)
-// 사용 가능한 키: q.skills | q.tags | q.topics
+
+/* ===== 스킬/인덱스 유틸 ===== */
 function getSkillCodes(q){
   const raw = q.skills || q.tags || q.topics || [];
   if (!Array.isArray(raw)) return [];
   return raw.map(s=>String(s).trim()).filter(Boolean);
 }
+// 문항 위치 인덱스: q.id -> { mi, qi, section, module }
+let QINDEX = {};
+function buildQIndex(){
+  QINDEX = {};
+  (SET.modules||[]).forEach((m,mi)=>{
+    (m.questions||[]).forEach((q,qi)=>{
+      QINDEX[q.id] = { mi, qi, section: (m.section||'').toLowerCase(), module: m.module||1 };
+    });
+  });
+}
+// 공통 스킬 겹침 기반 유사 문항 (현재 문항 제외)
+function findSimilarQuestions(currentQ, limit=6){
+  const target = new Set(getSkillCodes(currentQ));
+  if(target.size===0) return [];
+  const all = [];
+  (SET.modules||[]).forEach((m,mi)=>{
+    (m.questions||[]).forEach((q,qi)=>{
+      if(q===currentQ) return;
+      const skills = new Set(getSkillCodes(q));
+      if(skills.size===0) return;
+      let overlap=0;
+      skills.forEach(s=>{ if(target.has(s)) overlap++; });
+      if(overlap>0){
+        all.push({ q, mi, qi, module:m.module||1, section:(m.section||'').toLowerCase(), overlap });
+      }
+    });
+  });
+  all.sort((a,b)=>{
+    if(b.overlap!==a.overlap) return b.overlap-a.overlap;
+    if(a.section!==b.section) return a.section.localeCompare(b.section);
+    if(a.module!==b.module) return a.module-b.module;
+    return a.qi-b.qi;
+  });
+  return all.slice(0, limit);
+}
+function openExplainById(qid){
+  const loc = QINDEX[qid];
+  if(!loc) return;
+  const { mi, qi, section, module } = loc;
+  const modRec = SET.modules[mi];
+  const q = modRec.questions[qi];
+  const ok = isCorrect(q);
+  openExplain(sectionLabel(section), module, qi+1, q, ok);
+}
 
-// 전체 세트의 스킬별 {correct,total} 집계
+/* ===== 스킬 요약(Top3/Bottom3) ===== */
 function collectSkillStats(){
-  const stats = {}; // code -> {correct,total}
+  const stats = {};
   (SET.modules || []).forEach(m=>{
     (m.questions || []).forEach(q=>{
       const codes = getSkillCodes(q);
@@ -625,14 +672,10 @@ function collectSkillStats(){
   });
   return stats;
 }
-
-// Top3/Bottom3 카드 엘리먼트 생성
 function buildSkillSummaryCard(minCount){
   const stats = collectSkillStats();
   const entries = Object.entries(stats).map(([code, v])=>({
-    code,
-    correct: v.correct,
-    total: v.total,
+    code, correct: v.correct, total: v.total,
     acc: v.total ? v.correct / v.total : 0
   }));
   const eligible = entries.filter(e=> e.total >= minCount).sort((a,b)=> b.acc - a.acc);
@@ -683,11 +726,11 @@ function buildSkillSummaryCard(minCount){
   return wrap;
 }
 
-
 /* ===== 최종 결과표 & 해설 팝업 ===== */
 function showFinalReport(){
   clearInterval(tickId);
-  clearState(); // 이 세트의 자동 저장본 제거(선택)
+  buildQIndex();
+  clearState();
   $('#card').style.display='none';
   $('#ribbon').style.display='none';
   hideNavPopup();
@@ -704,18 +747,16 @@ function showFinalReport(){
   box.appendChild(tool);
   $('#csvBtn').onclick = downloadCSV;
 
-// 스킬 요약 카드(Top3/Bottom3) — 최소 2문항 이상인 스킬만 집계
-box.appendChild( buildSkillSummaryCard(2) );
+  // 스킬 요약 카드(Top3/Bottom3)
+  box.appendChild( buildSkillSummaryCard(2) );
 
-  // 섹션별 그룹화 (rw, math)
+  // 섹션별 그룹화
   const groups = {};
   SET.modules.forEach((m,mi)=>{
     const key=(m.section||'misc').toLowerCase();
     if(!groups[key]) groups[key]=[];
     groups[key].push({mi, module:m.module||1, questions:m.questions});
   });
-
-  // 섹션 순서 보존 (rw -> math -> 기타)
   const order = Object.keys(groups).sort((a,b)=>{
     const rank = k => (k==='rw'?1 : k==='math'?2 : 9);
     return rank(a)-rank(b);
@@ -725,7 +766,6 @@ box.appendChild( buildSkillSummaryCard(2) );
   order.forEach(secKey=>{
     const secName = sectionLabel(secKey);
     const mods = groups[secKey].sort((a,b)=>a.module-b.module);
-    // 섹션 총계
     let secTotal=0, secCorrect=0;
     const perModule=[];
     mods.forEach(m=>{
@@ -737,7 +777,6 @@ box.appendChild( buildSkillSummaryCard(2) );
       secTotal += m.questions.length; secCorrect += corr;
     });
 
-    // 섹션 헤더 + 섹션 정오표(모듈1,2)
     const header = document.createElement('div');
     header.className='qcard';
     header.style.marginTop='10px';
@@ -755,7 +794,6 @@ box.appendChild( buildSkillSummaryCard(2) );
       </div>`;
     box.appendChild(header);
 
-    // 모듈별 정오표
     perModule.forEach(pm=>{
       const wrap=document.createElement('div'); wrap.className='qcard result-section';
       const cells = pm.detail.map(d=>{
@@ -822,6 +860,47 @@ function openExplain(secName, modNo, idx, q, ok){
     </div>
     ${q.rationale ? `<div class="qcard"><b>Explanation</b><div style="margin-top:6px">${fmt(q.rationale)}</div></div>`:''}
   `;
+
+  /* === 스킬 배지 + 유사문항 (플래그 가드) === */
+  const skills = getSkillCodes(q);
+  const skillBadges = skills.length
+    ? `<div class="skill-badges">${skills.map(s=>`<span class="skill-badge">${s}</span>`).join('')}</div>`
+    : `<div class="skill-badges"><span class="skill-badge" style="opacity:.7">NO_SKILLS_TAGGED</span></div>`;
+  explainBody.insertAdjacentHTML('afterbegin', skillBadges);
+
+  let simGrid = '';
+  if (FEATURE_SIMILAR && skills.length){
+    const sims = findSimilarQuestions(q, 6);
+    simGrid = sims.length ? `
+      <div class="similar-wrap">
+        <div style="font-weight:700; margin-bottom:6px">Similar questions by skill overlap</div>
+        <div class="similar-grid">
+          ${sims.map(({q:qq, mi, qi, section, module})=>{
+            const ok2 = isCorrect(qq);
+            const cls = ok2 ? 'similar-ok' : 'similar-bad';
+            const label = `${sectionLabel(section)} · M${module} · Q${qi+1}`;
+            const skillsTxt = getSkillCodes(qq).join(', ');
+            return `
+              <button class="similar-card ${cls}" data-qid="${qq.id}" title="${label}">
+                <div style="font-weight:700; margin-bottom:4px">${label}</div>
+                <div class="similar-meta">${skillsTxt || 'NO_SKILLS'}</div>
+              </button>
+            `;
+          }).join('')}
+        </div>
+      </div>` : `<div class="similar-wrap" style="color:var(--muted); font-size:13px">추천 문항이 아직 없습니다.</div>`;
+  }
+  if (simGrid) {
+    explainBody.insertAdjacentHTML('beforeend', simGrid);
+    // 유사문항 클릭 핸들러
+    explainBody.querySelectorAll('.similar-card').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const qid = btn.getAttribute('data-qid');
+        openExplainById(qid);
+      });
+    });
+  }
+
   explainBack.style.display='block';
   typeset();
 }
@@ -837,9 +916,9 @@ async function loadSetFromFile(file){
     SET = JSON.parse(text);
     $('#loadError').style.display='none';
 
-    // loadSet() 이후와 동일 초기화
     flags.clear(); answers={}; $('#scoreBox').innerHTML='';
     dirPanel.innerHTML = fmt(SET.metadata?.directions);
+    buildQIndex();
 
     RESTORE_CACHE = tryRestore();
     if(RESTORE_CACHE){
@@ -892,7 +971,6 @@ function buildCSV(){
   const header = ['Section','Module','Number','QuestionID','Type','Correct','YourAnswer','CorrectAnswer','Flagged'];
   const rows = [header];
 
-  // 섹션별 그룹화
   const groups = {};
   SET.modules.forEach((m,mi)=>{
     const key=(m.section||'misc').toLowerCase();
@@ -952,16 +1030,13 @@ window.addEventListener('DOMContentLoaded', ()=>{
   const src = qs.get('source');
 
   if (url) {
-    // URL 모드: 쿼리의 set= 을 사용
     $('#path').value = url;
     document.querySelector('.loader')?.style && (document.querySelector('.loader').style.display='none');
     loadSet(url);
   } else if (src === 'blob') {
-    // 파일 모드: 랜딩에서 넘긴 JSON 텍스트 사용
     document.querySelector('.loader')?.style && (document.querySelector('.loader').style.display='none');
     bootFromBlob();
   } else {
-    // 아무 것도 자동 시작하지 않음(랜딩에서만 진입하도록)
     // 개발 편의를 위해 상단 로더는 남겨둠
   }
 });
