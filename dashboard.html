@@ -8,36 +8,37 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
-<!-- 커브 프리셋 (연습페이지와 동일 파일) -->
 <script src="./curves.presets.js"></script>
 
 <style>
-  :root{
-    --bg:#fafbfe; --card:#fff; --ink:#1f2937; --muted:#6b7280;
-    --line:#e5e7eb; --accent:#2563eb;
-  }
+  :root{ --bg:#fafbfe; --card:#fff; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --ok:#16a34a; --bad:#ef4444 }
   *{ box-sizing:border-box }
   body{ margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif }
-  .wrap{ max-width:1100px; margin:20px auto 56px; padding:0 14px }
+  .wrap{ max-width:1180px; margin:16px auto 64px; padding:0 14px }
   .row{ display:grid; grid-template-columns:1fr 1fr; gap:14px }
-  @media (max-width:900px){ .row{ grid-template-columns:1fr } }
+  @media (max-width:980px){ .row{ grid-template-columns:1fr } }
   .card{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; box-shadow:0 6px 20px rgba(0,0,0,.04) }
   .head{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px }
   .title{ font-weight:800 }
   .muted{ color:var(--muted) }
-  .btn{ border:1px solid var(--line); background:#fff; padding:8px 12px; border-radius:10px; cursor:pointer }
+  .btn, select{ border:1px solid var(--line); background:#fff; padding:8px 12px; border-radius:10px; cursor:pointer }
   .pill{ padding:6px 10px; border:1px solid var(--line); border-radius:999px; background:#fff }
-  select{ padding:7px 10px; border:1px solid var(--line); border-radius:10px; background:#fff }
   table{ width:100%; border-collapse:collapse; font-size:14px }
   th,td{ border-bottom:1px solid var(--line); padding:8px 6px; text-align:left; vertical-align:top }
   th{ color:#111827 }
   .right{ text-align:right }
-  .topbar{
-    position:sticky; top:0; z-index:5; background:#fff; border-bottom:1px solid var(--line);
-  }
+  .topbar{ position:sticky; top:0; z-index:5; background:#fff; border-bottom:1px solid var(--line) }
   .toprow{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 14px }
   a.back{ text-decoration:none; color:var(--accent) }
+  .grid{ display:grid; gap:6px }
+  .heatmap{ --cell:34px; display:grid; grid-template-columns:160px repeat(auto-fill,var(--cell)); overflow:auto }
+  .heat-row{ display:contents }
+  .skill-name{ position:sticky; left:0; background:#fff; border-right:1px solid var(--line); padding-right:6px; white-space:nowrap; font-size:13px }
+  .cell{ width:var(--cell); height:var(--cell); border:1px solid var(--line); display:grid; place-items:center; font-variant-numeric:tabular-nums; font-size:12px }
+  .c-0{ background:#fee2e2 } .c-50{ background:#fde68a } .c-70{ background:#fef9c3 } .c-85{ background:#dcfce7 } .c-95{ background:#bbf7d0 }
+  .legend{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:12px }
+  .badge{ display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; color:#fff }
+  .ok{ background:var(--ok) } .bad{ background:var(--bad) }
 </style>
 </head>
 <body>
@@ -53,9 +54,10 @@
 </div>
 
 <div class="wrap">
+  <!-- 필터 + 프리셋 스위처 -->
   <div class="card">
     <div class="head">
-      <div class="title">필터</div>
+      <div class="title">필터 · 커브</div>
       <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
         <label class="muted">세트:</label>
         <select id="baseSelect"></select>
@@ -65,33 +67,62 @@
           <option value="base">Base</option>
           <option value="review">Review</option>
         </select>
+        <label class="muted">커브 프리셋(보기 재계산):</label>
+        <select id="presetSelect"></select>
         <span id="countInfo" class="pill muted"></span>
       </div>
     </div>
-    <div class="muted" style="font-size:13px">연습 페이지에서 저장된 시도(로컬)의 집계입니다.</div>
+    <div class="muted" style="font-size:13px">
+      * 프리셋 스위처는 <b>표시용 재계산</b>입니다(저장 로그는 그대로). 저장시 실제 프리셋은 연습페이지의 <code>SET.metadata.curvePreset</code>에 반영됩니다.
+    </div>
   </div>
 
   <div class="row" style="margin-top:14px">
     <div class="card">
-      <div class="head">
-        <div class="title">총점 추이 (SAT)</div>
-      </div>
+      <div class="head"><div class="title">총점 추이 (SAT)</div></div>
       <canvas id="satLine" height="160"></canvas>
     </div>
     <div class="card">
-      <div class="head">
-        <div class="title">섹션별 환산 점수</div>
-      </div>
+      <div class="head"><div class="title">섹션별 환산 점수</div></div>
       <canvas id="sectionBar" height="160"></canvas>
     </div>
   </div>
 
+  <!-- 스킬 히트맵 -->
+  <div class="card" style="margin-top:14px">
+    <div class="head">
+      <div class="title">스킬 히트맵 (정확도 %)</div>
+      <div class="legend">
+        <span class="cell c-0">0</span>0–50
+        <span class="cell c-50">50</span>50–70
+        <span class="cell c-70">70</span>70–85
+        <span class="cell c-85">85</span>85–95
+        <span class="cell c-95">95</span>95–100
+      </div>
+    </div>
+    <div id="heatHdr" class="heatmap" style="grid-template-rows:auto"></div>
+    <div id="heatBody" class="heatmap"></div>
+  </div>
+
+  <!-- 시도 비교 -->
+  <div class="card" style="margin-top:14px">
+    <div class="head">
+      <div class="title">시도 비교</div>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+        <select id="cmpA"></select>
+        <span class="muted">vs</span>
+        <select id="cmpB"></select>
+        <button class="btn" id="cmpBtn">비교</button>
+      </div>
+    </div>
+    <div id="cmpOut" class="grid" style="grid-template-columns:1fr 1fr; gap:12px"></div>
+  </div>
+
+  <!-- 시도 목록 -->
   <div class="card" style="margin-top:14px">
     <div class="head">
       <div class="title">시도 목록</div>
-      <div>
-        <button class="btn" id="exportBtn">CSV 내보내기</button>
-      </div>
+      <div><button class="btn" id="exportBtn">CSV 내보내기</button></div>
     </div>
     <div class="muted" style="font-size:13px; margin-bottom:8px">최신순</div>
     <table id="attemptTable">
@@ -111,164 +142,234 @@
 </div>
 
 <script>
-const ATTEMPT_KEY = 'dsat_attempts_v1';
-
-function loadAttempts(){
-  try{ return JSON.parse(localStorage.getItem(ATTEMPT_KEY) || '[]'); }catch(_e){ return []; }
-}
+const ATTEMPT_KEY='dsat_attempts_v1';
+function loadAttempts(){ try{ return JSON.parse(localStorage.getItem(ATTEMPT_KEY)||'[]'); }catch(_e){ return []; } }
 function saveAttempts(a){ try{ localStorage.setItem(ATTEMPT_KEY, JSON.stringify(a)); }catch(_e){} }
 
-// 커브 도우미 (연습페이지와 동일 로직의 경량판)
-function interp(points, x){
-  const pts=[...points].sort((a,b)=>a[0]-b[0]);
-  if(!pts.length) return 0;
+function interp(points,x){
+  const pts=[...points].sort((a,b)=>a[0]-b[0]); if(!pts.length) return 0;
   if(x<=pts[0][0]) return Math.round(pts[0][1]);
   if(x>=pts[pts.length-1][0]) return Math.round(pts[pts.length-1][1]);
-  for(let i=1;i<pts.length;i++){
-    const [x0,y0]=pts[i-1],[x1,y1]=pts[i];
-    if(x<=x1){ const t=(x-x0)/(x1-x0); return Math.round(y0+t*(y1-y0)); }
-  }
+  for(let i=1;i<pts.length;i++){ const [x0,y0]=pts[i-1],[x1,y1]=pts[i]; if(x<=x1){ const t=(x-x0)/(x1-x0); return Math.round(y0+t*(y1-y0)); } }
   return Math.round(pts[pts.length-1][1]);
 }
 function scaledFromCurve(points, correct, total){
-  const maxX = Math.max(...points.map(p=>p[0]));
-  const x = (maxX<=100)? (total? correct/total*100 : 0) : correct;
-  return interp(points, x);
+  const maxX=Math.max(...points.map(p=>p[0]));
+  const x=(maxX<=100)?(total? correct/total*100 : 0):correct;
+  return interp(points,x);
 }
-function chooseCurvesFromAttempt(attempt){
-  const PRESETS = (window.CURVE_PRESETS||{});
-  if (attempt.curvePreset && PRESETS[attempt.curvePreset]) return PRESETS[attempt.curvePreset];
+function chooseCurves(presetName, attempt){
+  const PRESETS=(window.CURVE_PRESETS||{});
+  if(presetName && PRESETS[presetName]) return PRESETS[presetName];
+  if(attempt?.curvePreset && PRESETS[attempt.curvePreset]) return PRESETS[attempt.curvePreset];
   return PRESETS.default || { rw:[[0,200],[100,800]], math:[[0,200],[100,800]] };
 }
-function ensureScaled(attempt){
-  // 과거 로그 호환: sections 없으면 추정/재계산
-  if (attempt.sections && typeof attempt.sat_total === 'number') return attempt;
-
-  const curves = chooseCurvesFromAttempt(attempt);
-  // overall만 있을 수도 있으니 일단 0으로
+function ensureScaled(attempt, viewPreset){
+  // sections/ sat_total 없을 수 있는 과거 로그 보정 + 보기용 프리셋으로 재계산
+  const curves = chooseCurves(viewPreset, attempt);
   let rw = {correct:0,total:0,scaled:0};
   let math = {correct:0,total:0,scaled:0};
-  if (attempt.sections){
-    rw.correct = attempt.sections.rw?.correct ?? 0;
-    rw.total   = attempt.sections.rw?.total ?? 0;
+  if(attempt.sections){
+    rw.correct   = attempt.sections.rw?.correct ?? 0;
+    rw.total     = attempt.sections.rw?.total ?? 0;
     math.correct = attempt.sections.math?.correct ?? 0;
     math.total   = attempt.sections.math?.total ?? 0;
   }
   rw.scaled   = scaledFromCurve(curves.rw,   rw.correct,   rw.total);
   math.scaled = scaledFromCurve(curves.math, math.correct, math.total);
-  attempt.sections = { rw, math };
-  attempt.sat_total = rw.scaled + math.scaled;
-  return attempt;
+  const sat_total = rw.scaled + math.scaled;
+  return { ...attempt, sections:{ rw, math }, sat_total };
 }
 
-// UI
-const $base = document.getElementById('baseSelect');
-const $kind = document.getElementById('kindSelect');
-const $count= document.getElementById('countInfo');
-const $tbody= document.querySelector('#attemptTable tbody');
+const $base   = document.getElementById('baseSelect');
+const $kind   = document.getElementById('kindSelect');
+const $preset = document.getElementById('presetSelect');
+const $count  = document.getElementById('countInfo');
+const $tbody  = document.querySelector('#attemptTable tbody');
+const $cmpA   = document.getElementById('cmpA');
+const $cmpB   = document.getElementById('cmpB');
+const $cmpOut = document.getElementById('cmpOut');
 let LINE=null, BAR=null;
 
-function groupBaseIds(list){
+function groupBaseOptions(list){
   const map=new Map();
   list.forEach(a=>{
-    if(!map.has(a.baseId)) map.set(a.baseId, new Set());
-    const set = map.get(a.baseId);
-    if(a.title) set.add(a.title);
+    if(!map.has(a.baseId)) map.set(a.baseId,{ baseId:a.baseId, titleSet:new Set(), lastTs:0 });
+    const rec=map.get(a.baseId);
+    if(a.title) rec.titleSet.add(a.title);
+    rec.lastTs = Math.max(rec.lastTs,a.ts);
   });
-  return [...map.entries()].map(([baseId, titles])=>{
-    // 표시용 라벨: 제일 최근 제목 1개
-    const label = titles.size? [...titles].pop() : baseId;
-    return { baseId, label };
+  return [...map.values()].sort((a,b)=> b.lastTs-a.lastTs).map(rec=>{
+    const label = rec.titleSet.size? [...rec.titleSet].pop() : rec.baseId;
+    return { value: rec.baseId, label };
   });
 }
-
-function loadFilterOptions(all){
-  const bases = groupBaseIds(all);
+function fillBase(list){
   $base.innerHTML='';
-  bases.forEach(({baseId,label})=>{
-    const opt=document.createElement('option');
-    opt.value=baseId; opt.textContent=label || baseId;
-    $base.appendChild(opt);
+  groupBaseOptions(list).forEach(opt=>{
+    const o=document.createElement('option'); o.value=opt.value; o.textContent=opt.label; $base.appendChild(o);
   });
 }
-
+function fillPreset(){
+  const PRESETS = window.CURVE_PRESETS||{};
+  $preset.innerHTML='';
+  Object.keys(PRESETS).forEach(name=>{
+    const o=document.createElement('option'); o.value=name; o.textContent=name; $preset.appendChild(o);
+  });
+  if(PRESETS.default) $preset.value='default';
+}
 function fmtDate(ts){
-  const d=new Date(ts);
-  const z=n=>String(n).padStart(2,'0');
+  const d=new Date(ts), z=n=>String(n).padStart(2,'0');
   return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`;
 }
 
-function render(){
-  const all = loadAttempts().map(ensureScaled).sort((a,b)=> b.ts-a.ts);
-  if(!$base.options.length) loadFilterOptions(all);
+function currentRows(){
+  const all = loadAttempts().sort((a,b)=> b.ts-a.ts);
+  if(!$base.options.length) fillBase(all);
+  if(!$preset.options.length) fillPreset();
   const baseId = $base.value || (all[0]?.baseId ?? '');
   const kind = $kind.value;
+  const presetName = $preset.value || null;
+  const filtered = all.filter(a=> a.baseId===baseId && (!kind || a.kind===kind));
+  $count.textContent = `${filtered.length} attempts`;
+  return { rows: filtered.map(a=> ensureScaled(a, presetName)), presetName };
+}
 
-  const rows = all.filter(a=> a.baseId===baseId && (!kind || a.kind===kind));
-  $count.textContent = `${rows.length} attempts`;
-
-  // 표
+function renderTable(rows){
   $tbody.innerHTML='';
   rows.forEach(a=>{
     const tr=document.createElement('tr');
-    tr.innerHTML = `
+    tr.innerHTML=`
       <td>${fmtDate(a.ts)}</td>
       <td>${a.title||a.baseId||''}</td>
       <td>${a.kind}</td>
       <td class="right">${a.sections.rw.correct}/${a.sections.rw.total} · <b>${a.sections.rw.scaled}</b></td>
       <td class="right">${a.sections.math.correct}/${a.sections.math.total} · <b>${a.sections.math.scaled}</b></td>
-      <td class="right"><b>${a.sat_total}</b></td>
-    `;
+      <td class="right"><b>${a.sat_total}</b></td>`;
     $tbody.appendChild(tr);
-  });
-
-  // 차트 데이터 (시간 오름차순으로)
-  const chronological = [...rows].sort((a,b)=> a.ts-b.ts);
-  const labels = chronological.map(a=> new Date(a.ts).toLocaleDateString());
-  const lineSAT = chronological.map(a=> a.sat_total);
-  const barRW   = chronological.map(a=> a.sections.rw.scaled);
-  const barM    = chronological.map(a=> a.sections.math.scaled);
-
-  // 라인 차트
-  const ctx1 = document.getElementById('satLine');
-  if(LINE) LINE.destroy();
-  LINE = new Chart(ctx1, {
-    type:'line',
-    data:{
-      labels,
-      datasets:[{ label:'Total SAT', data:lineSAT, tension:0.25 }]
-    },
-    options:{
-      responsive:true,
-      scales:{ y:{ suggestedMin:200, suggestedMax:1600 } }
-    }
-  });
-
-  // 바 차트
-  const ctx2 = document.getElementById('sectionBar');
-  if(BAR) BAR.destroy();
-  BAR = new Chart(ctx2, {
-    type:'bar',
-    data:{
-      labels,
-      datasets:[
-        { label:'RW',   data:barRW, stack:'sat' },
-        { label:'Math', data:barM,  stack:'sat' }
-      ]
-    },
-    options:{
-      responsive:true,
-      scales:{ y:{ suggestedMin:200, suggestedMax:1600, stacked:true }, x:{ stacked:true } }
-    }
   });
 }
 
+function renderCharts(rows){
+  const chronological = [...rows].sort((a,b)=> a.ts-b.ts);
+  const labels = chronological.map(a=> new Date(a.ts).toLocaleDateString());
+  const totalSAT = chronological.map(a=> a.sat_total);
+  const rwScaled = chronological.map(a=> a.sections.rw.scaled);
+  const mScaled  = chronological.map(a=> a.sections.math.scaled);
+
+  const c1=document.getElementById('satLine'); if(LINE) LINE.destroy();
+  LINE = new Chart(c1,{ type:'line', data:{ labels, datasets:[{label:'Total SAT', data:totalSAT, tension:.25}]},
+    options:{ responsive:true, scales:{ y:{ suggestedMin:200, suggestedMax:1600 } } } });
+
+  const c2=document.getElementById('sectionBar'); if(BAR) BAR.destroy();
+  BAR = new Chart(c2,{ type:'bar', data:{ labels, datasets:[
+      { label:'RW',   data:rwScaled, stack:'sat' },
+      { label:'Math', data:mScaled,  stack:'sat' }
+    ]},
+    options:{ responsive:true, scales:{ y:{ suggestedMin:200, suggestedMax:1600, stacked:true }, x:{ stacked:true } } } });
+}
+
+function classForPct(p){
+  if(p>=95) return 'c-95';
+  if(p>=85) return 'c-85';
+  if(p>=70) return 'c-70';
+  if(p>=50) return 'c-50';
+  return 'c-0';
+}
+
+function renderHeatmap(rows){
+  // rows[*].skills = { SKILL: {correct,total,acc} } 형태(연습페이지 저장본)
+  const heatHdr=document.getElementById('heatHdr');
+  const heatBody=document.getElementById('heatBody');
+  heatHdr.innerHTML=''; heatBody.innerHTML='';
+
+  const allSkills = new Set();
+  rows.forEach(a=> Object.keys(a.skills||{}).forEach(k=> allSkills.add(k)));
+  const skills = [...allSkills].sort();
+
+  // 헤더(좌측은 공백, 오른쪽은 날짜/인덱스)
+  const hdrRow=document.createElement('div');
+  hdrRow.className='heat-row';
+  const left=document.createElement('div'); left.className='skill-name'; left.style.fontWeight='700'; left.textContent='Skill';
+  hdrRow.appendChild(left);
+  rows.forEach((a,i)=>{
+    const d=document.createElement('div'); d.className='cell'; d.style.fontWeight='700';
+    d.title=fmtDate(a.ts); d.textContent=String(i+1);
+    hdrRow.appendChild(d);
+  });
+  heatHdr.appendChild(hdrRow);
+
+  // 바디
+  skills.forEach(sk=>{
+    const row=document.createElement('div'); row.className='heat-row';
+    const name=document.createElement('div'); name.className='skill-name'; name.textContent=sk;
+    row.appendChild(name);
+    rows.forEach(a=>{
+      const s=a.skills?.[sk];
+      const acc = s && s.total ? Math.round((s.correct/s.total)*100) : null;
+      const cell=document.createElement('div'); cell.className='cell ' + (acc===null?'':classForPct(acc));
+      cell.textContent = acc===null ? '—' : String(acc);
+      cell.title = acc===null ? `${sk}: data none` : `${sk}: ${s.correct}/${s.total} (${acc}%)`;
+      row.appendChild(cell);
+    });
+    heatBody.appendChild(row);
+  });
+}
+
+function fillCompare(rows){
+  const opts = rows.map((a,i)=>({ key:String(a.ts), label:`#${i+1} • ${fmtDate(a.ts)} • ${a.kind} • ${a.sat_total}` }));
+  [$cmpA,$cmpB].forEach(sel=>{
+    sel.innerHTML=''; opts.forEach(o=>{ const op=document.createElement('option'); op.value=o.key; op.textContent=o.label; sel.appendChild(op); });
+  });
+  if(opts.length>=2){ $cmpA.selectedIndex=0; $cmpB.selectedIndex=1; }
+}
+
+function renderCompare(rows){
+  $cmpOut.innerHTML='';
+  const keyA=$cmpA.value, keyB=$cmpB.value;
+  const A=rows.find(a=> String(a.ts)===keyA);
+  const B=rows.find(a=> String(a.ts)===keyB);
+  if(!A||!B){ $cmpOut.innerHTML='<div class="muted">비교하려면 두 시도를 선택하세요.</div>'; return; }
+
+  function card(title, aVal, bVal, fmt=(v)=>v){
+    const delta = (typeof aVal==='number' && typeof bVal==='number') ? (bVal-aVal) : null;
+    const sign = delta===null ? '' : (delta>0? '+' : '');
+    const color = delta===null ? '' : (delta>=0 ? 'ok' : 'bad');
+    return `
+      <div class="card">
+        <div class="head"><div class="title">${title}</div></div>
+        <div style="display:flex; justify-content:space-between; gap:8px">
+          <div><div class="muted">A</div><div><b>${fmt(aVal)}</b></div></div>
+          <div><div class="muted">B</div><div><b>${fmt(bVal)}</b></div></div>
+          <div><div class="muted">Δ</div><div><span class="badge ${color}">${delta===null?'—': sign + delta}</span></div></div>
+        </div>
+      </div>`;
+  }
+
+  $cmpOut.innerHTML = [
+    card('Total SAT', A.sat_total, B.sat_total),
+    card('RW (Scaled)', A.sections.rw.scaled, B.sections.rw.scaled),
+    card('Math (Scaled)', A.sections.math.scaled, B.sections.math.scaled),
+    card('RW Raw', A.sections.rw.correct, B.sections.rw.correct),
+    card('Math Raw', A.sections.math.correct, B.sections.math.correct)
+  ].join('');
+}
+
+function renderAll(){
+  const { rows } = currentRows();
+  renderTable(rows);
+  renderCharts(rows);
+  renderHeatmap(rows);
+  fillCompare(rows);
+  renderCompare(rows);
+}
+
 document.getElementById('exportBtn').onclick = ()=>{
-  const all = loadAttempts().map(ensureScaled).sort((a,b)=> b.ts-a.ts);
-  const header = ['timestamp','title','kind','rw_raw','rw_total','rw_scaled','math_raw','math_total','math_scaled','sat_total','baseId','curvePreset'];
-  const rows = [header];
-  all.forEach(a=>{
-    rows.push([
+  const { rows, presetName } = currentRows();
+  const header=['timestamp','title','kind','rw_raw','rw_total','rw_scaled','math_raw','math_total','math_scaled','sat_total','baseId','curvePreset(used)','viewPreset'];
+  const list=[header];
+  rows.forEach(a=>{
+    list.push([
       new Date(a.ts).toISOString(),
       (a.title||'').replaceAll('"','""'),
       a.kind,
@@ -276,30 +377,28 @@ document.getElementById('exportBtn').onclick = ()=>{
       a.sections.math.correct, a.sections.math.total, a.sections.math.scaled,
       a.sat_total,
       a.baseId,
-      a.curvePreset||''
+      a.curvePreset||'',
+      presetName||''
     ]);
   });
-  const csv = rows.map(r=> r.map(v=> `"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href=url; a.download='dsat_attempts.csv';
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
+  const csv=list.map(r=> r.map(v=> `"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download='dsat_dashboard.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 };
-
 document.getElementById('clearBtn').onclick = ()=>{
   if(confirm('정말 모든 대시보드 로그를 삭제할까요? (되돌릴 수 없음)')){
-    saveAttempts([]);
-    render();
+    saveAttempts([]); renderAll();
   }
 };
 
-$base.addEventListener('change', render);
-$kind.addEventListener('change', render);
+$base.addEventListener('change', renderAll);
+$kind.addEventListener('change', renderAll);
+$preset.addEventListener('change', renderAll);
+document.getElementById('cmpBtn').addEventListener('click', ()=> renderAll());
 
 // 초기 렌더
-render();
+renderAll();
 </script>
 </body>
 </html>
