@@ -282,6 +282,69 @@ const injectImages = html =>
   (html||"").replace(/\[\[IMAGE:\s*([^|\]]+)(?:\|([^\]]+))?\]\]/g,
     (_m,src,alt)=>`<img src="./img/${src.trim()}" alt="${(alt||'problem image').trim()}" style="max-width:100%">`);
 
+// ===================== Attempt Log Utils =====================
+const ATTEMPT_KEY = 'dsat_attempts_v1';
+
+function loadAttempts(){
+  try{ return JSON.parse(localStorage.getItem(ATTEMPT_KEY) || '[]'); }catch(_e){ return []; }
+}
+function saveAttempts(arr){
+  try{ localStorage.setItem(ATTEMPT_KEY, JSON.stringify(arr)); }catch(_e){}
+}
+function overallTotals(){
+  let total=0, correct=0;
+  (SET.modules||[]).forEach(m=>{
+    (m.questions||[]).forEach(q=>{
+      total += 1;
+      if(isCorrect(q)) correct += 1;
+    });
+  });
+  return { total, correct, acc: total? correct/total : 0 };
+}
+function summarizeSkills(){
+  // 기존 collectSkillStats() 재사용해 비율만 만들어서 반환
+  const stats = collectSkillStats(); // code -> {correct,total}
+  const bySkill = {};
+  Object.entries(stats).forEach(([code, v])=>{
+    bySkill[code] = { correct:v.correct, total:v.total, acc: v.total? v.correct/v.total : 0 };
+  });
+  return bySkill;
+}
+// 현재 세트를 하나의 "시도"로 저장
+function recordAttempt(){
+  const isReview = !!SET.__isReviewSession;
+  // baseId(비교용): 리뷰면 parentId, 아니면 세트 id/title
+  const baseId = isReview
+    ? (SET.metadata?.parentId || 'base')
+    : (SET.metadata?.id || SET.metadata?.title || 'base');
+
+  const attempt = {
+    ts: Date.now(),
+    baseId,
+    kind: isReview ? 'review' : 'base',
+    title: SET.metadata?.title || '',
+    overall: overallTotals(),
+    skills: summarizeSkills()
+  };
+
+  const list = loadAttempts();
+  list.push(attempt);
+  saveAttempts(list);
+  return attempt;
+}
+
+// 특정 baseId에 대해 최신 base / review 시도 1개씩 조회
+function getLatestPair(baseId){
+  const list = loadAttempts().filter(a=> a.baseId===baseId);
+  let lastBase=null, lastReview=null;
+  list.sort((a,b)=> b.ts - a.ts).forEach(a=>{
+    if(a.kind==='base'   && !lastBase)   lastBase = a;
+    if(a.kind==='review' && !lastReview) lastReview = a;
+  });
+  return { lastBase, lastReview };
+}
+
+
 /* RW 지문 통합 수집 */
 function getPassageHTML(q){
   const base = q.passageHtml || q.passage || q.passageText || "";
@@ -765,6 +828,93 @@ function buildSkillSummaryCard(minCount){
   return wrap;
 }
 
+// ===================== Progress Card (Base vs Review) =====================
+function buildProgressCard(baseId, maxSkills=5){
+  const { lastBase, lastReview } = getLatestPair(baseId);
+  const wrap = document.createElement('div');
+  wrap.className = 'qcard';
+
+  if(!lastBase && !lastReview){
+    wrap.innerHTML = `
+      <div class="result-title">
+        <div><b>Progress</b></div>
+      </div>
+      <div style="margin-top:6px; color:var(--muted)">기록된 시도가 없습니다.</div>`;
+    return wrap;
+  }
+
+  // 상단 요약(전체 점수 변화)
+  const baseAcc = lastBase?.overall?.acc ?? null;
+  const revAcc  = lastReview?.overall?.acc ?? null;
+  let headerHTML = `<div class="result-title"><div><b>Progress</b></div></div>`;
+  if(baseAcc!==null || revAcc!==null){
+    const fmt = v=> (v===null? '—' : `${Math.round(v*100)}%`);
+    const delta = (baseAcc!==null && revAcc!==null) ? Math.round((revAcc-baseAcc)*100) : null;
+    const deltaTxt = (delta===null? '' : ` <span style="font-weight:700; color:${delta>=0?'#065f46':'#991b1b'}">(${delta>=0?'+':''}${delta} pp)</span>`);
+    headerHTML = `
+      <div class="result-title">
+        <div><b>Progress</b></div>
+        <div style="font-variant-numeric:tabular-nums">
+          Base: ${fmt(baseAcc)} → Review: ${fmt(revAcc)}${deltaTxt}
+        </div>
+      </div>`;
+  }
+
+  // 스킬별 변화 계산
+  const baseSkills = lastBase?.skills || {};
+  const revSkills  = lastReview?.skills || {};
+  const union = new Set([...Object.keys(baseSkills), ...Object.keys(revSkills)]);
+  const changes = [];
+  union.forEach(code=>{
+    const b = baseSkills[code]?.acc ?? null;
+    const r = revSkills[code]?.acc ?? null;
+    if(b===null && r===null) return;
+    const d = (b!==null && r!==null) ? (r-b) : null;
+    changes.push({ code, base:b, review:r, delta:d });
+  });
+
+  // 개선 TopN / 아직 약한 TopN
+  const improved = changes
+    .filter(x=> x.delta!==null)
+    .sort((a,b)=> (b.delta - a.delta))
+    .slice(0, maxSkills);
+
+  const weakNow = changes
+    .filter(x=> x.review!==null)
+    .sort((a,b)=> (a.review - b.review))
+    .slice(0, maxSkills);
+
+  const row = (e)=>`
+    <li style="display:flex; justify-content:space-between; gap:10px; border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:#fff">
+      <span>${e.code}</span>
+      <span style="font-variant-numeric:tabular-nums">
+        ${e.base===null?'—':Math.round(e.base*100)+'%'}
+        →
+        ${e.review===null?'—':Math.round(e.review*100)+'%'}
+        ${e.delta===null?'':` <b style="color:${e.delta>=0?'#065f46':'#991b1b'}">(${e.delta>=0?'+':''}${Math.round(e.delta*100)/100} )</b>`}
+      </span>
+    </li>`;
+
+  wrap.innerHTML = `
+    ${headerHTML}
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px">
+      <div>
+        <div style="font-weight:700; color:#065f46; margin-bottom:6px">Most improved</div>
+        <ul style="list-style:none; margin:0; padding:0; display:grid; gap:6px">
+          ${improved.length? improved.map(row).join('') : '<li style="color:var(--muted)">데이터 없음</li>'}
+        </ul>
+      </div>
+      <div>
+        <div style="font-weight:700; color:#991b1b; margin-bottom:6px">Still weak</div>
+        <ul style="list-style:none; margin:0; padding:0; display:grid; gap:6px">
+          ${weakNow.length? weakNow.map(row).join('') : '<li style="color:var(--muted)">데이터 없음</li>'}
+        </ul>
+      </div>
+    </div>`;
+  return wrap;
+}
+
+
 // ===================== Review Session Utilities =====================
 
 // 선택 기준으로 문항 필터링
@@ -805,6 +955,7 @@ function buildAdHocSet(items, titleNote){
   return {
     metadata: {
       id: `review-${Date.now()}`,
+      parentId: (SET?.metadata?.id || SET?.metadata?.title || 'base'), 
       title: `${SET.metadata?.title || 'DSAT Practice'} — Review ${titleNote}`,
       directions: 'Review selected items.',
       durationMinutesPerModule: SET.metadata?.durationMinutesPerModule || { rw:[32,32], math:[35,35] }
@@ -839,6 +990,9 @@ function startReviewSession({ mode, skill }){
 function showFinalReport(){
   clearInterval(tickId);
   buildQIndex();
+
+   const justLogged = recordAttempt();
+
   clearState();
   $('#card').style.display='none';
   $('#ribbon').style.display='none';
@@ -871,7 +1025,17 @@ tool.innerHTML = `
       <button class="btn" id="csvBtn">Download CSV</button>
     </div>
   </div>`;
+// 결과 상단 도구 모음 (CSV + 리뷰 옵션) 생성 뒤 …
 box.appendChild(tool);
+
+// 진행도 카드 삽입 (baseId는 현 세트 기준으로 추정)
+const baseIdForCompare = SET.__isReviewSession
+  ? (SET.metadata?.parentId || 'base')
+  : (SET.metadata?.id || SET.metadata?.title || 'base');
+box.appendChild( buildProgressCard(baseIdForCompare, 5) );
+
+// 스킬 요약 카드(Top3/Bottom3)
+box.appendChild( buildSkillSummaryCard(2) );
 
 // CSV 버튼
 $('#csvBtn').onclick = downloadCSV;
