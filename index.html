@@ -7,6 +7,10 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <script defer id="MathJax-script"
         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- ▲ 수식 -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- ▲ 시각화(Chart.js) 추가 -->
+
 <style>
   :root{
     --bg:#fafbfe; --card:#fff; --ink:#1f2937; --muted:#6b7280;
@@ -134,17 +138,9 @@
   .similar-wrap{ margin-top:12px }
   .similar-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(160px,1fr)); gap:8px }
   .similar-card{ border:1px solid var(--line); background:#fff; border-radius:10px; padding:8px 10px; text-align:left; cursor:pointer }
-  .similar-meta{ font-size:12px; color:var(--muted) }
+  .similar-meta{ font-size:12px; color:#6b7280 }
   .similar-ok{ background:#e9fbe7; border-color:#b7f4be }
   .similar-bad{ background:#fee2e2; border-color:#fecaca }
-
-  /* ===== Notes UI ===== */
-  .dot.note{ box-shadow: inset 0 0 0 2px var(--accent); }
-  .qnote-wrap{ margin-top:10px }
-  .qnote-wrap textarea{
-    width:100%; min-height:84px; padding:10px 12px; border:1px solid var(--line);
-    border-radius:10px; font-size:14px; background:#fff; resize:vertical
-  }
 
   @media (max-width:560px){
     .nav-grid{ grid-template-columns:repeat(8, 36px) }
@@ -245,7 +241,7 @@
 <script>
 /* ===== 상태 ===== */
 let SET=null, modIdx=0, qIdx=0;
-let flags=new Set(), answers={}, notes={}; // notes 추가
+let flags=new Set(), answers={};
 let timerSec=0, tickId=null;
 
 // 리뷰 세션에서 사용할 타이머 선호 설정
@@ -263,7 +259,7 @@ function storageKey(){
 function saveState(){
   try{
     const payload = {
-      modIdx, qIdx, answers, notes,                 // notes 저장
+      modIdx, qIdx, answers,
       timers: { [String(modIdx)]: timerSec }
     };
     localStorage.setItem(storageKey(), JSON.stringify(payload));
@@ -399,14 +395,13 @@ async function loadSet(path){
     return;
   }
 
-  flags.clear(); answers={}; notes={}; $('#scoreBox').innerHTML='';
+  flags.clear(); answers={}; $('#scoreBox').innerHTML='';
   dirPanel.innerHTML = fmt(SET.metadata?.directions);
   buildQIndex();
 
   RESTORE_CACHE = tryRestore();
   if(RESTORE_CACHE){
     answers = RESTORE_CACHE.answers || {};
-    notes   = RESTORE_CACHE.notes   || {};
     const restoreMod = Math.min(RESTORE_CACHE.modIdx ?? 0, SET.modules.length-1);
     startModule(restoreMod);
     const savedSec = RESTORE_CACHE.timers?.[String(restoreMod)];
@@ -435,14 +430,13 @@ function bootFromBlob(){
     localStorage.removeItem(key);
 
     $('#loadError').style.display='none';
-    flags.clear(); answers={}; notes={}; $('#scoreBox').innerHTML='';
+    flags.clear(); answers={}; $('#scoreBox').innerHTML='';
     dirPanel.innerHTML = fmt(SET.metadata?.directions);
     buildQIndex();
 
     RESTORE_CACHE = tryRestore();
     if(RESTORE_CACHE){
       answers = RESTORE_CACHE.answers || {};
-      notes   = RESTORE_CACHE.notes   || {};
       const restoreMod = Math.min(RESTORE_CACHE.modIdx ?? 0, (SET.modules?.length||1)-1);
       startModule(restoreMod);
       const savedSec = RESTORE_CACHE.timers?.[String(restoreMod)];
@@ -486,10 +480,7 @@ function startModule(idx){
     tickId = setInterval(()=>{
       const now = Date.now();
       const last = window.__lastSaveTs || 0;
-      if (now - last > 5000) {
-        saveState();
-        window.__lastSaveTs = now;
-      }
+      if (now - last > 5000) { saveState(); window.__lastSaveTs = now; }
     }, 1000);
   } else {
     timerSec = minutes * 60;
@@ -538,36 +529,6 @@ function renderQuestion(){
   const hasGridGuide = (q.type==='gridin') && !!(q.gridGuideHtml || q.gridGuideImage);
   const needSplit = (q.layout === 'split') || hasPassage || hasGridGuide;
 
-  const buildChoices = ()=>{
-    const area = document.createElement('div'); area.className='choices';
-    if(q.type==='mcq'){
-      (q.choices||[]).forEach((c,i)=>{
-        const row=document.createElement('label'); row.className='choice';
-        row.innerHTML = `
-          <input type="radio" name="ans" value="${i}" ${String(answers[q.id])===String(i)?'checked':''}/>
-          <div class="bubble">${bubbleABC(i)}</div>
-          <div class="txt">${c}</div>`;
-        if(String(answers[q.id])===String(i)) row.classList.add('selected');
-        row.addEventListener('click',()=>{
-          answers[q.id]=i;
-          saveState();
-          renderQuestion(); renderNavButton();
-        });
-        area.appendChild(row);
-      });
-    }else{
-      const inp=document.createElement('input'); inp.className='gridin';
-      inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
-      inp.oninput=e=>{
-        answers[q.id]=e.target.value.trim();
-        saveState();
-        renderNavButton();
-      };
-      area.appendChild(inp);
-    }
-    return area;
-  };
-
   if(needSplit){
     const wrap = document.createElement('div');
     wrap.className='gridwrap';
@@ -588,36 +549,61 @@ function renderQuestion(){
     stem.innerHTML = injectImages(fmt(q.prompt));
     right.appendChild(stem);
 
-    right.appendChild(buildChoices());
+    const area = document.createElement('div'); area.className='choices';
+    if(q.type==='mcq'){
+      (q.choices||[]).forEach((c,i)=>{
+        const row=document.createElement('label'); row.className='choice';
+        row.innerHTML = `
+          <input type="radio" name="ans" value="${i}" ${String(answers[q.id])===String(i)?'checked':''}/>
+          <div class="bubble">${bubbleABC(i)}</div>
+          <div class="txt">${c}</div>`;
+        if(String(answers[q.id])===String(i)) row.classList.add('selected');
+        row.addEventListener('click',()=>{
+          answers[q.id]=i; saveState(); renderQuestion(); renderNavButton();
+        });
+        area.appendChild(row);
+      });
+    }else{
+      const inp=document.createElement('input'); inp.className='gridin';
+      inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
+      inp.oninput=e=>{
+        answers[q.id]=e.target.value.trim(); saveState(); renderNavButton();
+      };
+      area.appendChild(inp);
+    }
+    right.appendChild(area);
+
     wrap.appendChild(left); wrap.appendChild(right);
     qc.appendChild(wrap);
   }else{
     const stem = document.createElement('div'); stem.className='qstem';
     stem.innerHTML = injectImages(fmt(q.prompt));
     qc.appendChild(stem);
-    qc.appendChild(buildChoices());
+
+    const area = document.createElement('div'); area.className='choices';
+    if(q.type==='mcq'){
+      (q.choices||[]).forEach((c,i)=>{
+        const row=document.createElement('label'); row.className='choice';
+        row.innerHTML = `
+          <input type="radio" name="ans" value="${i}" ${String(answers[q.id])===String(i)?'checked':''}/>
+          <div class="bubble">${bubbleABC(i)}</div>
+          <div class="txt">${c}</div>`;
+        if(String(answers[q.id])===String(i)) row.classList.add('selected');
+        row.addEventListener('click',()=>{
+          answers[q.id]=i; saveState(); renderQuestion(); renderNavButton();
+        });
+        area.appendChild(row);
+      });
+    }else{
+      const inp=document.createElement('input'); inp.className='gridin';
+      inp.placeholder='Enter your answer'; inp.value=answers[q.id]??'';
+      inp.oninput=e=>{
+        answers[q.id]=e.target.value.trim(); saveState(); renderNavButton();
+      };
+      area.appendChild(inp);
+    }
+    qc.appendChild(area);
   }
-
-  // === 문항별 메모(오답노트)
-  const noteWrap = document.createElement('div');
-  noteWrap.className = 'qnote-wrap';
-  noteWrap.innerHTML = `
-    <div style="display:flex; align-items:center; justify-content:space-between; margin:8px 0 6px">
-      <div style="font-weight:600">My note</div>
-      <div style="color:var(--muted); font-size:12px">자동 저장</div>
-    </div>
-    <textarea id="qnote"></textarea>
-  `;
-  qc.appendChild(noteWrap);
-
-  const nt = noteWrap.querySelector('#qnote');
-  nt.value = notes[q.id] || '';
-  let ntTimer=null;
-  nt.addEventListener('input', e=>{
-    notes[q.id] = e.target.value;
-    if(ntTimer) clearTimeout(ntTimer);
-    ntTimer = setTimeout(()=> saveState(), 300);
-  });
 
   typeset();
   renderNavButton();
@@ -645,7 +631,6 @@ function showNavPopup(){
     if(i===qIdx) b.classList.add('active');
     if(flags.has(q.id)) b.classList.add('flag');
     if(answers[q.id]!==undefined && answers[q.id]!=='' ) b.classList.add('answered');
-    if(notes[q.id] && String(notes[q.id]).trim()!=='') b.classList.add('note'); // 메모 표시
     b.textContent=i+1;
     b.onclick=()=>{ qIdx=i; renderQuestion(); showNavPopup(); };
     grid.appendChild(b);
@@ -666,14 +651,6 @@ $('#confirmOk').onclick = ()=>{
   confirmBack.style.display='none';
   saveState();
   gotoNextModule();
-};
-
-/* ===== 버튼 액션 ===== */
-$('#prevBtn').onclick=()=>{ if(qIdx>0){ qIdx--; saveState(); renderQuestion(); } hideNavPopup(); };
-$('#nextBtn').onclick=()=>{
-  const n=totalQ(modIdx);
-  if(qIdx<n-1){ qIdx++; saveState(); renderQuestion(); hideNavPopup(); }
-  else{ openSubmitConfirm(); }
 };
 
 /* ===== 채점 ===== */
@@ -745,7 +722,7 @@ function openExplainById(qid){
   openExplain(sectionLabel(section), module, qi+1, q, ok);
 }
 
-/* ===== 스킬 요약(Top3/Bottom3) ===== */
+/* ===== 스킬 요약(Top3/Bottom3) + 차트 ===== */
 function collectSkillStats(){
   const stats = {};
   (SET.modules || []).forEach(m=>{
@@ -813,10 +790,34 @@ function buildSkillSummaryCard(minCount){
         </ul>
       </div>
     </div>`;
+
+  // ▼ 막대 차트 (eligible 전체 기준 정확도%)
+  const canvas = document.createElement('canvas');
+  canvas.height = 220;
+  canvas.style.marginTop = '10px';
+  wrap.appendChild(canvas);
+
+  const labels = eligible.map(e=>e.code);
+  const accs   = eligible.map(e=>Math.round(e.acc*100));
+  setTimeout(()=>{
+    new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{ label: 'Accuracy %', data: accs, backgroundColor: '#3b82f6' }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero:true, max:100, ticks:{ stepSize:20 } } }
+      }
+    });
+  },0);
+
   return wrap;
 }
 
-/* ===== Progress Card (Base vs Review) ===== */
+/* ===== 진행도 카드 (Base vs Review) ===== */
 function buildProgressCard(baseId, maxSkills=5){
   const { lastBase, lastReview } = getLatestPair(baseId);
   const wrap = document.createElement('div');
@@ -835,18 +836,19 @@ function buildProgressCard(baseId, maxSkills=5){
   const revAcc  = lastReview?.overall?.acc ?? null;
   let headerHTML = `<div class="result-title"><div><b>Progress</b></div></div>`;
   if(baseAcc!==null || revAcc!==null){
-    const fmtp = v=> (v===null? '—' : `${Math.round(v*100)}%`);
+    const fmt = v=> (v===null? '—' : `${Math.round(v*100)}%`);
     const delta = (baseAcc!==null && revAcc!==null) ? Math.round((revAcc-baseAcc)*100) : null;
     const deltaTxt = (delta===null? '' : ` <span style="font-weight:700; color:${delta>=0?'#065f46':'#991b1b'}">(${delta>=0?'+':''}${delta} pp)</span>`);
     headerHTML = `
       <div class="result-title">
         <div><b>Progress</b></div>
         <div style="font-variant-numeric:tabular-nums">
-          Base: ${fmtp(baseAcc)} → Review: ${fmtp(revAcc)}${deltaTxt}
+          Base: ${fmt(baseAcc)} → Review: ${fmt(revAcc)}${deltaTxt}
         </div>
       </div>`;
   }
 
+  // 스킬별 변화 계산
   const baseSkills = lastBase?.skills || {};
   const revSkills  = lastReview?.skills || {};
   const union = new Set([...Object.keys(baseSkills), ...Object.keys(revSkills)]);
@@ -859,24 +861,16 @@ function buildProgressCard(baseId, maxSkills=5){
     changes.push({ code, base:b, review:r, delta:d });
   });
 
-  const improved = changes
-    .filter(x=> x.delta!==null)
-    .sort((a,b)=> (b.delta - a.delta))
-    .slice(0, maxSkills);
-
-  const weakNow = changes
-    .filter(x=> x.review!==null)
-    .sort((a,b)=> (a.review - b.review))
-    .slice(0, maxSkills);
+  const improved = changes.filter(x=> x.delta!==null).sort((a,b)=> (b.delta - a.delta)).slice(0, maxSkills);
+  const weakNow  = changes.filter(x=> x.review!==null).sort((a,b)=> (a.review - b.review)).slice(0, maxSkills);
 
   const row = (e)=>`
     <li style="display:flex; justify-content:space-between; gap:10px; border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:#fff">
       <span>${e.code}</span>
       <span style="font-variant-numeric:tabular-nums">
-        ${e.base===null?'—':Math.round(e.base*100)+'%'}
-        →
+        ${e.base===null?'—':Math.round(e.base*100)+'%'} →
         ${e.review===null?'—':Math.round(e.review*100)+'%'}
-        ${e.delta===null?'':` <b style="color:${e.delta>=0?'#065f46':'#991b1b'}">(${e.delta>=0?'+':''}${Math.round(e.delta*100)/100} )</b>`}
+        ${e.delta===null?'':` <b style="color:${e.delta>=0?'#065f46':'#991b1b'}">(${e.delta>=0?'+':''}${Math.round(e.delta*100)} pp)</b>`}
       </span>
     </li>`;
 
@@ -896,10 +890,36 @@ function buildProgressCard(baseId, maxSkills=5){
         </ul>
       </div>
     </div>`;
+
+  // ▼ 시도 추세선(전체 정확도 %)
+  const trendCanvas = document.createElement('canvas');
+  trendCanvas.height = 180;
+  trendCanvas.style.marginTop = '10px';
+  wrap.appendChild(trendCanvas);
+
+  const all = loadAttempts().filter(a=> a.baseId===baseId).sort((a,b)=> a.ts-b.ts);
+  const tlabels = all.map(a=> new Date(a.ts).toLocaleDateString());
+  const tdata   = all.map(a=> Math.round((a.overall?.acc||0)*100));
+
+  setTimeout(()=>{
+    new Chart(trendCanvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: tlabels,
+        datasets: [{ label:'Overall %', data:tdata, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,.15)', fill:true, tension:.25 }]
+      },
+      options: {
+        responsive:true,
+        plugins:{ legend:{ display:false } },
+        scales:{ y:{ beginAtZero:true, max:100 } }
+      }
+    });
+  },0);
+
   return wrap;
 }
 
-/* ===== Review Session Utilities ===== */
+/* ===== 리뷰 세션 유틸 ===== */
 function pickReviewQuestions({ mode, skill }){
   const picked = [];
   (SET.modules||[]).forEach((m)=>{
@@ -956,7 +976,6 @@ function startReviewSession({ mode, skill }){
 
   flags = new Set();
   answers = {};
-  notes = {};
   buildQIndex();
   startModule(0);
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1000,15 +1019,17 @@ function showFinalReport(){
   </div>`;
   box.appendChild(tool);
 
+  // 진행도 카드 + 스킬 요약 카드
   const baseIdForCompare = SET.__isReviewSession
     ? (SET.metadata?.parentId || 'base')
     : (SET.metadata?.id || SET.metadata?.title || 'base');
   box.appendChild( buildProgressCard(baseIdForCompare, 5) );
-
   box.appendChild( buildSkillSummaryCard(2) );
 
+  // CSV 버튼
   $('#csvBtn').onclick = downloadCSV;
 
+  // 스킬 드롭다운
   const allSkills = new Set();
   (SET.modules||[]).forEach(m => (m.questions||[]).forEach(q => getSkillCodes(q).forEach(s => allSkills.add(s))));
   const $skill = document.getElementById('skillFilter');
@@ -1018,9 +1039,9 @@ function showFinalReport(){
     $skill.appendChild(opt);
   });
 
+  // 리뷰 타이머 UI 바인딩
   const $mode = document.getElementById('reviewTimerMode');
   const $min  = document.getElementById('reviewTimerMin');
-
   if (window.REVIEW_TIMER_PREF) {
     $mode.value = window.REVIEW_TIMER_PREF.mode || 'default';
     if (window.REVIEW_TIMER_PREF.mode === 'custom') {
@@ -1028,7 +1049,6 @@ function showFinalReport(){
       if (window.REVIEW_TIMER_PREF.minutes) $min.value = window.REVIEW_TIMER_PREF.minutes;
     }
   }
-
   $mode.addEventListener('change', ()=>{
     if ($mode.value === 'custom') $min.style.display = '';
     else $min.style.display = 'none';
@@ -1045,6 +1065,7 @@ function showFinalReport(){
     if(code) startReviewSession({ mode:'skill', skill:code });
   };
 
+  // 섹션별 그룹화
   const groups = {};
   SET.modules.forEach((m,mi)=>{
     const key=(m.section||'misc').toLowerCase();
@@ -1056,6 +1077,7 @@ function showFinalReport(){
     return rank(a)-rank(b);
   });
 
+  // 섹션별 렌더링 + 도넛 차트
   order.forEach(secKey=>{
     const secName = sectionLabel(secKey);
     const mods = groups[secKey].sort((a,b)=>a.module-b.module);
@@ -1078,15 +1100,34 @@ function showFinalReport(){
         <div><b>${secName} — Total:</b> ${secCorrect} / ${secTotal}</div>
         <div><span class="badge ok">Correct</span> <span class="badge bad" style="margin-left:8px">Wrong</span></div>
       </div>
-      <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap">
+      <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center">
         ${perModule.map(pm=>`
           <div class="qcard" style="flex:1; min-width:180px">
             <div><b>Module ${pm.module}</b></div>
             <div style="margin-top:6px">${pm.correct} / ${pm.total}</div>
           </div>`).join('')}
+        <div style="flex:1; min-width:220px">
+          <canvas id="pie_${secKey}" height="160"></canvas>
+        </div>
       </div>`;
     box.appendChild(header);
 
+    // ▼ 섹션 도넛
+    setTimeout(()=>{
+      const ctx = document.getElementById(`pie_${secKey}`);
+      if(ctx){
+        new Chart(ctx.getContext('2d'), {
+          type:'doughnut',
+          data:{
+            labels:['Correct','Wrong'],
+            datasets:[{ data:[secCorrect, secTotal-secCorrect], backgroundColor:['#16a34a','#ef4444'] }]
+          },
+          options:{ plugins:{ legend:{ position:'bottom' } } }
+        });
+      }
+    },0);
+
+    // 모듈별 정오표
     perModule.forEach(pm=>{
       const wrap=document.createElement('div'); wrap.className='qcard result-section';
       const cells = pm.detail.map(d=>{
@@ -1101,6 +1142,7 @@ function showFinalReport(){
     });
   });
 
+  // 해설 팝업 바인딩
   document.querySelectorAll('.result-dot').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const secKey=btn.getAttribute('data-section');
@@ -1153,29 +1195,6 @@ function openExplain(secName, modNo, idx, q, ok){
     ${q.rationale ? `<div class="qcard"><b>Explanation</b><div style="margin-top:6px">${fmt(q.rationale)}</div></div>`:''}
   `;
 
-  // === 해설 팝업 내 메모
-  const noteBlock = document.createElement('div');
-  noteBlock.className = 'qcard';
-  noteBlock.style.marginBottom = '10px';
-  noteBlock.innerHTML = `
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px">
-      <b>My note</b>
-      <span style="color:var(--muted); font-size:12px">자동 저장</span>
-    </div>
-    <textarea id="expNote" style="width:100%; min-height:92px; padding:10px 12px; border:1px solid var(--line); border-radius:10px"></textarea>
-  `;
-  explainBody.insertBefore(noteBlock, explainBody.children[2] || null);
-
-  const expNT = noteBlock.querySelector('#expNote');
-  expNT.value = notes[q.id] || '';
-  let expTimer=null;
-  expNT.addEventListener('input', e=>{
-    notes[q.id] = e.target.value;
-    if(expTimer) clearTimeout(expTimer);
-    expTimer = setTimeout(()=> saveState(), 300);
-  });
-
-  /* === 스킬 배지 + (옵션) 유사문항 === */
   const skills = getSkillCodes(q);
   const skillBadges = skills.length
     ? `<div class="skill-badges">${skills.map(s=>`<span class="skill-badge">${s}</span>`).join('')}</div>`
@@ -1228,14 +1247,13 @@ async function loadSetFromFile(file){
     SET = JSON.parse(text);
     $('#loadError').style.display='none';
 
-    flags.clear(); answers={}; notes={}; $('#scoreBox').innerHTML='';
+    flags.clear(); answers={}; $('#scoreBox').innerHTML='';
     dirPanel.innerHTML = fmt(SET.metadata?.directions);
     buildQIndex();
 
     RESTORE_CACHE = tryRestore();
     if(RESTORE_CACHE){
       answers = RESTORE_CACHE.answers || {};
-      notes   = RESTORE_CACHE.notes   || {};
       const restoreMod = Math.min(RESTORE_CACHE.modIdx ?? 0, SET.modules.length-1);
       startModule(restoreMod);
       const savedSec = RESTORE_CACHE.timers?.[String(restoreMod)];
@@ -1281,7 +1299,7 @@ function correctAnswerDisplay(q){
   return (q.answerNumeric ?? (Array.isArray(q.altNumeric)? q.altNumeric[0] : '')) ?? '';
 }
 function buildCSV(){
-  const header = ['Section','Module','Number','QuestionID','Type','Correct','YourAnswer','CorrectAnswer','Flagged','Note'];
+  const header = ['Section','Module','Number','QuestionID','Type','Correct','YourAnswer','CorrectAnswer','Flagged'];
   const rows = [header];
 
   const groups = {};
@@ -1309,8 +1327,7 @@ function buildCSV(){
           isCorrect(q) ? 'Y' : 'N',
           userAnswerDisplay(q),
           correctAnswerDisplay(q),
-          flags.has(q.id) ? 'Y' : 'N',
-          notes[q.id] || ''
+          flags.has(q.id) ? 'Y' : 'N'
         ]);
       });
     });
@@ -1350,8 +1367,6 @@ window.addEventListener('DOMContentLoaded', ()=>{
   } else if (src === 'blob') {
     document.querySelector('.loader')?.style && (document.querySelector('.loader').style.display='none');
     bootFromBlob();
-  } else {
-    // 개발 편의를 위해 상단 로더는 남겨둠
   }
 });
 </script>
