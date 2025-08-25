@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>DSAT — Dashboard</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<style>
+  :root{
+    --bg:#f6f7fb; --card:#fff; --ink:#111827; --muted:#6b7280; --line:#e5e7eb;
+    --accent:#2563eb; --ok:#16a34a; --bad:#ef4444;
+  }
+  *{ box-sizing:border-box }
+  body{ margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Apple SD Gothic Neo,Arial,sans-serif; color:var(--ink); background:var(--bg) }
+  .topbar{ position:sticky; top:0; z-index:5; background:#fff; border-bottom:1px solid var(--line) }
+  .row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 14px }
+  .title{ font-weight:800 }
+  .wrap{ max-width:1100px; margin:16px auto 80px; padding:0 14px; display:grid; gap:12px }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; box-shadow:0 4px 18px rgba(0,0,0,.04) }
+  .controls{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+  .btn{ border:1px solid var(--line); background:#fff; padding:8px 12px; border-radius:10px; cursor:pointer }
+  .btn.primary{ background:var(--accent); color:#fff; border-color:var(--accent) }
+  .select{ border:1px solid var(--line); background:#fff; padding:8px 10px; border-radius:10px; }
+  .grid2{ display:grid; grid-template-columns:1.2fr 1fr; gap:12px }
+  .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px }
+  .muted{ color:var(--muted); font-size:13px }
+  .table{ width:100%; border-collapse:collapse; font-size:14px }
+  .table th, .table td{ border-bottom:1px solid var(--line); padding:8px; text-align:left; }
+  .pill{ display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; border:1px solid var(--line); background:#f8fafc }
+  canvas{ width:100%; height:320px; }
+  @media (max-width:980px){ .grid2{ grid-template-columns:1fr } .grid3{ grid-template-columns:1fr } }
+</style>
+</head>
+<body>
+<!-- Topbar -->
+<div class="topbar">
+  <div class="row">
+    <div class="title">📈 DSAT Dashboard</div>
+    <div class="controls">
+      <select id="basePicker" class="select"></select>
+      <button class="btn" id="refreshBtn">Refresh</button>
+      <button class="btn" onclick="location.href='./index.html'">← Back to Practice</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <!-- Summary -->
+  <div class="card" id="summaryCard">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px">
+      <div><b id="summaryTitle">Overview</b></div>
+      <div class="muted" id="attemptCount">—</div>
+    </div>
+    <div class="grid3" style="margin-top:10px">
+      <div class="card">
+        <div class="muted">Latest accuracy</div>
+        <div style="font-weight:800; font-size:28px" id="latestAcc">—</div>
+      </div>
+      <div class="card">
+        <div class="muted">Best accuracy</div>
+        <div style="font-weight:800; font-size:28px" id="bestAcc">—</div>
+      </div>
+      <div class="card">
+        <div class="muted">Trend (last → now)</div>
+        <div style="font-weight:800; font-size:28px" id="deltaAcc">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="grid2">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px">
+        <b>Attempts over time</b>
+        <span class="muted">(Base/Review 포함)</span>
+      </div>
+      <canvas id="accChart"></canvas>
+    </div>
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px">
+        <b>Skills — latest attempt</b>
+        <span class="muted" id="latestKind">—</span>
+      </div>
+      <canvas id="skillChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Attempts table -->
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px">
+      <b>Attempts</b>
+      <div class="controls">
+        <button class="btn" id="clearBtn">Clear all (this base)</button>
+      </div>
+    </div>
+    <table class="table" id="attemptTable">
+      <thead>
+        <tr>
+          <th>Date</th><th>Kind</th><th>Title</th><th>Accuracy</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+/* ===== Storage schema (연습 페이지와 동일) ===== */
+const ATTEMPT_KEY = 'dsat_attempts_v1';
+
+/* ===== Helpers ===== */
+const $ = s=>document.querySelector(s);
+const fmtPct = v => (v==null? '—' : `${Math.round(v*100)}%`);
+const fmtDate = ts => new Date(ts).toLocaleString();
+
+/* ===== Load & group attempts ===== */
+function loadAttempts(){ try{ return JSON.parse(localStorage.getItem(ATTEMPT_KEY)||'[]'); }catch(_e){ return []; } }
+function saveAttempts(arr){ try{ localStorage.setItem(ATTEMPT_KEY, JSON.stringify(arr)); }catch(_e){} }
+
+function groupByBaseId(list){
+  const map = {};
+  list.forEach(a=>{
+    const k = a.baseId || 'base';
+    if(!map[k]) map[k] = [];
+    map[k].push(a);
+  });
+  Object.values(map).forEach(arr => arr.sort((a,b)=> a.ts - b.ts));
+  return map;
+}
+
+/* ===== UI: base picker ===== */
+function populateBasePicker(){
+  const all = loadAttempts();
+  const grouped = groupByBaseId(all);
+  const picker = $('#basePicker');
+  picker.innerHTML = '';
+  const keys = Object.keys(grouped);
+  if(keys.length===0){
+    const opt = document.createElement('option');
+    opt.value = ''; opt.textContent = 'No attempts yet';
+    picker.appendChild(opt);
+    return null;
+  }
+  keys.forEach(k=>{
+    const labelTitle = grouped[k][grouped[k].length-1]?.title || k;
+    const opt = document.createElement('option');
+    opt.value = k; opt.textContent = `${labelTitle}  —  (${grouped[k].length})`;
+    picker.appendChild(opt);
+  });
+  // 최근 활동한 baseId 선택
+  picker.value = keys[keys.length-1];
+  return grouped;
+}
+
+/* ===== Charts (Chart.js) ===== */
+let accChart, skillChart;
+
+function renderAccChart(list){
+  const ctx = document.getElementById('accChart');
+  const labels = list.map(a=> new Date(a.ts).toLocaleDateString());
+  const data   = list.map(a=> (a.overall?.acc ?? null));
+  if(accChart) accChart.destroy();
+  accChart = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets:[{ label:'Accuracy', data, tension:.25, fill:false }]},
+    options:{
+      responsive:true,
+      scales:{ y:{ min:0, max:1, ticks:{ callback:(v)=>Math.round(v*100)+'%' } } },
+      plugins:{ legend:{ display:false } }
+    }
+  });
+}
+
+function topSkillsFromAttempt(attempt, limit=12){
+  const entries = Object.entries(attempt?.skills||{}).map(([code, v])=>({ code, acc: v.acc||0, total:v.total||0 }));
+  entries.sort((a,b)=> b.total - a.total || b.acc - a.acc);
+  return entries.slice(0, limit);
+}
+
+function renderSkillChart(attempt){
+  const ctx = document.getElementById('skillChart');
+  const top = topSkillsFromAttempt(attempt);
+  const labels = top.map(x=>x.code);
+  const data   = top.map(x=>x.acc);
+  if(skillChart) skillChart.destroy();
+  skillChart = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Accuracy', data }]},
+    options:{
+      responsive:true,
+      scales:{ y:{ min:0, max:1, ticks:{ callback:(v)=>Math.round(v*100)+'%' } }, x:{ ticks:{ autoSkip:false, maxRotation:45, minRotation:0 }}},
+      plugins:{ legend:{ display:false } }
+    }
+  });
+}
+
+/* ===== Table & Summary ===== */
+function renderTable(list){
+  const tb = $('#attemptTable tbody');
+  tb.innerHTML = '';
+  list.slice().reverse().forEach(a=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${fmtDate(a.ts)}</td>
+      <td><span class="pill">${a.kind||'base'}</span></td>
+      <td>${(a.title||'').replaceAll('<','&lt;')}</td>
+      <td>${fmtPct(a.overall?.acc)}</td>
+    `;
+    tb.appendChild(tr);
+  });
+}
+
+function renderSummary(list){
+  $('#attemptCount').textContent = `${list.length} attempts`;
+  const last = list[list.length-1];
+  const first = list[0];
+  const best = list.reduce((m,a)=> (m==null || (a.overall?.acc??0)>(m.overall?.acc??0) ? a : m), null);
+
+  $('#latestAcc').textContent = fmtPct(last?.overall?.acc);
+  $('#bestAcc').textContent   = fmtPct(best?.overall?.acc);
+
+  const delta = (last && first) ? Math.round(((last.overall?.acc||0) - (first.overall?.acc||0))*100) : null;
+  $('#deltaAcc').textContent  = (delta==null? '—' : (delta>=0? '+' : '') + delta + ' pp');
+
+  $('#summaryTitle').textContent = last?.title || 'Overview';
+  $('#latestKind').textContent = (last?.kind||'base').toUpperCase();
+}
+
+/* ===== Clear (this base only) ===== */
+function clearCurrentBase(baseId){
+  if(!baseId) return;
+  if(!confirm('현재 선택된 베이스의 시도 기록을 모두 삭제할까요?')) return;
+  const all = loadAttempts();
+  const left = all.filter(a=> a.baseId!==baseId);
+  saveAttempts(left);
+  boot();
+}
+
+/* ===== Main render ===== */
+function renderForBase(baseId){
+  const grouped = groupByBaseId(loadAttempts());
+  const list = grouped[baseId] || [];
+  renderSummary(list);
+  renderAccChart(list);
+  renderSkillChart(list[list.length-1] || null);
+  renderTable(list);
+}
+
+function boot(){
+  const grouped = populateBasePicker();
+  const baseId = $('#basePicker').value;
+  if(!grouped || !grouped[baseId]){
+    // 빈 상태
+    renderSummary([]);
+    if(accChart) accChart.destroy();
+    if(skillChart) skillChart.destroy();
+    $('#attemptTable tbody').innerHTML = '';
+    return;
+  }
+  renderForBase(baseId);
+}
+
+/* ===== Events ===== */
+document.getElementById('refreshBtn').onclick = boot;
+document.getElementById('basePicker').onchange = ()=> renderForBase($('#basePicker').value);
+document.getElementById('clearBtn').onclick = ()=> clearCurrentBase($('#basePicker').value);
+
+/* ===== Start ===== */
+window.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>
