@@ -726,6 +726,73 @@ function buildSkillSummaryCard(minCount){
   return wrap;
 }
 
+// ===================== Review Session Utilities =====================
+
+// 선택 기준으로 문항 필터링
+function pickReviewQuestions({ mode, skill }){
+  const picked = [];
+  (SET.modules||[]).forEach((m)=>{
+    (m.questions||[]).forEach((q)=>{
+      if(mode==='wrong'   && !isCorrect(q)) picked.push({ section:m.section, module:m.module||1, q });
+      if(mode==='flagged' && flags.has(q.id)) picked.push({ section:m.section, module:m.module||1, q });
+      if(mode==='skill'   && getSkillCodes(q).includes(skill)) picked.push({ section:m.section, module:m.module||1, q });
+    });
+  });
+  return picked;
+}
+
+// 섹션별로 묶어 임시 세트 구성(섹션마다 모듈 1개)
+function buildAdHocSet(items, titleNote){
+  const bySec = {};
+  items.forEach(it=>{
+    const key = (it.section||'misc').toLowerCase();
+    if(!bySec[key]) bySec[key] = [];
+    bySec[key].push(it.q);
+  });
+
+  const modules = [];
+  Object.entries(bySec).forEach(([sec, arr])=>{
+    modules.push({
+      section: sec,
+      module: 1,
+      questions: arr.map((q) => ({
+        ...q,
+        // id 충돌 방지: 임시 접두사
+        id: `review:${q.id}`
+      }))
+    });
+  });
+
+  return {
+    metadata: {
+      id: `review-${Date.now()}`,
+      title: `${SET.metadata?.title || 'DSAT Practice'} — Review ${titleNote}`,
+      directions: 'Review selected items.',
+      durationMinutesPerModule: SET.metadata?.durationMinutesPerModule || { rw:[32,32], math:[35,35] }
+    },
+    modules
+  };
+}
+
+// 리뷰 세션 시작(현 페이지에서 새 SET으로 교체)
+function startReviewSession({ mode, skill }){
+  const items = pickReviewQuestions({ mode, skill });
+  if(items.length===0){
+    alert('선택 조건에 맞는 문항이 없습니다.');
+    return;
+  }
+  const titleNote = (mode==='skill') ? `(Skill: ${skill})` : `(${mode})`;
+  const newSet = buildAdHocSet(items, titleNote);
+
+  // 상태 초기화 후 시작
+  SET = newSet;
+  flags = new Set();
+  answers = {};
+  buildQIndex();   // 비슷한 문항/해설 점프 등을 위한 인덱스 갱신
+  startModule(0);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 /* ===== 최종 결과표 & 해설 팝업 ===== */
 function showFinalReport(){
   clearInterval(tickId);
@@ -737,15 +804,44 @@ function showFinalReport(){
 
   // 결과 상단 도구 모음 (CSV)
   const box = $('#scoreBox'); box.innerHTML='';
-  const tool = document.createElement('div');
-  tool.className = 'qcard';
-  tool.innerHTML = `
-    <div class="result-title">
-      <div><b>${SET.metadata?.title || 'DSAT Practice'} — Combined Report</b></div>
-      <div><button class="btn" id="csvBtn">Download CSV</button></div>
-    </div>`;
-  box.appendChild(tool);
-  $('#csvBtn').onclick = downloadCSV;
+const tool = document.createElement('div');
+tool.className = 'qcard';
+tool.innerHTML = `
+  <div class="result-title">
+    <div><b>${SET.metadata?.title || 'DSAT Practice'} — Combined Report</b></div>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+      <select id="skillFilter" class="btn">
+        <option value="">Skill…</option>
+      </select>
+      <button class="btn" id="reviewSkillBtn">Review Skill</button>
+      <button class="btn" id="reviewWrongBtn">Review Wrong</button>
+      <button class="btn" id="reviewFlagBtn">Review Flagged</button>
+      <button class="btn" id="csvBtn">Download CSV</button>
+    </div>
+  </div>`;
+box.appendChild(tool);
+
+// CSV 버튼
+$('#csvBtn').onclick = downloadCSV;
+
+// 스킬 드롭다운 채우기
+const allSkills = new Set();
+(SET.modules||[]).forEach(m => (m.questions||[]).forEach(q => getSkillCodes(q).forEach(s => allSkills.add(s))));
+const $skill = document.getElementById('skillFilter');
+[...allSkills].sort().forEach(s=>{
+  const opt = document.createElement('option');
+  opt.value = s; opt.textContent = s;
+  $skill.appendChild(opt);
+});
+
+// 리뷰 버튼 핸들러
+document.getElementById('reviewWrongBtn').onclick = ()=> startReviewSession({ mode:'wrong' });
+document.getElementById('reviewFlagBtn').onclick  = ()=> startReviewSession({ mode:'flagged' });
+document.getElementById('reviewSkillBtn').onclick = ()=>{
+  const code = $skill.value;
+  if(code) startReviewSession({ mode:'skill', skill:code });
+};
+
 
   // 스킬 요약 카드(Top3/Bottom3)
   box.appendChild( buildSkillSummaryCard(2) );
