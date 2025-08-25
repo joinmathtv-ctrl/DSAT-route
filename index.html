@@ -283,6 +283,65 @@ const injectImages = html =>
   (html||"").replace(/\[\[IMAGE:\s*([^|\]]+)(?:\|([^\]]+))?\]\]/g,
     (_m,src,alt)=>`<img src="./img/${src.trim()}" alt="${(alt||'problem image').trim()}" style="max-width:100%">`);
 
+
+// ===== SAT Score Curves & Helpers =====
+// 커브는 세트 메타(SET.metadata.curves)로 덮어쓰기 가능
+// 포맷 예시:
+// metadata.curves = {
+//   rw:   [[0,200],[20,300],[40,400],[60,550],[80,700],[100,800]],   // %도메인
+//   math: [[0,200],[20,300],[40,450],[60,600],[80,720],[100,800]]    // %도메인
+// }
+// ※ x축이 0~100이면 %도메인, 그보다 크면 '맞힌 개수' 도메인으로 자동 판단합니다.
+const DEFAULT_CURVES = {
+  rw:   [[0,200],[20,300],[40,400],[60,550],[80,700],[100,800]],
+  math: [[0,200],[20,300],[40,450],[60,600],[80,720],[100,800]]
+};
+
+function getCurves(){
+  const c = (SET?.metadata?.curves) || {};
+  return {
+    rw:   Array.isArray(c.rw)   ? c.rw   : DEFAULT_CURVES.rw,
+    math: Array.isArray(c.math) ? c.math : DEFAULT_CURVES.math
+  };
+}
+
+function interp(points, x){
+  const pts = [...points].sort((a,b)=>a[0]-b[0]);
+  if (x <= pts[0][0]) return Math.round(pts[0][1]);
+  if (x >= pts[pts.length-1][0]) return Math.round(pts[pts.length-1][1]);
+  for (let i=1;i<pts.length;i++){
+    const [x0,y0]=pts[i-1], [x1,y1]=pts[i];
+    if (x <= x1){
+      const t = (x-x0)/(x1-x0);
+      return Math.round(y0 + t*(y1-y0));
+    }
+  }
+  return Math.round(pts[pts.length-1][1]);
+}
+
+function scaledFromCurve(points, rawCorrect, rawTotal){
+  const maxX = Math.max(...points.map(p=>p[0]));
+  const x = (maxX <= 100)
+    ? (rawTotal ? (rawCorrect/rawTotal*100) : 0) // % 도메인
+    : rawCorrect;                                // 원점수(맞힌 개수) 도메인
+  return interp(points, x);
+}
+
+function accumulateSectionTotals(){
+  // 섹션별 맞힌 개수/전체 개수 집계
+  const t = { rw:{correct:0,total:0}, math:{correct:0,total:0} };
+  (SET.modules||[]).forEach((m)=>{
+    const key = (m.section||'').toLowerCase();
+    (m.questions||[]).forEach((q)=>{
+      const ok = isCorrect(q);
+      if (key==='rw'){ t.rw.total++; if(ok) t.rw.correct++; }
+      else if (key==='math'){ t.math.total++; if(ok) t.math.correct++; }
+    });
+  });
+  return t;
+}
+
+
 // ===================== Attempt Log Utils =====================
 const ATTEMPT_KEY = 'dsat_attempts_v1';
 
@@ -1024,6 +1083,49 @@ function showFinalReport(){
     </div>
   </div>`;
   box.appendChild(tool);
+
+// === SAT 환산 점수 카드 삽입 ===
+(function renderSATCard(){
+  const totals = accumulateSectionTotals();
+  const curves = getCurves();
+
+  const rwScaled   = scaledFromCurve(curves.rw,   totals.rw.correct,   totals.rw.total);
+  const mathScaled = scaledFromCurve(curves.math, totals.math.correct, totals.math.total);
+  const totalSAT   = (isFinite(rwScaled)?rwScaled:0) + (isFinite(mathScaled)?mathScaled:0);
+
+  const sat = document.createElement('div');
+  sat.className = 'qcard';
+  sat.innerHTML = `
+    <div class="result-title">
+      <div><b>SAT Converted Score</b></div>
+      <div style="font-variant-numeric:tabular-nums; font-weight:700; font-size:18px">${totalSAT}</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px">
+      <div style="border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:#fff">
+        <div style="font-weight:700; margin-bottom:4px">Reading & Writing</div>
+        <div style="font-variant-numeric:tabular-nums">
+          Raw: ${totals.rw.correct} / ${totals.rw.total}
+          <span style="color:var(--muted)"> · </span>
+          Scaled: <b>${rwScaled}</b>
+        </div>
+      </div>
+      <div style="border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:#fff">
+        <div style="font-weight:700; margin-bottom:4px">Math</div>
+        <div style="font-variant-numeric:tabular-nums">
+          Raw: ${totals.math.correct} / ${totals.math.total}
+          <span style="color:var(--muted)"> · </span>
+          Scaled: <b>${mathScaled}</b>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:8px; color:var(--muted); font-size:12px">
+      * 커브는 세트의 <code>metadata.curves</code>에서 조정할 수 있습니다.
+    </div>
+  `;
+  box.appendChild(sat);
+})();
+
+
 
   const baseIdForCompare = SET.__isReviewSession
     ? (SET.metadata?.parentId || 'base')
