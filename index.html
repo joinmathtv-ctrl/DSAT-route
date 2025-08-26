@@ -4,11 +4,11 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>DSAT Practice — Classic UI</title>
-<link rel="preconnect" href="https://cdn.jsdelivr.net">
-<script defer id="MathJax-script"
-        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-<!-- ★ 커브 프리셋 파일을 메인 스크립트보다 먼저 로드 -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<script defer id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<!-- 커브 프리셋: 메인 스크립트보다 먼저 로드 -->
 <script src="./assets/curves.presets.js"></script>
 
 <style>
@@ -172,7 +172,7 @@
 </div>
 
 <div class="wrap">
-  <div class="loader">
+  <div class="loader" id="loaderRow">
     <input id="path" type="text" value="./questions.json" />
     <button class="btn" id="loadBtn">Load set</button>
     <input id="file" type="file" accept=".json,application/json" style="margin-left:10px"/>
@@ -239,6 +239,12 @@
 </div>
 
 <script>
+/* ===== 기본 커브(안전 장치) ===== */
+const DEFAULT_CURVES = {
+  rw:   [[0,200],[20,300],[40,400],[60,550],[80,700],[100,800]],
+  math: [[0,200],[20,300],[40,450],[60,600],[80,720],[100,800]]
+};
+
 /* ===== 상태 ===== */
 let SET=null, modIdx=0, qIdx=0;
 let flags=new Set(), answers={};
@@ -252,6 +258,20 @@ let RESTORE_CACHE = null;
 
 const FEATURE_SIMILAR = false;
 
+/* 마지막으로 연 세트 정보(대시보드 왕복 복원용) */
+const LAST_SET_KEY = 'dsat_last_set'; // {type:'url'|'blob', value:string}
+
+/* ===== 유틸 ===== */
+const $ = s=>document.querySelector(s);
+const bubbleABC = idx => "ABCD".charAt(idx);
+const fmt = s => (s??"").replaceAll("\\n","<br>");
+const fmtTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+const typeset = ()=> window.MathJax && MathJax.typesetPromise();
+const injectImages = html =>
+  (html||"").replace(/\[\[IMAGE:\s*([^|\]]+)(?:\|([^\]]+))?\]\]/g,
+    (_m,src,alt)=>`<img src="./img/${src.trim()}" alt="${(alt||'problem image').trim()}" style="max-width:100%">`);
+
+/* ===== 저장소 키 ===== */
 function storageKey(){
   const id = (SET?.metadata?.id || SET?.id || SET?.metadata?.title || 'default').toString();
   return `dsat_autosave:${id}`;
@@ -273,40 +293,30 @@ function clearState(){
   try{ localStorage.removeItem(storageKey()); }catch(_e){}
 }
 
-/* ===== 유틸 ===== */
-const $ = s=>document.querySelector(s);
-const bubbleABC = idx => "ABCD".charAt(idx);
-const fmt = s => (s??"").replaceAll("\\n","<br>");
-const fmtTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
-const typeset = ()=> window.MathJax && MathJax.typesetPromise();
-const injectImages = html =>
-  (html||"").replace(/\[\[IMAGE:\s*([^|\]]+)(?:\|([^\]]+))?\]\]/g,
-    (_m,src,alt)=>`<img src="./img/${src.trim()}" alt="${(alt||'problem image').trim()}" style="max-width:100%">`);
-
 /* ===== SAT Score Curves & Helpers =====
-   우선순위: metadata.curves > metadata.curvePreset(프리셋 이름) > PRESETS.default > 안전 기본값 */
+   우선순위: metadata.curves > metadata.curvePreset(프리셋 이름) > PRESETS.default > DEFAULT_CURVES */
 function getCurves(){
-  const presetName = SET?.metadata?.curvePreset;  // 예: "default", "hard"
   const PRESETS = window.CURVE_PRESETS || {};
-  if (presetName && PRESETS[presetName]) {
-    return PRESETS[presetName];  // { rw: [...], math: [...] }
-  }
-  const c = (SET?.metadata?.curves) || {};
-  return {
-    rw:   Array.isArray(c.rw)   ? c.rw   : (PRESETS.default?.rw   || DEFAULT_CURVES.rw),
-    math: Array.isArray(c.math) ? c.math : (PRESETS.default?.math || DEFAULT_CURVES.math)
-  };
-}
-  if (meta.curvePreset && PRESETS[meta.curvePreset]) return PRESETS[meta.curvePreset];
-  if (PRESETS.default) return PRESETS.default;
+  const meta = SET?.metadata || {};
 
-  // 안전장치
-  return { rw: [[0,200],[100,800]], math: [[0,200],[100,800]] };
+  // 1) 세트에 곡선 직접 내장
+  if (meta.curves && (Array.isArray(meta.curves.rw) || Array.isArray(meta.curves.math))) {
+    return {
+      rw:   Array.isArray(meta.curves.rw)   ? meta.curves.rw   : (PRESETS.default?.rw || DEFAULT_CURVES.rw),
+      math: Array.isArray(meta.curves.math) ? meta.curves.math : (PRESETS.default?.math || DEFAULT_CURVES.math)
+    };
+  }
+  // 2) 프리셋 이름 지정
+  if (meta.curvePreset && PRESETS[meta.curvePreset]) return PRESETS[meta.curvePreset];
+  // 3) 프리셋 default
+  if (PRESETS.default) return PRESETS.default;
+  // 4) 안전 기본값
+  return { rw: DEFAULT_CURVES.rw, math: DEFAULT_CURVES.math };
 }
 
 function interp(points, x){
   const pts = [...points].sort((a,b)=>a[0]-b[0]);
-  if (pts.length===0) return 0;
+  if (!pts.length) return 0;
   if (x <= pts[0][0]) return Math.round(pts[0][1]);
   if (x >= pts[pts.length-1][0]) return Math.round(pts[pts.length-1][1]);
   for (let i=1;i<pts.length;i++){
@@ -378,18 +388,14 @@ function summarizeSkills(){
   });
   return bySkill;
 }
-// ===== Attempt Log Utils  =====
-// recordAttempt() 함수 전체를 아래로 교체
+/* 기록 포맷(대시보드 호환): 섹션 원점수/프리셋명 포함 */
 function recordAttempt(){
   const isReview = !!SET.__isReviewSession;
   const baseId = isReview
     ? (SET.metadata?.parentId || 'base')
     : (SET.metadata?.id || SET.metadata?.title || 'base');
 
-  // 섹션별 원점수 집계
-  const totals = accumulateSectionTotals(); // { rw:{correct,total}, math:{correct,total} }
-
-  // 실제 사용한 프리셋 이름(없으면 null)
+  const totals = accumulateSectionTotals();
   const usedPreset = SET?.metadata?.curvePreset ?? null;
 
   const attempt = {
@@ -397,13 +403,13 @@ function recordAttempt(){
     baseId,
     kind: isReview ? 'review' : 'base',
     title: SET.metadata?.title || '',
-    overall: overallTotals(),          // 기존 총 정답/정확도
-    skills: summarizeSkills(),         // 스킬 정확도 스냅샷
-    sections: {                        // ★ 대시보드가 쓰는 원점수
+    overall: overallTotals(),
+    skills: summarizeSkills(),
+    sections: {
       rw:   { correct: totals.rw.correct,   total: totals.rw.total   },
       math: { correct: totals.math.correct, total: totals.math.total }
     },
-    curvePreset: usedPreset            // ★ 어떤 프리셋으로 기록했는지(보기용 정보)
+    curvePreset: usedPreset
   };
 
   const list = loadAttempts();
@@ -411,7 +417,6 @@ function recordAttempt(){
   saveAttempts(list);
   return attempt;
 }
-
 
 function getLatestPair(baseId){
   const list = loadAttempts().filter(a=> a.baseId===baseId);
@@ -423,7 +428,7 @@ function getLatestPair(baseId){
   return { lastBase, lastReview };
 }
 
-/* ===== RW 지문 수집 ===== */
+/* ===== RW 지문 ===== */
 function getPassageHTML(q){
   const base = q.passageHtml || q.passage || q.passageText || "";
   const imgOne = q.passageImage ? `[[IMAGE: ${q.passageImage}]]` : "";
@@ -463,18 +468,56 @@ document.addEventListener('click',e=>{
   if(!dirPanel.contains(e.target) && e.target!==dirBtn) dirPanel.style.display='none';
 });
 
+/* ===== 마지막 세트 저장(대시보드 복귀시 자동복원) ===== */
+function rememberLastSet(meta){
+  try{
+    localStorage.setItem(LAST_SET_KEY, JSON.stringify(meta));
+  }catch(_e){}
+}
+function tryLoadLastSetMeta(){
+  try{
+    const raw = localStorage.getItem(LAST_SET_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(_e){ return null; }
+}
+
 /* ===== 로드 ===== */
 async function loadSet(path){
   try{
     const res = await fetch(path, {cache:'no-store'});
     SET = await res.json();
     $('#loadError').style.display='none';
+    rememberLastSet({ type:'url', value:path });
   }catch(e){
     $('#loadError').textContent = `로드 실패: ${e.message}`;
     $('#loadError').style.display='block';
     return;
   }
 
+  afterSetLoaded();
+}
+
+function bootFromBlob(){
+  const key = 'dsat_launch_blob';
+  const text = localStorage.getItem(key);
+  if(!text){
+    $('#loadError').textContent = 'No pending set. Please start from the landing page.';
+    $('#loadError').style.display = 'block';
+    return;
+  }
+  try{
+    SET = JSON.parse(text);
+    localStorage.removeItem(key);
+    $('#loadError').style.display='none';
+    rememberLastSet({ type:'blob', value:text });
+    afterSetLoaded();
+  }catch(e){
+    $('#loadError').textContent = 'Failed to parse set from landing page: ' + e.message;
+    $('#loadError').style.display='block';
+  }
+}
+
+function afterSetLoaded(){
   flags.clear(); answers={}; $('#scoreBox').innerHTML='';
   dirPanel.innerHTML = fmt(SET.metadata?.directions);
   buildQIndex();
@@ -494,44 +537,9 @@ async function loadSet(path){
   } else {
     startModule(0);
   }
-}
 
-function bootFromBlob(){
-  const key = 'dsat_launch_blob';
-  const text = localStorage.getItem(key);
-  if(!text){
-    $('#loadError').textContent = 'No pending set. Please start from the landing page.';
-    $('#loadError').style.display = 'block';
-    return;
-  }
-  try{
-    SET = JSON.parse(text);
-    localStorage.removeItem(key);
-
-    $('#loadError').style.display='none';
-    flags.clear(); answers={}; $('#scoreBox').innerHTML='';
-    dirPanel.innerHTML = fmt(SET.metadata?.directions);
-    buildQIndex();
-
-    RESTORE_CACHE = tryRestore();
-    if(RESTORE_CACHE){
-      answers = RESTORE_CACHE.answers || {};
-      const restoreMod = Math.min(RESTORE_CACHE.modIdx ?? 0, (SET.modules?.length||1)-1);
-      startModule(restoreMod);
-      const savedSec = RESTORE_CACHE.timers?.[String(restoreMod)];
-      if(typeof savedSec === 'number' && !Number.isNaN(savedSec)){
-        timerSec = Math.max(0, savedSec|0);
-        $('#timer').textContent = fmtTime(timerSec);
-      }
-      qIdx = Math.min(RESTORE_CACHE.qIdx ?? 0, totalQ(modIdx)-1);
-      renderQuestion(); renderNavButton();
-    } else {
-      startModule(0);
-    }
-  }catch(e){
-    $('#loadError').textContent = 'Failed to parse set from landing page: ' + e.message;
-    $('#loadError').style.display='block';
-  }
+  // 로더 숨김 (자동 복원 시에도 깔끔하게)
+  document.getElementById('loaderRow')?.style && (document.getElementById('loaderRow').style.display='none');
 }
 
 /* ===== 모듈/타이머 ===== */
@@ -989,7 +997,9 @@ function buildAdHocSet(items, titleNote){
       parentId: (SET?.metadata?.id || SET?.metadata?.title || 'base'),
       title: `${SET.metadata?.title || 'DSAT Practice'} — Review ${titleNote}`,
       directions: 'Review selected items.',
-      durationMinutesPerModule: SET.metadata?.durationMinutesPerModule || { rw:[32,32], math:[35,35] }
+      durationMinutesPerModule: SET.metadata?.durationMinutesPerModule || { rw:[32,32], math:[35,35] },
+      curvePreset: SET?.metadata?.curvePreset || null, // 리뷰도 동일 프리셋 사용
+      curves: SET?.metadata?.curves || undefined
     },
     modules
   };
@@ -1047,13 +1057,6 @@ function showFinalReport(){
       <button class="btn" id="reviewFlagBtn">Review Flagged</button>
       <button class="btn" id="csvBtn">Download CSV</button>
     </div>
-
-const usedPreset = SET?.metadata?.curvePreset ?? '—';
-sat.innerHTML = `
-  <div class="result-title">
-    <div><b>SAT Converted Score</b> <span class="muted" style="font-weight:400">preset: ${usedPreset}</span></div>
-    <div style="font-variant-numeric:tabular-nums; font-weight:700; font-size:18px">${totalSAT}</div>
-  </div>
   </div>`;
   box.appendChild(tool);
 
@@ -1066,11 +1069,13 @@ sat.innerHTML = `
     const mathScaled = scaledFromCurve(curves.math, totals.math.correct, totals.math.total);
     const totalSAT   = (isFinite(rwScaled)?rwScaled:0) + (isFinite(mathScaled)?mathScaled:0);
 
+    const usedPreset = SET?.metadata?.curvePreset ?? '—';
+
     const sat = document.createElement('div');
     sat.className = 'qcard';
     sat.innerHTML = `
       <div class="result-title">
-        <div><b>SAT Converted Score</b></div>
+        <div><b>SAT Converted Score</b> <span class="muted" style="font-weight:400">preset: ${usedPreset}</span></div>
         <div style="font-variant-numeric:tabular-nums; font-weight:700; font-size:18px">${totalSAT}</div>
       </div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px">
@@ -1303,26 +1308,9 @@ async function loadSetFromFile(file){
     const text = await file.text();
     SET = JSON.parse(text);
     $('#loadError').style.display='none';
+    rememberLastSet({ type:'blob', value:text });
 
-    flags.clear(); answers={}; $('#scoreBox').innerHTML='';
-    dirPanel.innerHTML = fmt(SET.metadata?.directions);
-    buildQIndex();
-
-    RESTORE_CACHE = tryRestore();
-    if(RESTORE_CACHE){
-      answers = RESTORE_CACHE.answers || {};
-      const restoreMod = Math.min(RESTORE_CACHE.modIdx ?? 0, SET.modules.length-1);
-      startModule(restoreMod);
-      const savedSec = RESTORE_CACHE.timers?.[String(restoreMod)];
-      if(typeof savedSec === 'number' && !Number.isNaN(savedSec)){
-        timerSec = Math.max(0, savedSec|0);
-        $('#timer').textContent = fmtTime(timerSec);
-      }
-      qIdx = Math.min(RESTORE_CACHE.qIdx ?? 0, totalQ(modIdx)-1);
-      renderQuestion(); renderNavButton();
-    } else {
-      startModule(0);
-    }
+    afterSetLoaded();
   }catch(e){
     $('#loadError').textContent = `파일 로드 실패: ${e.message}`;
     $('#loadError').style.display='block';
@@ -1411,19 +1399,18 @@ document.addEventListener('click', (e)=>{
   if(!$('#navPopup').contains(e.target) && e.target!==$('#navOpen')) hideNavPopup();
 });
 
+/* 쿼리로 리뷰 자동 시작 */
 function maybeStartReviewFromQuery(){
   const qs = new URLSearchParams(location.search);
   const mode = qs.get('review');             // 'skill' | 'wrong' | 'flagged'
   const value = qs.get('value');             // mode==='skill'일 때 스킬 코드
   if(!mode) return;
-
-  // 세트가 로드된 이후에 실행되어야 함: loadSet/bootFromBlob 완료 시점으로 살짝 딜레이
   setTimeout(()=>{
     if(mode==='skill' && value){
       startReviewSession({ mode:'skill', skill:value });
     }else if(mode==='wrong'){
       startReviewSession({ mode:'wrong' });
-  }else if(mode==='flagged'){
+    }else if(mode==='flagged'){
       startReviewSession({ mode:'flagged' });
     }
   }, 50);
@@ -1437,24 +1424,40 @@ window.addEventListener('DOMContentLoaded', ()=>{
 
   if (url) {
     $('#path').value = url;
-    document.querySelector('.loader')?.style && (document.querySelector('.loader').style.display='none');
+    document.getElementById('loaderRow').style.display='none';
     loadSet(url);
   } else if (src === 'blob') {
-    document.querySelector('.loader')?.style && (document.querySelector('.loader').style.display='none');
+    document.getElementById('loaderRow').style.display='none';
     bootFromBlob();
+  } else {
+    // 대시보드에서 돌아왔을 때 자동 복원
+    const last = tryLoadLastSetMeta();
+    if (last) {
+      document.getElementById('loaderRow').style.display='none';
+      if (last.type === 'url' && last.value) {
+        loadSet(last.value);
+      } else if (last.type === 'blob' && last.value) {
+        // landing 없이 직접 파싱
+        try{
+          SET = JSON.parse(last.value);
+          afterSetLoaded();
+        }catch(_e){
+          // 실패 시 로더 노출
+          document.getElementById('loaderRow').style.display='';
+        }
+      } else {
+        // 포맷 불명 → 로더 노출
+        document.getElementById('loaderRow').style.display='';
+      }
+    }
   }
 
   // Prev/Next 초기 바인딩
   bindPrevNext();
 
- // ★ 쿼리 기반 리뷰 자동 시작
+  // 쿼리 기반 리뷰 자동 시작
   maybeStartReviewFromQuery();
-
 });
-
-
- 
-
 </script>
 </body>
 </html>
