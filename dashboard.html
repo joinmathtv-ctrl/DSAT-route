@@ -21,7 +21,7 @@
   .head{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px }
   .title{ font-weight:800 }
   .muted{ color:var(--muted) }
-  .btn, select, input[type="number"], input[type="text"], textarea{ border:1px solid var(--line); background:#fff; padding:8px 12px; border-radius:10px; cursor:pointer }
+  .btn, select, input[type="number"], input[type="text"], input[type="date"], textarea{ border:1px solid var(--line); background:#fff; padding:8px 12px; border-radius:10px; cursor:pointer }
   .btn.ghost{ background:#fff }
   .pill{ padding:6px 10px; border:1px solid var(--line); border-radius:999px; background:#fff }
   table{ width:100%; border-collapse:collapse; font-size:14px }
@@ -47,19 +47,6 @@
   .modal .x{ float:right; border:1px solid var(--line); background:#fff; padding:6px 10px; border-radius:8px; cursor:pointer }
   .r{ display:flex; gap:8px; flex-wrap:wrap; align-items:center }
   textarea.code{ width:100%; min-height:180px; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace }
-
-/* Compare grid - 3줄 구성 */
-#cmpOut.cmp-grid{
-  display:grid;
-  grid-template-columns:repeat(2, minmax(0,1fr));
-  gap:12px;
-}
-.cmp-span-all{ grid-column:1 / -1; }
-
-@media (max-width:600px){
-  #cmpOut.cmp-grid{ grid-template-columns:1fr; }
-}
-
 </style>
 </head>
 <body>
@@ -97,17 +84,33 @@
         <span id="countInfo" class="pill muted"></span>
       </div>
     </div>
+
     <div class="r">
       <button class="btn ghost" id="openCurveEditor">프리셋 편집/추가</button>
       <span class="muted" style="font-size:13px">
         * 보기 프리셋은 <b>표시만 재계산</b>합니다. 실제 기록 시 사용된 프리셋은 연습페이지의 <code>SET.metadata.curvePreset</code> 값입니다.
       </span>
     </div>
-    <!-- ▼ 리뷰 딥링크 버튼 (추가) -->
+
+    <!-- ▼ 리뷰 딥링크 버튼 -->
     <div class="r" style="margin-top:8px">
       <button class="btn" id="startWrongReviewBtn">오답만 리뷰 시작</button>
       <button class="btn" id="startFlaggedReviewBtn">플래그만 리뷰 시작</button>
       <span class="muted" style="font-size:12px">* index.html의 현재 세트에서 실행됩니다.</span>
+    </div>
+
+    <!-- ▼ 날짜 범위 + 집계 모드 (추가) -->
+    <div class="r" style="margin-top:8px">
+      <label class="muted">날짜:</label>
+      <input type="date" id="fromDate"/>
+      <span class="muted">~</span>
+      <input type="date" id="toDate"/>
+      <span class="muted" style="margin-left:10px">집계:</span>
+      <select id="aggMode" title="요약 집계 모드">
+        <option value="">집계 없음</option>
+        <option value="byPreset">프리셋별 집계</option>
+        <option value="bySet">세트별 집계</option>
+      </select>
     </div>
   </div>
 
@@ -165,8 +168,16 @@
         <button class="btn ghost" id="openDetailB">B 상세</button>
       </div>
     </div>
-    <div id="cmpOut" class="cmp-grid"></div>
+    <div id="cmpOut" class="grid" style="grid-template-columns:1fr 1fr; gap:12px"></div>
+  </div>
 
+  <!-- 집계 결과 (추가) -->
+  <div class="card" id="aggCard" style="margin-top:14px; display:none">
+    <div class="head">
+      <div class="title">집계 요약</div>
+      <div class="muted" id="aggCaption" style="font-size:13px"></div>
+    </div>
+    <div id="aggOut"></div>
   </div>
 
   <!-- 시도 목록 -->
@@ -285,6 +296,12 @@ const $cmpA   = document.getElementById('cmpA');
 const $cmpB   = document.getElementById('cmpB');
 const $cmpOut = document.getElementById('cmpOut');
 const $skillSel = document.getElementById('skillSelect');
+const $from  = document.getElementById('fromDate');
+const $to    = document.getElementById('toDate');
+const $agg   = document.getElementById('aggMode');
+const $aggCard = document.getElementById('aggCard');
+const $aggOut  = document.getElementById('aggOut');
+const $aggCaption = document.getElementById('aggCaption');
 let LINE=null, BAR=null, SKILL_LINE=null;
 
 /* ===== 옵션 구성 ===== */
@@ -326,20 +343,42 @@ function fmtDate(ts){
   return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`;
 }
 
+/* ===== 날짜/필터 유틸 ===== */
+function parseDateInput(v){
+  if(!v) return null;
+  const t = Date.parse(v + 'T00:00:00');
+  return Number.isFinite(t) ? t : null;
+}
+function endOfDay(ts){ return ts + 24*60*60*1000 - 1; }
+
 /* ===== 데이터 현재 뷰 ===== */
 function currentRows(){
   const all = loadAttempts().sort((a,b)=> b.ts-a.ts);
   if(!$base.options.length) fillBase(all);
   if(!$preset.options.length) fillPreset();
+
   const baseId = $base.value || (all[0]?.baseId ?? '');
   const kind = $kind.value;
+
+  // 날짜 필터
+  const fromTs = parseDateInput($from.value);
+  const toTsRaw = parseDateInput($to.value);
+  const toTs = toTsRaw!==null ? endOfDay(toTsRaw) : null;
+
   // 세트별 기본 프리셋 우선 → 없으면 선택값
   const def=loadPresetDefaults(); const basePreset = def[baseId];
   const presetName = basePreset || $preset.value || null;
 
-  const filtered = all.filter(a=> a.baseId===baseId && (!kind || a.kind===kind));
+  const filtered = all.filter(a=>{
+    if(a.baseId!==baseId) return false;
+    if(kind && a.kind!==kind) return false;
+    if(fromTs!==null && a.ts < fromTs) return false;
+    if(toTs!==null && a.ts > toTs) return false;
+    return true;
+  });
+
   $count.textContent = `${filtered.length} attempts`;
-  return { rows: filtered.map(a=> ensureScaled(a, presetName)), presetName, baseId };
+  return { rows: filtered.map(a=> ensureScaled(a, presetName)), presetName, baseId, fromTs, toTs };
 }
 
 /* ===== 표/차트 ===== */
@@ -453,13 +492,12 @@ function renderCompare(rows){
   const B=rows.find(a=> String(a.ts)===keyB);
   if(!A||!B){ $cmpOut.innerHTML='<div class="muted">비교하려면 두 시도를 선택하세요.</div>'; return; }
 
-  // 카드 템플릿
-  function card(title, aVal, bVal, fmt=(v)=>v, extraClass=''){
+  function card(title, aVal, bVal, fmt=(v)=>v){
     const delta = (typeof aVal==='number' && typeof bVal==='number') ? (bVal-aVal) : null;
     const sign = delta===null ? '' : (delta>0? '+' : '');
     const color = delta===null ? '' : (delta>=0 ? 'ok' : 'bad');
     return `
-      <div class="card ${extraClass}">
+      <div class="card">
         <div class="head"><div class="title">${title}</div></div>
         <div style="display:flex; justify-content:space-between; gap:8px">
           <div><div class="muted">A</div><div><b>${fmt(aVal)}</b></div></div>
@@ -469,22 +507,88 @@ function renderCompare(rows){
       </div>`;
   }
 
-  // 1줄: Total SAT (가로 전체 span)
-  const row1 = card('Total SAT', A.sat_total, B.sat_total, v=>v, 'cmp-span-all');
-
-  // 2줄: Scaled 2개
-  const row2 = [
-    card('RW (Scaled)',   A.sections.rw.scaled,   B.sections.rw.scaled),
-    card('Math (Scaled)', A.sections.math.scaled, B.sections.math.scaled)
-  ].join('');
-
-  // 3줄: Raw 2개
-  const row3 = [
-    card('RW Raw',   A.sections.rw.correct,   B.sections.rw.correct),
+  $cmpOut.innerHTML = [
+    card('Total SAT', A.sat_total, B.sat_total),
+    card('RW (Scaled)', A.sections.rw.scaled, B.sections.rw.scaled),
+    card('Math (Scaled)', A.sections.math.scaled, B.sections.math.scaled),
+    card('RW Raw', A.sections.rw.correct, B.sections.rw.correct),
     card('Math Raw', A.sections.math.correct, B.sections.math.correct)
   ].join('');
+}
 
-  $cmpOut.innerHTML = row1 + row2 + row3;
+/* ===== 집계 렌더러 ===== */
+function renderAggregations(rows){
+  const mode = $agg.value;
+  if(!mode){
+    $aggCard.style.display='none';
+    $aggOut.innerHTML='';
+    return;
+  }
+
+  const keyFn = (a)=> mode==='byPreset' ? (a.curvePreset || '—') : a.baseId;
+
+  const groups = new Map();
+  rows.forEach(a=>{
+    const k = keyFn(a);
+    if(!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(a);
+  });
+
+  const stats = [...groups.entries()].map(([k,arr])=>{
+    const n = arr.length;
+    const avg = (list, pick)=> Math.round(list.reduce((s,x)=> s + pick(x), 0) / n);
+    const rwScaledAvg   = avg(arr, x=> x.sections.rw.scaled);
+    const mathScaledAvg = avg(arr, x=> x.sections.math.scaled);
+    const satAvg        = avg(arr, x=> x.sat_total);
+    const rwRawAvg   = Math.round(arr.reduce((s,x)=> s + (x.sections.rw.correct / (x.sections.rw.total||1)), 0) / n * 100);
+    const mathRawAvg = Math.round(arr.reduce((s,x)=> s + (x.sections.math.correct / (x.sections.math.total||1)), 0) / n * 100);
+    const latestTs = Math.max(...arr.map(x=> x.ts));
+    return { key:k, n, satAvg, rwScaledAvg, mathScaledAvg, rwRawAvg, mathRawAvg, latestTs };
+  });
+
+  stats.sort((a,b)=>{
+    if(b.n!==a.n) return b.n - a.n;
+    if(b.satAvg!==a.satAvg) return b.satAvg - a.satAvg;
+    return String(a.key).localeCompare(String(b.key));
+  });
+
+  const thMode = (mode==='byPreset') ? '프리셋' : '세트';
+  const rowsHTML = stats.map(s=>`
+    <tr>
+      <td>${s.key}</td>
+      <td class="right">${s.n}</td>
+      <td class="right"><b>${s.satAvg}</b></td>
+      <td class="right">${s.rwScaledAvg}</td>
+      <td class="right">${s.mathScaledAvg}</td>
+      <td class="right">${s.rwRawAvg}%</td>
+      <td class="right">${s.mathRawAvg}%</td>
+      <td>${new Date(s.latestTs).toLocaleDateString()}</td>
+    </tr>
+  `).join('');
+
+  $aggOut.innerHTML = `
+    <div class="muted" style="font-size:13px; margin-bottom:6px">
+      평균은 위의 모든 필터(세트/보기/날짜/프리셋 재계산) 적용 후 남은 시도만 포함됩니다.
+    </div>
+    <table style="width:100%; border-collapse:collapse; font-size:14px">
+      <thead>
+        <tr>
+          <th style="text-align:left">${thMode}</th>
+          <th class="right">시도수</th>
+          <th class="right">총점 평균</th>
+          <th class="right">RW Scaled 평균</th>
+          <th class="right">Math Scaled 평균</th>
+          <th class="right">RW 정답률</th>
+          <th class="right">Math 정답률</th>
+          <th style="text-align:left">최근 일자</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHTML}</tbody>
+    </table>
+  `;
+
+  $aggCaption.textContent = (mode==='byPreset') ? '프리셋별 집계' : '세트별 집계';
+  $aggCard.style.display = 'block';
 }
 
 /* ===== 시도 상세 모달 ===== */
@@ -613,10 +717,7 @@ document.getElementById('importBtn').onclick=()=>{
 document.getElementById('printBtn').onclick=()=> window.print();
 
 /* ===== 딥링크: 연습페이지에서 리뷰 자동 시작 ===== */
-function goPractice(url){
-  // 필요시 ?set=... 추가도 가능: index.html?set=...&review=...
-  location.href = url;
-}
+function goPractice(url){ location.href = url; }
 document.getElementById('startSkillReviewBtn').addEventListener('click', ()=>{
   const key = document.getElementById('skillSelect').value;
   if(!key){ alert('스킬을 먼저 선택하세요.'); return; }
@@ -631,7 +732,7 @@ document.getElementById('startFlaggedReviewBtn').addEventListener('click', ()=>{
 
 /* ===== 동작 ===== */
 function renderAll(){
-  const { rows, presetName } = currentRows();
+  const { rows } = currentRows();
   renderTable(rows);
   renderCharts(rows);
   renderHeatmap(rows);
@@ -639,6 +740,7 @@ function renderAll(){
   renderCompare(rows);
   fillSkillSelect(rows);
   renderSkillTrend(rows);
+  renderAggregations(rows); // ★ 집계 추가
 }
 $base.addEventListener('change', renderAll);
 $kind.addEventListener('change', renderAll);
@@ -650,16 +752,21 @@ document.getElementById('openDetailA').addEventListener('click', ()=>{
 document.getElementById('openDetailB').addEventListener('click', ()=>{
   const { rows } = currentRows(); const B=rows.find(r=> String(r.ts)===$cmpB.value); if(B) openAttemptDetail(B);
 });
-$skillSel.addEventListener('change', renderSkillTrend);
+$skillSel.addEventListener('change', ()=>{ const { rows } = currentRows(); renderSkillTrend(rows); });
 
-/* 세트 기본 프리셋 저장 */
-document.getElementById('saveDefaultPresetBtn').onclick=()=>{
-  const { baseId } = currentRows();
-  const def=loadPresetDefaults(); def[baseId] = $preset.value;
-  savePresetDefaults(def);
-  alert(`세트 ${baseId}의 기본 프리셋을 "${$preset.value}"로 저장했습니다.`);
-  renderAll();
-};
+// 날짜/집계 이벤트
+const onDateOrAggChange = ()=> renderAll();
+document.getElementById('fromDate').addEventListener('change', onDateOrAggChange);
+document.getElementById('toDate').addEventListener('change', onDateOrAggChange);
+document.getElementById('aggMode').addEventListener('change', onDateOrAggChange);
+
+// 전체 로그 삭제(안전 확인)
+document.getElementById('clearBtn').addEventListener('click', ()=>{
+  if(confirm('로컬에 저장된 모든 시도 로그를 삭제할까요?')){
+    saveAttempts([]);
+    renderAll();
+  }
+});
 
 /* 추천: 변동 큰 스킬 자동 선택 */
 document.getElementById('skillAllBtn').onclick=()=>{
