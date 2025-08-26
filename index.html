@@ -286,15 +286,17 @@ const injectImages = html =>
 /* ===== SAT Score Curves & Helpers =====
    우선순위: metadata.curves > metadata.curvePreset(프리셋 이름) > PRESETS.default > 안전 기본값 */
 function getCurves(){
-  const PRESETS = (window.CURVE_PRESETS || {});
-  const meta = SET?.metadata || {};
-
-  if (meta.curves) {
-    return {
-      rw:   Array.isArray(meta.curves.rw)   ? meta.curves.rw   : (PRESETS.default?.rw || []),
-      math: Array.isArray(meta.curves.math) ? meta.curves.math : (PRESETS.default?.math || [])
-    };
+  const presetName = SET?.metadata?.curvePreset;  // 예: "default", "hard"
+  const PRESETS = window.CURVE_PRESETS || {};
+  if (presetName && PRESETS[presetName]) {
+    return PRESETS[presetName];  // { rw: [...], math: [...] }
   }
+  const c = (SET?.metadata?.curves) || {};
+  return {
+    rw:   Array.isArray(c.rw)   ? c.rw   : (PRESETS.default?.rw   || DEFAULT_CURVES.rw),
+    math: Array.isArray(c.math) ? c.math : (PRESETS.default?.math || DEFAULT_CURVES.math)
+  };
+}
   if (meta.curvePreset && PRESETS[meta.curvePreset]) return PRESETS[meta.curvePreset];
   if (PRESETS.default) return PRESETS.default;
 
@@ -377,34 +379,31 @@ function summarizeSkills(){
   return bySkill;
 }
 // ===== Attempt Log Utils  =====
+// recordAttempt() 함수 전체를 아래로 교체
 function recordAttempt(){
   const isReview = !!SET.__isReviewSession;
   const baseId = isReview
     ? (SET.metadata?.parentId || 'base')
     : (SET.metadata?.id || SET.metadata?.title || 'base');
 
-  // 섹션 집계 + 환산
-  const totals = accumulateSectionTotals();
-  const curves = getCurves();
-  const rwScaled   = scaledFromCurve(curves.rw,   totals.rw.correct,   totals.rw.total);
-  const mathScaled = scaledFromCurve(curves.math, totals.math.correct, totals.math.total);
+  // 섹션별 원점수 집계
+  const totals = accumulateSectionTotals(); // { rw:{correct,total}, math:{correct,total} }
+
+  // 실제 사용한 프리셋 이름(없으면 null)
+  const usedPreset = SET?.metadata?.curvePreset ?? null;
 
   const attempt = {
     ts: Date.now(),
     baseId,
     kind: isReview ? 'review' : 'base',
     title: SET.metadata?.title || '',
-    // 전체 정확도(비율)
-    overall: overallTotals(),
-    // 스킬 정확도 스냅샷
-    skills: summarizeSkills(),
-    // 섹션별 원점수/환산점수 저장
-    sections: {
-      rw:   { correct: totals.rw.correct,   total: totals.rw.total,   scaled: rwScaled },
-      math: { correct: totals.math.correct, total: totals.math.total, scaled: mathScaled }
+    overall: overallTotals(),          // 기존 총 정답/정확도
+    skills: summarizeSkills(),         // 스킬 정확도 스냅샷
+    sections: {                        // ★ 대시보드가 쓰는 원점수
+      rw:   { correct: totals.rw.correct,   total: totals.rw.total   },
+      math: { correct: totals.math.correct, total: totals.math.total }
     },
-    sat_total: (isFinite(rwScaled)?rwScaled:0) + (isFinite(mathScaled)?mathScaled:0),
-    curvePreset: SET?.metadata?.curvePreset || null
+    curvePreset: usedPreset            // ★ 어떤 프리셋으로 기록했는지(보기용 정보)
   };
 
   const list = loadAttempts();
@@ -412,6 +411,7 @@ function recordAttempt(){
   saveAttempts(list);
   return attempt;
 }
+
 
 function getLatestPair(baseId){
   const list = loadAttempts().filter(a=> a.baseId===baseId);
@@ -1047,6 +1047,13 @@ function showFinalReport(){
       <button class="btn" id="reviewFlagBtn">Review Flagged</button>
       <button class="btn" id="csvBtn">Download CSV</button>
     </div>
+
+const usedPreset = SET?.metadata?.curvePreset ?? '—';
+sat.innerHTML = `
+  <div class="result-title">
+    <div><b>SAT Converted Score</b> <span class="muted" style="font-weight:400">preset: ${usedPreset}</span></div>
+    <div style="font-variant-numeric:tabular-nums; font-weight:700; font-size:18px">${totalSAT}</div>
+  </div>
   </div>`;
   box.appendChild(tool);
 
