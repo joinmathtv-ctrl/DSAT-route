@@ -1404,6 +1404,24 @@ document.addEventListener('click', (e)=>{
   if(!$('#navPopup').contains(e.target) && e.target!==$('#navOpen')) hideNavPopup();
 });
 
+function maybeStartReviewFromQuery(){
+  const qs = new URLSearchParams(location.search);
+  const mode = qs.get('review');             // 'skill' | 'wrong' | 'flagged'
+  const value = qs.get('value');             // mode==='skill'일 때 스킬 코드
+  if(!mode) return;
+
+  // 세트가 로드된 이후에 실행되어야 함: loadSet/bootFromBlob 완료 시점으로 살짝 딜레이
+  setTimeout(()=>{
+    if(mode==='skill' && value){
+      startReviewSession({ mode:'skill', skill:value });
+    }else if(mode==='wrong'){
+      startReviewSession({ mode:'wrong' });
+  }else if(mode==='flagged'){
+      startReviewSession({ mode:'flagged' });
+    }
+  }, 50);
+}
+
 /* ===== 부트스트랩 ===== */
 window.addEventListener('DOMContentLoaded', ()=>{
   const qs = new URLSearchParams(location.search);
@@ -1421,7 +1439,15 @@ window.addEventListener('DOMContentLoaded', ()=>{
 
   // Prev/Next 초기 바인딩
   bindPrevNext();
+
+ // ★ 쿼리 기반 리뷰 자동 시작
+  maybeStartReviewFromQuery();
+
 });
+
+
+ 
+
 </script>
 </body>
 </html>
