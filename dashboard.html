@@ -90,6 +90,12 @@
         * 보기 프리셋은 <b>표시만 재계산</b>합니다. 실제 기록 시 사용된 프리셋은 연습페이지의 <code>SET.metadata.curvePreset</code> 값입니다.
       </span>
     </div>
+    <!-- ▼ 리뷰 딥링크 버튼 (추가) -->
+    <div class="r" style="margin-top:8px">
+      <button class="btn" id="startWrongReviewBtn">오답만 리뷰 시작</button>
+      <button class="btn" id="startFlaggedReviewBtn">플래그만 리뷰 시작</button>
+      <span class="muted" style="font-size:12px">* index.html의 현재 세트에서 실행됩니다.</span>
+    </div>
   </div>
 
   <!-- 상단 메트릭 -->
@@ -110,10 +116,10 @@
       <div class="head">
         <div class="title">스킬 추이 (정확도 %)</div>
         <div class="r">
- 	 <select id="skillSelect"></select>
-  	 <button class="btn" id="skillAllBtn">Top-변동 스킬 추천</button>
-  	 <button class="btn" id="startSkillReviewBtn">이 스킬로 리뷰 시작</button>
-      </div>
+          <select id="skillSelect"></select>
+          <button class="btn" id="skillAllBtn">Top-변동 스킬 추천</button>
+          <button class="btn" id="startSkillReviewBtn">이 스킬로 리뷰 시작</button>
+        </div>
       </div>
       <canvas id="skillLine" height="160"></canvas>
     </div>
@@ -412,7 +418,6 @@ function renderSkillTrend(rows){
     const s=a.skills?.[key]; return (s && s.total)? Math.round((s.correct/s.total)*100) : null;
   });
 
-  // null을 끊김으로 표현
   const d = data.map(v=> (v===null? null : v));
   const c=document.getElementById('skillLine'); if(SKILL_LINE) SKILL_LINE.destroy();
   SKILL_LINE = new Chart(c,{ type:'line', data:{ labels, datasets:[{label:key||'Skill', data:d, spanGaps:true, tension:.2}]},
@@ -510,7 +515,6 @@ const mathPoints=document.getElementById('mathPoints');
 curveClose.onclick=()=>{ curveBack.style.display='none'; };
 
 function openCurveEditor(){
-  // 목록 채우기
   const PRESETS = window.CURVE_PRESETS||{};
   editPreset.innerHTML='';
   Object.keys(PRESETS).forEach(name=>{
@@ -540,7 +544,7 @@ document.getElementById('dupBtn').onclick=()=>{
     };
     alert(`프리셋 "${name}" 추가됨`);
     fillPreset(); $preset.value=name;
-    openCurveEditor(); // 목록 갱신
+    openCurveEditor();
   }catch(e){ alert('JSON 파싱 실패: '+e.message); }
 };
 document.getElementById('delBtn').onclick=()=>{
@@ -584,6 +588,23 @@ document.getElementById('importBtn').onclick=()=>{
 };
 document.getElementById('printBtn').onclick=()=> window.print();
 
+/* ===== 딥링크: 연습페이지에서 리뷰 자동 시작 ===== */
+function goPractice(url){
+  // 필요시 ?set=... 추가도 가능: index.html?set=...&review=...
+  location.href = url;
+}
+document.getElementById('startSkillReviewBtn').addEventListener('click', ()=>{
+  const key = document.getElementById('skillSelect').value;
+  if(!key){ alert('스킬을 먼저 선택하세요.'); return; }
+  goPractice(`./index.html?review=skill&value=${encodeURIComponent(key)}`);
+});
+document.getElementById('startWrongReviewBtn').addEventListener('click', ()=>{
+  goPractice('./index.html?review=wrong');
+});
+document.getElementById('startFlaggedReviewBtn').addEventListener('click', ()=>{
+  goPractice('./index.html?review=flagged');
+});
+
 /* ===== 동작 ===== */
 function renderAll(){
   const { rows, presetName } = currentRows();
@@ -619,7 +640,6 @@ document.getElementById('saveDefaultPresetBtn').onclick=()=>{
 /* 추천: 변동 큰 스킬 자동 선택 */
 document.getElementById('skillAllBtn').onclick=()=>{
   const { rows } = currentRows();
-  // 최근 5회 내에서 분산 큰 스킬
   const last = rows.slice(0,5).reverse(); // 과거→현재
   const accs = {};
   last.forEach(a=>{
