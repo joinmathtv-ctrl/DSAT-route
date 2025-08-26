@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="./assets/curves.presets.js"></script>
+<script src="./curves.presets.js"></script>
 
 <style>
   :root{ --bg:#fafbfe; --card:#fff; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --ok:#16a34a; --bad:#ef4444 }
@@ -47,6 +47,19 @@
   .modal .x{ float:right; border:1px solid var(--line); background:#fff; padding:6px 10px; border-radius:8px; cursor:pointer }
   .r{ display:flex; gap:8px; flex-wrap:wrap; align-items:center }
   textarea.code{ width:100%; min-height:180px; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace }
+
+/* Compare grid - 3줄 구성 */
+#cmpOut.cmp-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:12px;
+}
+.cmp-span-all{ grid-column:1 / -1; }
+
+@media (max-width:600px){
+  #cmpOut.cmp-grid{ grid-template-columns:1fr; }
+}
+
 </style>
 </head>
 <body>
@@ -152,7 +165,8 @@
         <button class="btn ghost" id="openDetailB">B 상세</button>
       </div>
     </div>
-    <div id="cmpOut" class="grid" style="grid-template-columns:1fr 1fr; gap:12px"></div>
+    <div id="cmpOut" class="cmp-grid"></div>
+
   </div>
 
   <!-- 시도 목록 -->
@@ -439,12 +453,13 @@ function renderCompare(rows){
   const B=rows.find(a=> String(a.ts)===keyB);
   if(!A||!B){ $cmpOut.innerHTML='<div class="muted">비교하려면 두 시도를 선택하세요.</div>'; return; }
 
-  function card(title, aVal, bVal, fmt=(v)=>v){
+  // 카드 템플릿
+  function card(title, aVal, bVal, fmt=(v)=>v, extraClass=''){
     const delta = (typeof aVal==='number' && typeof bVal==='number') ? (bVal-aVal) : null;
     const sign = delta===null ? '' : (delta>0? '+' : '');
     const color = delta===null ? '' : (delta>=0 ? 'ok' : 'bad');
     return `
-      <div class="card">
+      <div class="card ${extraClass}">
         <div class="head"><div class="title">${title}</div></div>
         <div style="display:flex; justify-content:space-between; gap:8px">
           <div><div class="muted">A</div><div><b>${fmt(aVal)}</b></div></div>
@@ -454,13 +469,22 @@ function renderCompare(rows){
       </div>`;
   }
 
-  $cmpOut.innerHTML = [
-    card('Total SAT', A.sat_total, B.sat_total),
-    card('RW (Scaled)', A.sections.rw.scaled, B.sections.rw.scaled),
-    card('Math (Scaled)', A.sections.math.scaled, B.sections.math.scaled),
-    card('RW Raw', A.sections.rw.correct, B.sections.rw.correct),
+  // 1줄: Total SAT (가로 전체 span)
+  const row1 = card('Total SAT', A.sat_total, B.sat_total, v=>v, 'cmp-span-all');
+
+  // 2줄: Scaled 2개
+  const row2 = [
+    card('RW (Scaled)',   A.sections.rw.scaled,   B.sections.rw.scaled),
+    card('Math (Scaled)', A.sections.math.scaled, B.sections.math.scaled)
+  ].join('');
+
+  // 3줄: Raw 2개
+  const row3 = [
+    card('RW Raw',   A.sections.rw.correct,   B.sections.rw.correct),
     card('Math Raw', A.sections.math.correct, B.sections.math.correct)
   ].join('');
+
+  $cmpOut.innerHTML = row1 + row2 + row3;
 }
 
 /* ===== 시도 상세 모달 ===== */
@@ -670,4 +694,3 @@ renderAll();
 </script>
 </body>
 </html>
-
