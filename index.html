@@ -155,17 +155,17 @@
     `;
   }
 
-  function openDirectionsPopover(anchorEl, htmlContent){
+   function openDirectionsPopover(anchorEl, htmlContent){
     closeDirectionsPopover();
     const bodyHTML = htmlContent || (window.CURRENT_SET && window.CURRENT_SET.directions) || getDefaultDirectionsHTML();
     const html = `
-      <div class="popover" id="directionsPopover" role="dialog" aria-modal="false">
+      <div class="popover" id="directionsPopover" role="dialog" aria-modal="false" aria-labelledby="dirTitle" tabindex="-1">
         <div class="arrow"></div>
         <div class="head">
-          <div class="title">Directions</div>
-          <button class="x" type="button" id="dirCloseX">닫기</button>
+          <div class="title" id="dirTitle">Directions</div>
+          <button class="x" type="button" id="dirCloseX" aria-label="Close directions">닫기</button>
         </div>
-        <div class="body">${bodyHTML}</div>
+        <div class="body" id="dirBody" tabindex="0">${bodyHTML}</div>
         <div class="foot">
           <button class="btn primary" id="dirOkBtn" type="button">확인</button>
         </div>
@@ -173,15 +173,51 @@
     `;
     document.body.insertAdjacentHTML('beforeend', html);
     __dirPopover = document.getElementById('directionsPopover');
+
+    // 위치
     positionPopoverBelow(anchorEl, __dirPopover, 8);
 
-    document.getElementById('dirCloseX').onclick = closeDirectionsPopover;
-    document.getElementById('dirOkBtn').onclick = closeDirectionsPopover;
+    // 스크롤 그림자 토글
+    const bodyEl = __dirPopover.querySelector('.body');
+    const updateShadows = ()=>{
+      if (!bodyEl) return;
+      const top = bodyEl.scrollTop;
+      const max = bodyEl.scrollHeight - bodyEl.clientHeight;
+      __dirPopover.classList.toggle('show-top-shadow', top > 0);
+      __dirPopover.classList.toggle('show-bottom-shadow', top < max - 1);
+    };
+    bodyEl.addEventListener('scroll', updateShadows, { passive:true });
+    // 초기에 한 번 계산
+    requestAnimationFrame(updateShadows);
 
+    // 접근성: 포커스 트랩 & 초기 포커스
+    const okBtn = document.getElementById('dirOkBtn');
+    const closeBtn = document.getElementById('dirCloseX');
+    const focusables = ()=> Array.from(__dirPopover.querySelectorAll(
+      'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])'
+    )).filter(el=> !el.hasAttribute('disabled') && el.offsetParent !== null);
+    const trap = (e)=>{
+      if (e.key !== 'Tab') return;
+      const els = focusables();
+      if (!els.length) return;
+      const first = els[0], last = els[els.length - 1];
+      if (e.shiftKey && document.activeElement === first){ last.focus(); e.preventDefault(); }
+      else if (!e.shiftKey && document.activeElement === last){ first.focus(); e.preventDefault(); }
+    };
+    __dirPopover.addEventListener('keydown', trap);
+
+    // 버튼 동작
+    closeBtn.onclick = closeDirectionsPopover;
+    okBtn.onclick = closeDirectionsPopover;
+
+    // 바깥/ESC/리사이즈/스크롤 핸들러
     document.addEventListener('mousedown', onOutside);
     window.addEventListener('resize', onResize);
     window.addEventListener('scroll', onScroll, true);
     document.addEventListener('keydown', onEsc);
+
+    // 초기 포커스: 본문 -> OK 버튼 순
+    (okBtn || __dirPopover).focus();
   }
 
   // 외부/ESC 핸들러 (클로저에 필요하므로 함수 선언부는 아래)
