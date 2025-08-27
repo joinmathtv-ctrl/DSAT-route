@@ -242,7 +242,7 @@ function fillCompare(rows){
   });
   if(opts.length>=2){ $cmpA.selectedIndex=0; $cmpB.selectedIndex=1; }
 }
-function renderCompare(rows){function renderCompare(rows){
+function renderCompare(rows){
   $cmpOut.innerHTML = '';
 
   const keyA = $cmpA.value, keyB = $cmpB.value;
