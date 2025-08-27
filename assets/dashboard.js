@@ -635,25 +635,68 @@ document.getElementById('saveCurveBtn').onclick=()=>{
 };
 
 /* ===== Export/Import/Print ===== */
+/* ▼▼▼ 3-1 패치: 버전 래핑 Export + 구/신 포맷 Import 지원 ▼▼▼ */
 document.getElementById('exportBtn').onclick = ()=>{
   const all = loadAttempts().sort((a,b)=> b.ts-a.ts);
-  const blob = new Blob([JSON.stringify(all,null,2)],{type:'application/json;charset=utf-8;'});
-  const url=URL.createObjectURL(blob); const a=document.createElement('a');
-  a.href=url; a.download='dsat_attempts.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  const payload = {
+    format: 'dsat_attempts',
+    version: '1.0.0',
+    app: 'dsat-dashboard',
+    createdAt: new Date().toISOString(),
+    attempts: all
+  };
+  const blob = new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`dsat_attempts_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 };
+
 document.getElementById('importBtn').onclick=()=>{
   const inp=document.createElement('input'); inp.type='file'; inp.accept='application/json';
   inp.onchange=async (e)=>{
     const f=e.target.files?.[0]; if(!f) return;
     try{
-      const text=await f.text(); const arr=JSON.parse(text);
-      if(!Array.isArray(arr)) throw new Error('배열 JSON이 아님');
-      saveAttempts(arr); renderAll();
+      const text=await f.text(); 
+      const parsed=JSON.parse(text);
+
+      let attempts = null;
+      // 신포맷: { format, version, attempts }
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        if (parsed.format !== 'dsat_attempts') {
+          throw new Error('알 수 없는 파일 형식입니다 (format 필드 불일치).');
+        }
+        if (!Array.isArray(parsed.attempts)) {
+          throw new Error('파일에 attempts 배열이 없습니다.');
+        }
+        const ver = String(parsed.version||'1.0.0');
+        if (!/^1\./.test(ver)) {
+          console.warn('미검증 버전 감지:', ver);
+        }
+        attempts = parsed.attempts;
+      }
+      // 구포맷: 배열 단독
+      else if (Array.isArray(parsed)) {
+        attempts = parsed;
+      }
+      else{
+        throw new Error('지원하지 않는 JSON 구조입니다.');
+      }
+
+      // 가벼운 스키마 체크
+      const ok = attempts.every(a => typeof a.ts === 'number' && a.baseId && a.kind && a.sections);
+      if (!ok) throw new Error('시도 레코드 스키마가 올바르지 않습니다.');
+
+      saveAttempts(attempts);
+      renderAll();
       alert('가져오기 완료');
-    }catch(err){ alert('가져오기 실패: '+err.message); }
+    }catch(err){ alert('가져오기 실패: '+(err?.message||err)); }
   };
   inp.click();
 };
+/* ▲▲▲ 3-1 패치 끝 ▲▲▲ */
+
 document.getElementById('printBtn').onclick=()=> window.print();
 
 /* ===== 딥링크: 연습페이지에서 리뷰 자동 시작 ===== */
