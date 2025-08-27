@@ -19,10 +19,12 @@
 <!-- ===== TOP BAR ===== -->
 <div class="topbar">
   <div class="topbar-row">
-    <div class="dir-zone">
+    <div class="dir-zone" style="position:relative">
       <div class="crumb" id="crumb">Section — Module</div>
-      <button class="dir-btn" id="dirToggle">Directions ▾</button>
-      <div class="dir-panel" id="dirPanel"></div>
+      <!-- ▶ Directions 버튼 (팝오버 트리거) -->
+      <button class="hide-btn" id="dirToggle" type="button">Directions ▾</button>
+      <!-- ▶ 레거시: 패널로 주입되면 자동 가로채 팝오버로 전환 -->
+      <div class="dir-panel" id="dirPanel" style="display:none"></div>
     </div>
     <div class="timer-wrap">
       <span class="timer" id="timer">35:00</span>
@@ -108,5 +110,123 @@
 
 <!-- 분리 스크립트 -->
 <script src="./assets/app.js"></script>
+
+<!-- ===== Directions Popover (2-A) ===== -->
+<script>
+(function(){
+  let __dirPopover = null;
+
+  function closeDirectionsPopover(){
+    if (__dirPopover) {
+      __dirPopover.remove();
+      __dirPopover = null;
+      document.removeEventListener('mousedown', onOutside);
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('scroll', onScroll, true);
+      document.removeEventListener('keydown', onEsc);
+    }
+  }
+
+  function positionPopoverBelow(anchorEl, popEl, gap = 8){
+    if (!anchorEl || !popEl) return;
+    const rect = anchorEl.getBoundingClientRect();
+    const top = rect.bottom + gap + window.scrollY;
+    let left = rect.left + window.scrollX;
+    const maxLeft = window.scrollX + document.documentElement.clientWidth - popEl.offsetWidth - 12;
+    if (left > maxLeft) left = Math.max(12 + window.scrollX, maxLeft);
+    popEl.style.top = top + 'px';
+    popEl.style.left = left + 'px';
+
+    const arrow = popEl.querySelector('.arrow');
+    if (arrow) {
+      const arrowLeft = Math.min(Math.max(24, rect.width/2), popEl.offsetWidth - 24);
+      arrow.style.left = arrowLeft + 'px';
+    }
+  }
+
+  function getDefaultDirectionsHTML(){
+    return `
+      <p>이 섹션은 시간 제한이 있습니다. 문제를 차례대로 풀되, 모르는 문제는 표시(Flag)하고 넘어가세요.</p>
+      <ul>
+        <li>답안을 선택하면 자동 저장됩니다.</li>
+        <li>네비게이터(· · ·)에서 문제 이동이 가능합니다.</li>
+        <li>시간 종료 전이라도 언제든 제출할 수 있습니다.</li>
+      </ul>
+    `;
+  }
+
+  function openDirectionsPopover(anchorEl, htmlContent){
+    closeDirectionsPopover();
+    const bodyHTML = htmlContent || (window.CURRENT_SET && window.CURRENT_SET.directions) || getDefaultDirectionsHTML();
+    const html = `
+      <div class="popover" id="directionsPopover" role="dialog" aria-modal="false">
+        <div class="arrow"></div>
+        <div class="head">
+          <div class="title">Directions</div>
+          <button class="x" type="button" id="dirCloseX">닫기</button>
+        </div>
+        <div class="body">${bodyHTML}</div>
+        <div class="foot">
+          <button class="btn primary" id="dirOkBtn" type="button">확인</button>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+    __dirPopover = document.getElementById('directionsPopover');
+    positionPopoverBelow(anchorEl, __dirPopover, 8);
+
+    document.getElementById('dirCloseX').onclick = closeDirectionsPopover;
+    document.getElementById('dirOkBtn').onclick = closeDirectionsPopover;
+
+    document.addEventListener('mousedown', onOutside);
+    window.addEventListener('resize', onResize);
+    window.addEventListener('scroll', onScroll, true);
+    document.addEventListener('keydown', onEsc);
+  }
+
+  // 외부/ESC 핸들러 (클로저에 필요하므로 함수 선언부는 아래)
+  function onOutside(e){
+    const btn = document.getElementById('dirToggle');
+    if (__dirPopover && !__dirPopover.contains(e.target) && e.target !== btn) {
+      closeDirectionsPopover();
+    }
+  }
+  function onResize(){ 
+    const btn = document.getElementById('dirToggle');
+    if (__dirPopover && btn) positionPopoverBelow(btn, __dirPopover, 8);
+  }
+  function onScroll(){ onResize(); }
+  function onEsc(e){ if (e.key === 'Escape') closeDirectionsPopover(); }
+
+  // 버튼 토글
+  const btn = document.getElementById('dirToggle');
+  if (btn) {
+    btn.addEventListener('click', ()=>{
+      if (__dirPopover) closeDirectionsPopover();
+      else openDirectionsPopover(btn, document.getElementById('dirPanel')?.innerHTML || '');
+    });
+  }
+
+  // 레거시 호환: 기존 코드가 #dirPanel에 내용을 주입/노출하면 자동으로 팝오버로 전환
+  const panel = document.getElementById('dirPanel');
+  if (panel) {
+    const obs = new MutationObserver(()=>{
+      const hasContent = panel.innerHTML && panel.innerHTML.trim().length > 0;
+      const isShown = panel.style.display !== 'none' && panel.offsetParent !== null;
+      if (hasContent || isShown) {
+        panel.style.display = 'none'; // 패널 표시는 막고
+        if (btn) openDirectionsPopover(btn, panel.innerHTML); // 팝오버로 대체
+      }
+    });
+    obs.observe(panel, { attributes:true, childList:true, subtree:true, attributeFilter:['style','class'] });
+  }
+
+  // 전역에서 시작 시점에 호출할 수 있도록 노출
+  window.__openDirectionsFromStart = function(){
+    const content = panel?.innerHTML || '';
+    if (btn) openDirectionsPopover(btn, content);
+  };
+})();
+</script>
 </body>
 </html>
