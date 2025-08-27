@@ -254,3 +254,36 @@ th{ color:#111827 }
 
 /* 리본 위에 떠 있을 때 자연스럽게 보이도록 */
 .ribbon { position: fixed; } /* 이미 있음, 재확인 차원 */
+
+/* ===== Popover scroll shadows (2-B) ===== */
+.popover {
+  overflow: visible; /* ::before/::after 보이도록 */
+}
+.popover::before,
+.popover::after{
+  content:"";
+  position:absolute;
+  left:0; right:0;
+  height:14px;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .15s ease;
+}
+.popover::before{
+  top:40px; /* 헤더 아래쪽 시작 위치(헤더 높이 대략 40px) */
+  background: linear-gradient(to bottom, rgba(0,0,0,.12), rgba(0,0,0,0));
+}
+.popover::after{
+  bottom:56px; /* 푸터 위쪽(버튼 영역 높이 가늠) */
+  background: linear-gradient(to top, rgba(0,0,0,.12), rgba(0,0,0,0));
+}
+/* 스크롤 위치에 따라 토글되는 클래스 */
+.popover.show-top-shadow::before{ opacity:.6; }
+.popover.show-bottom-shadow::after{ opacity:.6; }
+
+/* 모바일에서 헤더/푸터가 붙어 보이면 약간 여백 */
+@media (max-width:560px){
+  .popover::before{ top:44px; }
+  .popover::after{ bottom:60px; }
+}
+
