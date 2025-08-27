@@ -8,7 +8,95 @@ const PRESET_DEFAULT_KEY = 'dsat_preset_defaults';
 function loadPresetDefaults(){ try{ return JSON.parse(localStorage.getItem(PRESET_DEFAULT_KEY)||'{}'); }catch(_e){ return {}; } }
 function savePresetDefaults(obj){ try{ localStorage.setItem(PRESET_DEFAULT_KEY, JSON.stringify(obj)); }catch(_e){} }
 
-/* 곡선 계산 */
+/* ===== Filter Persistence (1-B) ===== */
+const FILTER_KEY = 'dsat_dashboard_filters_v1';
+let FILTERS_READY = false; // 초기 세팅 중 불필요 저장 방지
+
+function loadFilters() {
+  try { return JSON.parse(localStorage.getItem(FILTER_KEY) || '{}'); } catch { return {}; }
+}
+function saveFilters(filters) {
+  if (!FILTERS_READY) return;
+  try { localStorage.setItem(FILTER_KEY, JSON.stringify(filters)); } catch {}
+}
+function snapshotFiltersFromUI() {
+  const from = document.getElementById('fromDate').value || '';
+  const to   = document.getElementById('toDate').value || '';
+  return {
+    baseId: document.getElementById('baseSelect').value || '',
+    kind:   document.getElementById('kindSelect').value || '',
+    preset: document.getElementById('presetSelect').value || '',
+    from, to
+  };
+}
+function applySavedFiltersToUI() {
+  const f = loadFilters();
+  const byId = (id)=>document.getElementById(id);
+
+  if (f.baseId && byId('baseSelect').querySelector(`option[value="${CSS.escape(f.baseId)}"]`)) {
+    byId('baseSelect').value = f.baseId;
+  }
+  if (f.kind && byId('kindSelect').querySelector(`option[value="${CSS.escape(f.kind)}"]`)) {
+    byId('kindSelect').value = f.kind;
+  }
+  if (f.preset && byId('presetSelect').querySelector(`option[value="${CSS.escape(f.preset)}"]`)) {
+    byId('presetSelect').value = f.preset;
+  }
+  if (f.from) byId('fromDate').value = f.from;
+  if (f.to)   byId('toDate').value   = f.to;
+}
+
+/* ===== Chart.js 공통 옵션 (툴팁/호버 강화, 1-C) ===== */
+const chartCommonOptions = {
+  responsive: true,
+  interaction: { mode: 'nearest', intersect: false },
+  plugins: {
+    tooltip: {
+      callbacks: {
+        title: (items) => {
+          const it = items[0];
+          const att = it.raw && it.raw.__att;
+          if (!att) return it.label || 'Attempt';
+          const d = new Date(att.ts ?? att.date ?? 0);
+          const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+          return `Set ${att.title || att.baseId || '-'} · ${ds}`;
+        },
+        label: (item) => `Value: ${item.formattedValue}`,
+        afterLabel: (item) => {
+          const att = item.raw && item.raw.__att;
+          if (!att) return '';
+          const rw = att.sections?.rw?.correct ?? att.scores?.rw?.raw ?? '-';
+          const m  = att.sections?.math?.correct ?? att.scores?.math?.raw ?? '-';
+          return `RW raw: ${rw}\nMath raw: ${m}`;
+        }
+      }
+    },
+    legend: { display: true }
+  },
+  scales: {
+    x: {
+      type: 'linear',
+      ticks: {
+        autoSkip: true,
+        maxRotation: 0,
+        callback: (val) => formatDateTick(val)
+      },
+      grid: { display: false }
+    }
+  },
+  parsing: false
+};
+
+function formatDateTick(ms){
+  if (!ms || isNaN(ms)) return '';
+  const d = new Date(ms);
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+/* ===== 곡선 계산 ===== */
 function interp(points,x){
   const pts=[...points].sort((a,b)=>a[0]-b[0]); if(!pts.length) return 0;
   if(x<=pts[0][0]) return Math.round(pts[0][1]);
@@ -81,10 +169,16 @@ function fillBase(list){
     const o=document.createElement('option'); o.value=opt.value; o.textContent=opt.label; $base.appendChild(o);
   });
 
-  // 세트별 기본 프리셋 자동 선택
+  // 저장된 baseId가 있으면 우선 적용
+  const saved = loadFilters();
+  if (saved.baseId && $base.querySelector(`option[value="${CSS.escape(saved.baseId)}"]`)) {
+    $base.value = saved.baseId;
+  }
+
+  // 세트별 기본 프리셋 자동 선택(단, 저장된 preset이 있으면 저장값 우선)
   const def=loadPresetDefaults(); const baseId=$base.value;
   if(def[baseId] && ($preset.querySelector(`option[value="${def[baseId]}"]`))){
-    $preset.value=def[baseId];
+    if (!saved.preset) $preset.value=def[baseId];
   }
 }
 function fillPreset(){
@@ -94,6 +188,12 @@ function fillPreset(){
     const o=document.createElement('option'); o.value=name; o.textContent=name; $preset.appendChild(o);
   });
   if(PRESETS.default) $preset.value='default';
+
+  // 저장된 preset 복원
+  const saved = loadFilters();
+  if (saved.preset && $preset.querySelector(`option[value="${CSS.escape(saved.preset)}"]`)) {
+    $preset.value = saved.preset;
+  }
 }
 function fmtDate(ts){
   const d=new Date(ts), z=n=>String(n).padStart(2,'0');
@@ -122,9 +222,9 @@ function currentRows(){
   const toTsRaw = parseDateInput($to.value);
   const toTs = toTsRaw!==null ? endOfDay(toTsRaw) : null;
 
-  // 세트별 기본 프리셋 우선 → 없으면 선택값
+  // 세트별 기본 프리셋 우선 → 없으면 선택값 → (저장값은 fillPreset에서 적용됨)
   const def=loadPresetDefaults(); const basePreset = def[baseId];
-  const presetName = basePreset || $preset.value || null;
+  const presetName = ($preset.value || basePreset || null);
 
   const filtered = all.filter(a=>{
     if(a.baseId!==baseId) return false;
@@ -156,23 +256,69 @@ function renderTable(rows){
     $tbody.appendChild(tr);
   });
 }
+
+/* === 1-C 적용: 모든 시계열 차트에 공통 옵션 + __att 바인딩 === */
 function renderCharts(rows){
   const chronological = [...rows].sort((a,b)=> a.ts-b.ts);
-  const labels = chronological.map(a=> new Date(a.ts).toLocaleDateString());
-  const totalSAT = chronological.map(a=> a.sat_total);
-  const rwScaled = chronological.map(a=> a.sections.rw.scaled);
-  const mScaled  = chronological.map(a=> a.sections.math.scaled);
 
+  // 포인트 생성 (툴팁에서 원본 시도 접근 가능하도록 __att 포함)
+  const pointsTotal = chronological.map(a => ({ x: a.ts, y: a.sat_total, __att: a }));
+  const pointsRW    = chronological.map(a => ({ x: a.ts, y: a.sections.rw.scaled, __att: a }));
+  const pointsMath  = chronological.map(a => ({ x: a.ts, y: a.sections.math.scaled, __att: a }));
+
+  // Line: Total SAT
   const c1=document.getElementById('satLine'); if(LINE) LINE.destroy();
-  LINE = new Chart(c1,{ type:'line', data:{ labels, datasets:[{label:'Total SAT', data:totalSAT, tension:.25}]},
-    options:{ responsive:true, scales:{ y:{ suggestedMin:200, suggestedMax:1600 } } } });
+  LINE = new Chart(c1, {
+    type:'line',
+    data:{ datasets:[{ label:'Total SAT', data:pointsTotal, tension:.25, pointRadius:3 }]},
+    options:{
+      ...chartCommonOptions,
+      plugins:{
+        ...chartCommonOptions.plugins,
+        tooltip:{
+          ...chartCommonOptions.plugins.tooltip,
+          callbacks:{
+            ...chartCommonOptions.plugins.tooltip.callbacks,
+            label:(item)=> `Total: ${item.formattedValue}`
+          }
+        }
+      },
+      scales:{
+        ...chartCommonOptions.scales,
+        y:{ suggestedMin:400, suggestedMax:1600, grid:{ color:'#eee' } }
+      }
+    }
+  });
 
+  // Stacked Bar: RW/Math Scaled over time
   const c2=document.getElementById('sectionBar'); if(BAR) BAR.destroy();
-  BAR = new Chart(c2,{ type:'bar', data:{ labels, datasets:[
-      { label:'RW',   data:rwScaled, stack:'sat' },
-      { label:'Math', data:mScaled,  stack:'sat' }
-    ]},
-    options:{ responsive:true, scales:{ y:{ suggestedMin:200, suggestedMax:1600, stacked:true }, x:{ stacked:true } } } });
+  BAR = new Chart(c2, {
+    type:'bar',
+    data:{
+      datasets:[
+        { label:'RW',   data:pointsRW,   stack:'sat' },
+        { label:'Math', data:pointsMath, stack:'sat' }
+      ]
+    },
+    options:{
+      ...chartCommonOptions,
+      plugins:{
+        ...chartCommonOptions.plugins,
+        tooltip:{
+          ...chartCommonOptions.plugins.tooltip,
+          callbacks:{
+            ...chartCommonOptions.plugins.tooltip.callbacks,
+            label:(item)=> `${item.dataset.label}: ${item.formattedValue}`
+          }
+        }
+      },
+      scales:{
+        ...chartCommonOptions.scales,
+        y:{ suggestedMin:200, suggestedMax:1600, stacked:true, grid:{ color:'#eee' } },
+        x:{ ...chartCommonOptions.scales.x, stacked:true }
+      }
+    }
+  });
 }
 
 /* ===== 스킬 ===== */
@@ -220,18 +366,39 @@ function renderHeatmap(rows){
     heatBody.appendChild(row);
   });
 }
+
+/* === 1-C 적용: 스킬 트렌드도 {x,y,__att} + 공통옵션 사용 === */
 function renderSkillTrend(rows){
   const key=$skillSel.value;
   const chronological = [...rows].sort((a,b)=> a.ts-b.ts);
-  const labels = chronological.map(a=> new Date(a.ts).toLocaleDateString());
-  const data = chronological.map(a=>{
-    const s=a.skills?.[key]; return (s && s.total)? Math.round((s.correct/s.total)*100) : null;
+  const points = chronological.map(a=>{
+    const s=a.skills?.[key];
+    const val = (s && s.total)? Math.round((s.correct/s.total)*100) : null;
+    return val===null ? { x:a.ts, y:null, __att:a } : { x:a.ts, y:val, __att:a };
   });
 
-  const d = data.map(v=> (v===null? null : v));
   const c=document.getElementById('skillLine'); if(SKILL_LINE) SKILL_LINE.destroy();
-  SKILL_LINE = new Chart(c,{ type:'line', data:{ labels, datasets:[{label:key||'Skill', data:d, spanGaps:true, tension:.2}]},
-    options:{ responsive:true, scales:{ y:{ suggestedMin:0, suggestedMax:100 } } } });
+  SKILL_LINE = new Chart(c,{
+    type:'line',
+    data:{ datasets:[{ label:key||'Skill', data:points, spanGaps:true, tension:.2 }]},
+    options:{
+      ...chartCommonOptions,
+      plugins:{
+        ...chartCommonOptions.plugins,
+        tooltip:{
+          ...chartCommonOptions.plugins.tooltip,
+          callbacks:{
+            ...chartCommonOptions.plugins.tooltip.callbacks,
+            label:(item)=> `Acc: ${item.formattedValue}%`
+          }
+        }
+      },
+      scales:{
+        ...chartCommonOptions.scales,
+        y:{ suggestedMin:0, suggestedMax:100, grid:{ color:'#eee' } }
+      }
+    }
+  });
 }
 
 /* ===== 비교/상세 ===== */
@@ -283,12 +450,11 @@ function renderCompare(rows){
   // 3행: Raw 2장
   const row3 = [
     card('RW Raw',   A.sections.rw.correct,   B.sections.rw.correct),
-    card('Math Raw', A.sections.math.correct, B.sections.math.correct)
+    card('Math Raw', B.sections.math.correct, B.sections.math.correct)
   ].join('');
 
   $cmpOut.innerHTML = row1 + row2 + row3;
 }
-
 
 /* ===== 집계 렌더러 ===== */
 function renderAggregations(rows){
@@ -504,7 +670,7 @@ document.getElementById('startFlaggedReviewBtn').addEventListener('click', ()=>{
   goPractice('./index.html?review=flagged');
 });
 
-/* ===== 동작 ===== */
+/* ===== 렌더 & 이벤트 ===== */
 function renderAll(){
   const { rows } = currentRows();
   renderTable(rows);
@@ -516,9 +682,18 @@ function renderAll(){
   renderSkillTrend(rows);
   renderAggregations(rows); // ★ 집계 추가
 }
-$base.addEventListener('change', renderAll);
-$kind.addEventListener('change', renderAll);
-$preset.addEventListener('change', renderAll);
+
+/* — 이벤트에 '저장' 연결 (1-B) — */
+function onFilterChanged() {
+  saveFilters(snapshotFiltersFromUI());
+  renderAll();
+}
+$base.addEventListener('change', onFilterChanged);
+$kind.addEventListener('change', onFilterChanged);
+$preset.addEventListener('change', onFilterChanged);
+document.getElementById('fromDate').addEventListener('change', onFilterChanged);
+document.getElementById('toDate').addEventListener('change', onFilterChanged);
+
 document.getElementById('cmpBtn').addEventListener('click', ()=> renderAll());
 document.getElementById('openDetailA').addEventListener('click', ()=>{
   const { rows } = currentRows(); const A=rows.find(r=> String(r.ts)===$cmpA.value); if(A) openAttemptDetail(A);
@@ -528,11 +703,8 @@ document.getElementById('openDetailB').addEventListener('click', ()=>{
 });
 $skillSel.addEventListener('change', ()=>{ const { rows } = currentRows(); renderSkillTrend(rows); });
 
-// 날짜/집계 이벤트
-const onDateOrAggChange = ()=> renderAll();
-document.getElementById('fromDate').addEventListener('change', onDateOrAggChange);
-document.getElementById('toDate').addEventListener('change', onDateOrAggChange);
-document.getElementById('aggMode').addEventListener('change', onDateOrAggChange);
+// 집계 모드 변경
+document.getElementById('aggMode').addEventListener('change', ()=> renderAll());
 
 // 전체 로그 삭제(안전 확인)
 document.getElementById('clearBtn').addEventListener('click', ()=>{
@@ -565,8 +737,22 @@ document.getElementById('skillAllBtn').onclick=()=>{
   renderSkillTrend(rows);
 };
 
-/* 초기 렌더 */
-renderAll();
+/* ===== Bootstrap: 옵션 채우고 필터 복원 후 렌더 ===== */
+(function bootstrapDashboard(){
+  // 옵션 박스가 비어 있을 수 있어 먼저 채움
+  const all = loadAttempts().sort((a,b)=> b.ts-a.ts);
+  if(!$base.options.length) fillBase(all);
+  if(!$preset.options.length) fillPreset();
+
+  // 저장된 필터를 UI에 반영
+  applySavedFiltersToUI();
+
+  // 이제부터 변경 저장 허용
+  FILTERS_READY = true;
+
+  // 최초 렌더
+  renderAll();
+})();
 
 /* 모달 외부 클릭 닫기 */
 [document.getElementById('detailBack'), document.getElementById('curveBack')].forEach(back=>{

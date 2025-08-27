@@ -91,7 +91,14 @@ th{ color:#111827 }
 
 /* ===== Badges ===== */
 .badge{ display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; color:#fff }
-.ok{ background:var(--ok) } .bad{ background:var(--bad) }
+.ok{ background:var(--ok) } 
+.bad{ background:var(--bad) }
+
+/* Δ 강조: 비교 카드 배지 색상(1-A) */
+.badge.ok{ background:var(--ok); color:#fff; }
+.badge.bad{ background:var(--bad); color:#fff; }
+.badge.ok::before{ content:"▲ "; font-size:11px }
+.badge.bad::before{ content:"▼ "; font-size:11px }
 
 /* ===== Modal / Backdrops ===== */
 .backdrop, .modal-back, .explain-back{
@@ -223,3 +230,27 @@ th{ color:#111827 }
   .cmp-grid{ grid-template-columns:1fr; }
 }
 
+/* ===== Popover (Directions) ===== */
+.popover {
+  position: absolute;
+  z-index: 8;
+  width: min(560px, 92vw);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 16px 36px rgba(0,0,0,.12);
+  padding: 12px;
+}
+.popover .head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.popover .title { font-weight: 800; font-size: 16px; }
+.popover .body { font-size: 14px; color: #0f172a; line-height: 1.6; max-height: 46vh; overflow: auto; }
+.popover .foot { display:flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+.popover .x { border:1px solid var(--line); background:#fff; padding:6px 10px; border-radius:8px; cursor:pointer; }
+.popover .arrow {
+  position: absolute; top: -8px; left: 24px;
+  width: 16px; height: 16px; transform: rotate(45deg);
+  background: #fff; border-left: 1px solid var(--line); border-top: 1px solid var(--line);
+}
+
+/* 리본 위에 떠 있을 때 자연스럽게 보이도록 */
+.ribbon { position: fixed; } /* 이미 있음, 재확인 차원 */

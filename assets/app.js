@@ -220,12 +220,16 @@ function getDurationFor(idx){
 function totalQ(mod){ return SET.modules[mod].questions.length; }
 function currentQ(){ return SET.modules[modIdx].questions[qIdx]; }
 
-/* ===== Directions ===== */
-const dirBtn=$('#dirToggle'), dirPanel=$('#dirPanel');
-dirBtn.onclick=()=> dirPanel.style.display = dirPanel.style.display==='block'?'none':'block';
-document.addEventListener('click',e=>{
-  if(!dirPanel.contains(e.target) && e.target!==dirBtn) dirPanel.style.display='none';
-});
+/* ===== Directions (Popover 연동) ===== */
+const dirBtn = $('#dirToggle');
+const dirPanel = $('#dirPanel'); // 레거시 콘텐츠 주입용(표시는 안 함)
+
+/** Directions 팝오버 열기(버튼 아래). index.html 스크립트의 글로벌 훅 사용 */
+function openDirectionsPopoverFromStart(){
+  if (typeof window.__openDirectionsFromStart === 'function' && dirBtn) {
+    window.__openDirectionsFromStart();
+  }
+}
 
 /* ===== 마지막 세트 저장(대시보드 복귀시 자동복원) ===== */
 function rememberLastSet(meta){
@@ -278,7 +282,8 @@ function bootFromBlob(){
 
 function afterSetLoaded(){
   flags.clear(); answers={}; $('#scoreBox').innerHTML='';
-  dirPanel.innerHTML = fmt(SET.metadata?.directions);
+  // 레거시처럼 directions HTML은 여기로 넣어둠(표시는 index.html의 팝오버가 담당)
+  dirPanel.innerHTML = fmt(SET.metadata?.directions || '');
   buildQIndex();
 
   RESTORE_CACHE = tryRestore();
@@ -343,6 +348,10 @@ function startModule(idx){
   renderNavButton();
   hideNavPopup();
   $('#scoreBox').innerHTML='';
+
+  // ▶ 모듈 시작 시 Directions 팝오버 자동 오픈
+  // (세트 directions가 없더라도 기본 안내가 표시됨)
+  setTimeout(openDirectionsPopoverFromStart, 0);
 }
 
 function gotoNextModule(){
@@ -945,7 +954,7 @@ function showFinalReport(){
         <div><b>${secName} — Total:</b> ${secCorrect} / ${secTotal}</div>
         <div><span class="badge ok">Correct</span> <span class="badge bad" style="margin-left:8px">Wrong</span></div>
       </div>
-      <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px">
         ${perModule.map(pm=>`
           <div class="qcard" style="flex:1; min-width:180px">
             <div><b>Module ${pm.module}</b></div>
