@@ -242,36 +242,53 @@ function fillCompare(rows){
   });
   if(opts.length>=2){ $cmpA.selectedIndex=0; $cmpB.selectedIndex=1; }
 }
-function renderCompare(rows){
-  $cmpOut.innerHTML='';
-  const keyA=$cmpA.value, keyB=$cmpB.value;
-  const A=rows.find(a=> String(a.ts)===keyA);
-  const B=rows.find(a=> String(a.ts)===keyB);
-  if(!A||!B){ $cmpOut.innerHTML='<div class="muted">비교하려면 두 시도를 선택하세요.</div>'; return; }
+function renderCompare(rows){function renderCompare(rows){
+  $cmpOut.innerHTML = '';
 
-  function card(title, aVal, bVal, fmt=(v)=>v){
-    const delta = (typeof aVal==='number' && typeof bVal==='number') ? (bVal-aVal) : null;
-    const sign = delta===null ? '' : (delta>0? '+' : '');
-    const color = delta===null ? '' : (delta>=0 ? 'ok' : 'bad');
+  const keyA = $cmpA.value, keyB = $cmpB.value;
+  const A = rows.find(a => String(a.ts) === keyA);
+  const B = rows.find(a => String(a.ts) === keyB);
+
+  if (!A || !B) {
+    $cmpOut.innerHTML = '<div class="muted">비교하려면 두 시도를 선택하세요.</div>';
+    return;
+  }
+
+  // 공통 카드 템플릿
+  function card(title, aVal, bVal, fmt = (v)=>v, extraClass=''){
+    const bothNum = (typeof aVal === 'number') && (typeof bVal === 'number');
+    const delta = bothNum ? (bVal - aVal) : null;
+    const sign = delta === null ? '' : (delta > 0 ? '+' : '');
+    const color = delta === null ? '' : (delta >= 0 ? 'ok' : 'bad');
     return `
-      <div class="card">
+      <div class="card ${extraClass}">
         <div class="head"><div class="title">${title}</div></div>
         <div style="display:flex; justify-content:space-between; gap:8px">
           <div><div class="muted">A</div><div><b>${fmt(aVal)}</b></div></div>
           <div><div class="muted">B</div><div><b>${fmt(bVal)}</b></div></div>
-          <div><div class="muted">Δ</div><div><span class="badge ${color}">${delta===null?'—': sign + delta}</span></div></div>
+          <div><div class="muted">Δ</div><div><span class="badge ${color}">${delta===null?'—': (sign + delta)}</span></div></div>
         </div>
       </div>`;
   }
 
-  $cmpOut.innerHTML = [
-    card('Total SAT', A.sat_total, B.sat_total),
-    card('RW (Scaled)', A.sections.rw.scaled, B.sections.rw.scaled),
-    card('Math (Scaled)', A.sections.math.scaled, B.sections.math.scaled),
-    card('RW Raw', A.sections.rw.correct, B.sections.rw.correct),
+  // 1행: Total SAT (전체폭)
+  const row1 = card('Total SAT', A.sat_total, B.sat_total, v => v, 'cmp-span-all');
+
+  // 2행: Scaled 2장
+  const row2 = [
+    card('RW (Scaled)',   A.sections.rw.scaled,   B.sections.rw.scaled),
+    card('Math (Scaled)', A.sections.math.scaled, B.sections.math.scaled)
+  ].join('');
+
+  // 3행: Raw 2장
+  const row3 = [
+    card('RW Raw',   A.sections.rw.correct,   B.sections.rw.correct),
     card('Math Raw', A.sections.math.correct, B.sections.math.correct)
   ].join('');
+
+  $cmpOut.innerHTML = row1 + row2 + row3;
 }
+
 
 /* ===== 집계 렌더러 ===== */
 function renderAggregations(rows){

@@ -210,3 +210,16 @@ th{ color:#111827 }
   background:#fef3f2; color:#b42318; border:1px solid #fecdca;
   padding:10px 12px; border-radius:10px; margin:8px 0; font-size:14px
 }
+/* Compare grid - 3줄 구성 */
+.cmp-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:12px;
+}
+.cmp-span-all{ grid-column:1 / -1; }
+
+/* 좁은 화면에선 1열 */
+@media (max-width:600px){
+  .cmp-grid{ grid-template-columns:1fr; }
+}
+
