@@ -1172,12 +1172,12 @@
         {
           "id": "m2q13",
           "type": "gridin",
-          "prompt": "In the given equation, \\( k \\) is a constant. The solution to the given equation is \\( x=\\dfrac{15k}{3} \\). What is the value of \\( k \\)?<br>\\n\\( \\dfrac{x^2+1}{x}=k \\)",
-          "answerNumeric": 3,
+          "prompt": "In the given equation, \\( k \\) is a constant. The solution to the given equation is \\( x=\\dfrac{1}{224} \\). What is the value of \\( k \\)?<br>\\n\\( \\dfrac{x+1}{5x^2}=\\dfrac{k}{x} \\)",
+          "answerNumeric": 45,
           "tolerance": 0,
           "altNumeric": [
-            3,
-            "3"
+            45,
+            "45"
           ],
           "rationale": "Substitute \\( x=5k \\) into \\( (x^2+1)/x=k \\) to obtain \\( k=3 \\)."
         },
