@@ -1184,27 +1184,27 @@
         {
           "id": "m2q14",
           "type": "mcq",
-           "prompt": "The function \\( f \\) is defined by \\( f(x)=2^{-3x} \\). The function \\( g \\) is a decreasing linear function. In the \\( xy \\)-plane, the graphs of \\( y=f(x) \\) and \\( y=g(x) \\) intersect at two points, \\( (h,\\,j) \\) and \\( (k,\\,m) \\), where \\( j>m \\). When \\( g(x) < f(x) \\), which of the following must also be true?",
+           "prompt": "The function \\( f \\) is defined by \\( f(x)=-39^{x} \\). The function \\( g \\) is a decreasing linear function. In the \\( xy \\)-plane, the graphs of \\( y=f(x) \\) and \\( y=g(x) \\) intersect at two points, \\( (h,\\,j) \\) and \\( (k,\\,m) \\), where \\( j>m \\). When \\( g(x) < f(x) \\), which of the following must also be true?",
           "choices": [
             "\\( x < h \\)",
             "\\( x>k \\)",
             "\\( x>k \\text{ or } x < h \\)",
             "\\( h < x < k \\)"
           ],
-          "answer": 3,
+          "answer": 4,
           "rationale": "Between the intersection points the exponential lies above the decreasing line."
         },
         {
           "id": "m2q15",
           "type": "mcq",
-          "prompt": "One gallon of sealant costs \\( \\$29 \\) and will cover \\( 300 \\) square feet of a surface. A deck has a total surface area of \\( q \\) square feet. Which equation represents the cost \\( c \\), in dollars, of the sealant needed to cover the deck twice?",
+          "prompt": "One gallon of sealant costs \\( \\$29 \\) and will cover \\( 300 \\) square feet of a surface. A deck has a total surface area of \\( d \\) square feet. Which equation represents the cost \\( c \\), in dollars, of the sealant needed to cover the deck twice?",
           "choices": [
-            "\\( c=\\dfrac{29q}{300} \\)",
-            "\\( c=\\dfrac{29q}{2} \\)",
-            "\\( c=29\\left(\\dfrac{2q}{300}\\right) \\)",
-            "\\( c=\\dfrac{29(2q)}{30} \\)"
+            "\\( c=\\dfrac{300d}{29} \\)",
+            "\\( c=\\dfrac{600d}{29} \\)",
+            "\\( c=29\\left(\\dfrac{d}{150}\\right) \\)",
+            "\\( c=\\dfrac{29(d)}{300} \\)"
           ],
-          "answer": 2,
+          "answer": 4,
           "rationale": "Gallons needed \\( = \\dfrac{2q}{300} \\); cost \\( = 29\\cdot \\dfrac{2q}{300} \\)."
         },
         {
@@ -1259,7 +1259,7 @@
         {
           "id": "m2q20",
           "type": "mcq",
-          "prompt": "The functions \\( f \\) and \\( g \\) are defined by the equations shown, where \\( a \\) and \\( b \\) are integer constants, \\( a<b \\) and \\( b\\le 0 \\). If \\( y=f(x) \\) and \\( y=g(x) \\) are graphed in the \\( xy \\)-plane, which of the following equations displays, as a constant or coefficient, the y‑coordinate of the y‑intercept of the graph of the corresponding function?<br><br>I. \\( f(x)=a(4.2)^{x+b} \\)<br>II. \\( g(x)=a(4.2)^{x}+b \\)",
+          "prompt": "The functions \\( f \\) and \\( g \\) are defined by the equations shown, where \\( a \\) and \\( b \\) are integer constants, \\( a < b \\) and \\( b\\le 0 \\). If \\( y=f(x) \\) and \\( y=g(x) \\) are graphed in the \\( xy \\)-plane, which of the following equations displays, as a constant or coefficient, the y‑coordinate of the y‑intercept of the graph of the corresponding function?<br><br>I. \\( f(x)=a(4.2)^{x+b} \\)<br>II. \\( g(x)=a(4.2)^{x}+b \\)",
           "choices": [
             "I only",
             "II only",
