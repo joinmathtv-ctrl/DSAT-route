@@ -1095,10 +1095,10 @@
         {
           "id": "m2q7",
           "type": "mcq",
-          "prompt": "What is the slope of the graph of \\( y=\\tfrac{1}{2}(27x+12)+7x \\) in the \\( xy \\)-plane?",
+          "prompt": "What is the slope of the graph of \\( y=\\tfrac{1}{4}(27x+12)+7x \\) in the \\( xy \\)-plane?",
           "choices": [
-            "\\( \\tfrac{27}{2} \\)",
-            "\\( \\tfrac{41}{2} \\)",
+            "\\( \\tfrac{27}{4} \\)",
+            "\\( \\tfrac{55}{4} \\)",
             "\\( 27 \\)",
             "\\( 34 \\)"
           ],
@@ -1108,14 +1108,14 @@
         {
           "id": "m2q8",
           "type": "mcq",
-          "prompt": "The function \\( f \\) is defined by \\( f(x)=\\dfrac{2^{a+4}}{x^{5}} \\), and \\( f(a)=-19 \\), where \\( a \\) is a constant. What is the value of \\( a \\)?",
+          "prompt": "The function \\( f \\) is defined by \\( f(x)=\\dfrac{x+16}{5} \\), and \\( f(a)=-19 \\), where \\( a \\) is a constant. What is the value of \\( a \\)?",
           "choices": [
             "\\( -111 \\)",
             "\\( -79 \\)",
-            "\\( -\\tfrac{29}{2} \\)",
-            "\\( -8 \\)"
+            "\\( -\\tfrac{79}{5} \\)",
+            "\\( -\\tfrac{3}{5} \\)"
           ],
-          "answer": 3,
+          "answer": 2,
           "rationale": "The given choices are consistent with \\( a=-8 \\) (best matching the sign/magnitude in the expression)."
         },
         {
