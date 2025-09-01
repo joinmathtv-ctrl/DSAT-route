@@ -1274,8 +1274,8 @@
           "type": "mcq",
           "prompt": " \\[ \\begin{aligned} 5x+4y&=3 \\\\\\ 15x+12y&=9 \\end{aligned} \\] <br> For each real number \\( r \\), which of the following points lies on the graph of each equation in the \\( xy \\)-plane for the given system?",
           "choices": [
-            "\\( \\big(r,\\,-\\tfrac{5}{4}r+\\tfrac{3}{4}\\big) \\)",
-            "\\( \\big(r,\\,\\tfrac{5}{4}r+\\tfrac{3}{4}\\big) \\)",
+            "\\( \\big(r,\\,-\\tfrac{4r}{5}+\\tfrac{3}{5}\\big) \\)",
+            "\\( \\big(r,\\,\\tfrac{5r}{4}+\\tfrac{3}{4}\\big) \\)",
             "\\( \\big(-\\tfrac{4}{5}r+\\tfrac{3}{5},\\,r\\big) \\)",
             "\\( \\big(\\tfrac{r}{3}+3,\\,-\\tfrac{r}{3}+9\\big) \\)"
           ],
