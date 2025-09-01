@@ -287,3 +287,59 @@ th{ color:#111827 }
   .popover::after{ bottom:60px; }
 }
 
+#modeLegend {
+  font-family: 'Arial', sans-serif;
+  font-size: 18px;
+}
+
+.mode-btn {
+  cursor: pointer;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  background-color: #fff;
+  color: #333;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.mode-btn:hover {
+  background-color: #f3f4f6;
+}
+
+.mode-btn.selected {
+  background-color: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.mode-btn:focus {
+  outline: none;
+}
+
+/* 모드 선택 버튼 스타일링 */
+#modeSeg .seg-btn {
+  padding: 10px 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#modeSeg .seg-btn:hover {
+  background-color: #f3f4f6;
+}
+
+#modeSeg .seg-btn.active {
+  background-color: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+#modeSeg .seg-btn:focus {
+  outline: none;
+}
+
+
+

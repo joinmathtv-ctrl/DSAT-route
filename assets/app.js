@@ -1,3 +1,90 @@
+// app.js
+// === (app.js 상단) MYSETS-lite: 연습 페이지 전용(랜딩과 동일 라이트 버전) ===
+(function(){
+  if (window.MYSETS) return;
+  const KEY='dsat_mysets_v1';
+  let cache=null; const CACHE_MS=5*60*1000;
+  function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'null'); }catch{ return null; } }
+  function save(v){ try{ localStorage.setItem(KEY, JSON.stringify(v)); }catch{} }
+  async function refresh(force=false){
+    const now=Date.now();
+    if(!force && cache && (now-(cache.ts||0) < CACHE_MS)) return cache.sets||[];
+    const base = (window.DSAT_SYNC?.getConfig?.().baseUrl || window.SYNC_API_BASE || '').replace(/\/$/,'');
+    let sets=[]; try{
+      const r=await fetch(base+'/api/mySets'); const j=await r.json();
+      sets = Array.isArray(j?.sets) ? j.sets : [];
+    }catch(_){}
+    cache = { ts: Date.now(), sets }; save(cache); return sets;
+  }
+  function list(){ const loc=load(); return cache?.sets || loc?.sets || []; }
+  function has(id){ return !!list().find(s=> s.id===id); }
+  window.MYSETS = { refresh, list, has };
+})();
+
+// === URL util ===
+function qp(k){ return new URLSearchParams(location.search).get(k); }
+
+// === 권한 가드: base 파라미터가 있을 때만 체크 ===
+async function guardStartPractice(){
+  const baseId = qp('base');
+  if (!baseId) return; // URL로 파일/URL 세트 진입하는 경우는 패스
+
+  await MYSETS.refresh(true);
+  if (MYSETS.has(baseId)) return; // 권한 OK → 그대로 진행
+
+  // 권한 없음 → 구매 유도 (연습 페이지에서도 안전망)
+  if (!confirm('You do not own this set. Purchase now?')) {
+    // 뒤로가기 또는 랜딩으로 이동
+    location.href = './landing.html?tab=owned';
+    return Promise.reject(new Error('Not owned'));
+  }
+
+  try{
+    const base = (DSAT_SYNC?.getConfig?.().baseUrl || window.SYNC_API_BASE || '').replace(/\/$/,'');
+    const res = await fetch(base + '/api/purchaseSet', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ setId: baseId })
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    await MYSETS.refresh(true);
+    if (!MYSETS.has(baseId)) throw new Error('Not yet visible');
+    // 소유 반영 완료 → 계속 진행
+  }catch(e){
+    alert('Purchase failed: ' + (e.message||e));
+    location.href = './landing.html?tab=owned';
+    return Promise.reject(e);
+  }
+}
+
+
+async function guardStartPractice(currentBaseId){
+  try{
+    await MYSETS?.refresh(); // /api/mySets → 캐시
+    if(MYSETS && !MYSETS.has(currentBaseId)){
+      alert(`You don't have access to: ${currentBaseId}`);
+      return false;
+    }
+    return true;
+  }catch(e){
+    console.warn('[MYSETS] guard error', e);
+    return confirm('Offline/verification failed. Continue anyway?');
+  }
+}
+
+(async function init(){
+  try {
+    await guardStartPractice();     // ← 제일 먼저!
+  } catch { return; }
+
+  // ... 기존 세트 로딩/모듈 스타트 로직
+})();
+
+async function startPractice(){
+  const baseId = window.SET?.id || new URL(location.href).searchParams.get('base');
+  const ok = await guardStartPractice(baseId);
+  if(!ok) return;
+}
+
 /* ===== 기본 커브(안전 장치) ===== */
 const DEFAULT_CURVES = {
   rw:   [[0,200],[20,300],[40,400],[60,550],[80,700],[100,800]],
@@ -20,6 +107,53 @@ const FEATURE_SIMILAR = false;
 /* 마지막으로 연 세트 정보(대시보드 왕복 복원용) */
 const LAST_SET_KEY = 'dsat_last_set'; // {type:'url'|'blob', value:string}
 
+/* ===== 실행 모드 관리 ===== */
+let RUN_MODE = 'full'; // 'full' | 'rw' | 'math'
+function getRunMode(){ return RUN_MODE; }
+function runModeLabel(m = getRunMode()){
+  return m==='rw' ? 'RW Only' : m==='math' ? 'Math Only' : 'Full';
+}
+
+/** URL > localStorage > default 순서로 모드 결정 */
+function resolveInitialRunMode(){
+  const qs = new URLSearchParams(location.search);
+  const onlyParam = (qs.get('only') || '').toLowerCase();
+  if (onlyParam==='rw' || onlyParam==='math' || onlyParam==='full') return onlyParam;
+  try{
+    const saved = (localStorage.getItem('dsat_landing_only') || '').toLowerCase();
+    if (saved==='rw' || saved==='math' || saved==='full') return saved;
+  }catch(_){}
+  return 'full';
+}
+
+/** 상단 바 모드 배지 업데이트 (있으면) + 제목 옆 모드 칩 추가 */
+function updateModeUIBadges(){
+  const modeText = runModeLabel();
+  // 1) 기존 배지
+  const badge = document.getElementById('modeBadge');
+  if (badge) badge.textContent = `Mode: ${modeText}`;
+
+  // 2) 제목 라인(crumb) 옆 칩
+  const crumb = document.getElementById('crumb');
+  if (crumb){
+    let chip = document.getElementById('modeChipTop');
+    if (!chip){
+      chip = document.createElement('span');
+      chip.id = 'modeChipTop';
+      chip.style.marginLeft = '8px';
+      chip.style.fontSize = '12px';
+      chip.style.padding = '2px 8px';
+      chip.style.borderRadius = '999px';
+      chip.style.border = '1px solid #c7d2fe';
+      chip.style.background = '#eef2ff';
+      chip.style.color = '#334155';
+      chip.style.verticalAlign = 'middle';
+      crumb.appendChild(chip);
+    }
+    chip.textContent = modeText;
+  }
+}
+
 /* ===== 유틸 ===== */
 const $ = s=>document.querySelector(s);
 const bubbleABC = idx => "ABCD".charAt(idx);
@@ -33,11 +167,11 @@ const injectImages = html =>
 /* ===== 저장소 키 ===== */
 function storageKey(){
   const id = (SET?.metadata?.id || SET?.id || SET?.metadata?.title || 'default').toString();
-  return `dsat_autosave:${id}`;
+  return `dsat_autosave:${id}:${getRunMode()}`; // 모드별 분리 저장
 }
 function saveState(){
   try{
-    const payload = { modIdx, qIdx, answers, timers: { [String(modIdx)]: timerSec } };
+    const payload = { modIdx, qIdx, answers, timers: { [String(modIdx)]: timerSec }, mode:getRunMode() };
     localStorage.setItem(storageKey(), JSON.stringify(payload));
   }catch(e){}
 }
@@ -113,6 +247,67 @@ function accumulateSectionTotals(){
 const ATTEMPT_KEY = 'dsat_attempts_v1';
 function loadAttempts(){ try{ return JSON.parse(localStorage.getItem(ATTEMPT_KEY) || '[]'); }catch(_e){ return []; } }
 function saveAttempts(arr){ try{ localStorage.setItem(ATTEMPT_KEY, JSON.stringify(arr)); }catch(_e){} }
+
+/* === Attempt 마이그레이션 & ID 유틸 === */
+function uuid4(){
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c=>{
+    const r = Math.random()*16|0, v = c === 'x' ? r : (r&0x3|0x8);
+    return v.toString(16);
+  });
+}
+/** 기존 기록을 Attempt 스펙(id/updatedAt/_dirty/version)으로 보정 — 여러 번 호출해도 안전 */
+function migrateLocalAttemptsOnce(){
+  const arr = loadAttempts();
+  let changed = false;
+  for(const a of arr){
+    if(!a.id){ a.id = uuid4(); changed = true; }
+    if(!a.updatedAt){ a.updatedAt = a.ts || Date.now(); changed = true; }
+    if(a._dirty === undefined){ a._dirty = false; changed = true; }
+    if(!a.version){ a.version = 1; changed = true; }
+  }
+  if(changed) saveAttempts(arr);
+}
+
+// 예시: 시도 완료 시 호출되는 saveAttempt(record) 비슷한 지점에 적용
+function saveAttemptToLocal(attempt){
+  // 필수 필드 구성 (대시보드/Sync와 동일 포맷)
+  const a = {
+    id: attempt.id || undefined,      // 없으면 sync.js가 id 보정
+    userId: DSAT_SYNC?.getConfig?.().userId || 'u-demo',
+    baseId: attempt.baseId,           // e.g., 'SAT-Blue-1'
+    title: attempt.title,             // 표시용
+    kind: attempt.kind || 'base',     // 'base' | 'review'
+    mode: attempt.mode || (qp('only')||'full'), // 'full'|'rw'|'math'
+    ts: attempt.ts || Date.now(),     // 시도 시작/완료 시각 중 하나
+    updatedAt: Date.now(),
+
+    // 정답/총문항
+    sections: {
+      rw:   { correct: attempt.rwCorrect,   total: attempt.rwTotal },
+      math: { correct: attempt.mathCorrect, total: attempt.mathTotal },
+    },
+
+    // 커브 프리셋 이름(연습 페이지에서 사용한 프리셋)
+    curvePreset: attempt.curvePreset || (window.SET?.metadata?.curvePreset) || 'default',
+
+    // (선택) 스킬 breakdown
+    skills: attempt.skills || {},
+
+    // 동기화 메타
+    _dirty: true
+  };
+
+  // 로컬 저장
+  const KEY='dsat_attempts_v1';
+  const arr = (()=>{ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(_){ return []; }})();
+  arr.push(a);
+  try{ localStorage.setItem(KEY, JSON.stringify(arr)); }catch(_){}
+
+  // (옵션) 종료 직후 푸시까지 시도하고 싶으면:
+  // DSAT_SYNC.pushAttempts().catch(()=>{});  // 실패해도 UX 방해하지 않음
+}
+
 function overallTotals(){
   let total=0, correct=0;
   (SET.modules||[]).forEach(m=>{
@@ -147,7 +342,7 @@ function summarizeSkills(){
   });
   return bySkill;
 }
-/* 기록 포맷(대시보드 호환): 섹션 원점수/프리셋명 포함 */
+/* 기록 포맷(대시보드/싱크 호환): 섹션 원점수/프리셋 포함 + 싱크 메타 */
 function recordAttempt(){
   const isReview = !!SET.__isReviewSession;
   const baseId = isReview
@@ -157,18 +352,35 @@ function recordAttempt(){
   const totals = accumulateSectionTotals();
   const usedPreset = SET?.metadata?.curvePreset ?? null;
 
+  // sync config에서 userId 가져오기(선택)
+  let userId = null;
+  try {
+    const cfg = JSON.parse(localStorage.getItem('dsat_sync_config_v1') || '{}');
+    userId = cfg.userId || null;
+  } catch(_) {}
+
+  const now = Date.now();
+  const attemptId = `loc_${userId||'u'}_${(baseId||'base').replace(/[^\w-]+/g,'_')}_${isReview?'review':'base'}_${now}`;
+
   const attempt = {
-    ts: Date.now(),
+    id: attemptId,
+    ts: now,
+    updatedAt: now,
+    userId: userId || undefined,
     baseId,
     kind: isReview ? 'review' : 'base',
     title: SET.metadata?.title || '',
-    overall: overallTotals(),
-    skills: summarizeSkills(),
+    mode: SET.__runMode || getRunMode(),
     sections: {
       rw:   { correct: totals.rw.correct,   total: totals.rw.total   },
       math: { correct: totals.math.correct, total: totals.math.total }
     },
-    curvePreset: usedPreset
+    skills: summarizeSkills(),
+    curvePreset: usedPreset,
+
+    _dirty: true,
+    _remoteId: null,
+    _lastPushedAt: null
   };
 
   const list = loadAttempts();
@@ -223,8 +435,6 @@ function currentQ(){ return SET.modules[modIdx].questions[qIdx]; }
 /* ===== Directions (Popover 연동) ===== */
 const dirBtn = $('#dirToggle');
 const dirPanel = $('#dirPanel'); // 레거시 콘텐츠 주입용(표시는 안 함)
-
-/** Directions 팝오버 열기(버튼 아래). index.html 스크립트의 글로벌 훅 사용 */
 function openDirectionsPopoverFromStart(){
   if (typeof window.__openDirectionsFromStart === 'function' && dirBtn) {
     window.__openDirectionsFromStart();
@@ -244,6 +454,36 @@ function tryLoadLastSetMeta(){
   }catch(_e){ return null; }
 }
 
+/* ===== 모드 필터 적용 ===== */
+function applyRunModeFilter(){
+  const only = getRunMode();
+  SET.__runMode = only;
+  if (!SET.__allModules) SET.__allModules = (SET.modules||[]).slice();
+  if (only==='rw' || only==='math'){
+    SET.modules = (SET.__allModules||SET.modules||[]).filter(
+      m => (m.section||'').toLowerCase() === only
+    );
+  } else {
+    SET.modules = (SET.__allModules||SET.modules||[]).slice();
+  }
+
+  if (!SET.modules.length) {
+    const msg = (only==='rw')
+      ? 'This set has no RW modules. Switch to Full mode?'
+      : 'This set has no Math modules. Switch to Full mode?';
+    if (confirm(msg)) {
+      RUN_MODE = 'full';
+      SET.modules = (SET.__allModules||[]).slice();
+      SET.__runMode = 'full';
+    } else {
+      alert('Returning to the landing page...');
+      location.href = './landing.html';
+      return false;
+    }
+  }
+  return true;
+}
+
 /* ===== 로드 ===== */
 async function loadSet(path){
   try{
@@ -252,11 +492,13 @@ async function loadSet(path){
     $('#loadError').style.display='none';
     rememberLastSet({ type:'url', value:path });
   }catch(e){
-    $('#loadError').textContent = `로드 실패: ${e.message}`;
+    $('#loadError').textContent = `Failed to load: ${e.message}`;
     $('#loadError').style.display='block';
     return;
   }
 
+  applyRunModeFilter(); // 로드 직후 필터
+  if (!SET.modules.length) return;
   afterSetLoaded();
 }
 
@@ -273,6 +515,8 @@ function bootFromBlob(){
     localStorage.removeItem(key);
     $('#loadError').style.display='none';
     rememberLastSet({ type:'blob', value:text });
+    applyRunModeFilter();
+    if (!SET.modules.length) return;
     afterSetLoaded();
   }catch(e){
     $('#loadError').textContent = 'Failed to parse set from landing page: ' + e.message;
@@ -282,7 +526,6 @@ function bootFromBlob(){
 
 function afterSetLoaded(){
   flags.clear(); answers={}; $('#scoreBox').innerHTML='';
-  // 레거시처럼 directions HTML은 여기로 넣어둠(표시는 index.html의 팝오버가 담당)
   dirPanel.innerHTML = fmt(SET.metadata?.directions || '');
   buildQIndex();
 
@@ -302,7 +545,6 @@ function afterSetLoaded(){
     startModule(0);
   }
 
-  // 로더 숨김 (자동 복원 시에도 깔끔하게)
   document.getElementById('loaderRow')?.style && (document.getElementById('loaderRow').style.display='none');
 }
 
@@ -312,6 +554,8 @@ function startModule(idx){
   const m=SET.modules[modIdx];
   const secTxt = sectionLabel(m.section);
   $('#crumb').textContent = `${SET.metadata?.title || 'DSAT Practice'} — ${secTxt} · Module ${m.module||1}`;
+  // 제목 옆 모드 칩 갱신
+  updateModeUIBadges();
 
   clearInterval(tickId);
 
@@ -343,14 +587,12 @@ function startModule(idx){
 
   $('#card').style.display='block';
   $('#ribbon').style.display='flex';
-  bindPrevNext();   // 안전 재바인딩
+  bindPrevNext();
   renderQuestion();
   renderNavButton();
   hideNavPopup();
   $('#scoreBox').innerHTML='';
 
-  // ▶ 모듈 시작 시 Directions 팝오버 자동 오픈
-  // (세트 directions가 없더라도 기본 안내가 표시됨)
   setTimeout(openDirectionsPopoverFromStart, 0);
 }
 
@@ -616,13 +858,13 @@ function buildSkillSummaryCard(minCount){
 
   const wrap = document.createElement('div');
   wrap.className = 'qcard';
-  const headNote = `<span style="color:var(--muted); font-size:13px">· 최소 ${minCount}문항 기준</span>`;
+  const headNote = `<span style="color:var(--muted); font-size:13px">· min ${minCount} questions</span>`;
 
   if(eligible.length === 0){
     wrap.innerHTML = `
       <div class="result-title"><div><b>Skill Summary</b> ${headNote}</div></div>
       <div style="margin-top:6px; color:var(--muted); font-size:14px">
-        스킬 태그가 감지되지 않았습니다. 문항 JSON에 <code>"skills": ["FUNC_LINEAR","RATIO"]</code> 형태로 태그를 추가하면 요약이 표시됩니다.
+        No skill tags detected. Add tags in your JSON like <code>"skills": ["FUNC_LINEAR","RATIO"]</code> to enable this summary.
       </div>`;
     return wrap;
   }
@@ -665,7 +907,7 @@ function buildProgressCard(baseId, maxSkills=5){
   if(!lastBase && !lastReview){
     wrap.innerHTML = `
       <div class="result-title"><div><b>Progress</b></div></div>
-      <div style="margin-top:6px; color:var(--muted)">기록된 시도가 없습니다.</div>`;
+      <div style="margin-top:6px; color:var(--muted)">No attempts recorded.</div>`;
     return wrap;
   }
 
@@ -717,13 +959,13 @@ function buildProgressCard(baseId, maxSkills=5){
       <div>
         <div style="font-weight:700; color:#065f46; margin-bottom:6px">Most improved</div>
         <ul style="list-style:none; margin:0; padding:0; display:grid; gap:6px">
-          ${improved.length? improved.map(row).join('') : '<li style="color:var(--muted)">데이터 없음</li>'}
+          ${improved.length? improved.map(row).join('') : '<li style="color:var(--muted)">No data</li>'}
         </ul>
       </div>
       <div>
         <div style="font-weight:700; color:#991b1b; margin-bottom:6px">Still weak</div>
         <ul style="list-style:none; margin:0; padding:0; display:grid; gap:6px">
-          ${weakNow.length? weakNow.map(row).join('') : '<li style="color:var(--muted)">데이터 없음</li>'}
+          ${weakNow.length? weakNow.map(row).join('') : '<li style="color:var(--muted)">No data</li>'}
         </ul>
       </div>
     </div>`;
@@ -766,7 +1008,7 @@ function buildAdHocSet(items, titleNote){
       title: `${SET.metadata?.title || 'DSAT Practice'} — Review ${titleNote}`,
       directions: 'Review selected items.',
       durationMinutesPerModule: SET.metadata?.durationMinutesPerModule || { rw:[32,32], math:[35,35] },
-      curvePreset: SET?.metadata?.curvePreset || null, // 리뷰도 동일 프리셋 사용
+      curvePreset: SET?.metadata?.curvePreset || null,
       curves: SET?.metadata?.curves || undefined
     },
     modules
@@ -775,7 +1017,7 @@ function buildAdHocSet(items, titleNote){
 function startReviewSession({ mode, skill }){
   const items = pickReviewQuestions({ mode, skill });
   if(items.length===0){
-    alert('선택 조건에 맞는 문항이 없습니다.');
+    alert('No items match the selected condition.');
     return;
   }
   const titleNote = (mode==='skill') ? `(Skill: ${skill})` : `(${mode})`;
@@ -783,6 +1025,7 @@ function startReviewSession({ mode, skill }){
 
   SET = newSet;
   SET.__isReviewSession = true;
+  SET.__runMode = 'full'; // 리뷰는 항상 전체 표시
 
   flags = new Set();
   answers = {};
@@ -832,58 +1075,66 @@ function showFinalReport(){
   (function renderSATCard(){
     const totals = accumulateSectionTotals();
     const curves = getCurves();
+    const mode = SET.__runMode || getRunMode();
 
-    const rwScaled   = scaledFromCurve(curves.rw,   totals.rw.correct,   totals.rw.total);
-    const mathScaled = scaledFromCurve(curves.math, totals.math.correct, totals.math.total);
-    const totalSAT   = (isFinite(rwScaled)?rwScaled:0) + (isFinite(mathScaled)?mathScaled:0);
+    const rwScaled   = totals.rw.total   ? scaledFromCurve(curves.rw,   totals.rw.correct,   totals.rw.total)   : null;
+    const mathScaled = totals.math.total ? scaledFromCurve(curves.math, totals.math.correct, totals.math.total) : null;
+
+    let totalSAT = '—';
+    if (mode === 'full' && rwScaled!==null && mathScaled!==null) {
+      totalSAT = (rwScaled + mathScaled);
+    }
 
     const usedPreset = SET?.metadata?.curvePreset ?? '—';
 
     const sat = document.createElement('div');
     sat.className = 'qcard';
+
+    const rwBlock = `
+      <div style="border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:#fff">
+        <div style="font-weight:700; margin-bottom:4px">Reading & Writing</div>
+        <div style="font-variant-numeric:tabular-nums">
+          Raw: ${totals.rw.correct} / ${totals.rw.total}
+          <span style="color:var(--muted)"> · </span>
+          Scaled: <b>${rwScaled===null?'—':rwScaled}</b>
+        </div>
+      </div>`;
+    const mathBlock = `
+      <div style="border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:#fff">
+        <div style="font-weight:700; margin-bottom:4px">Math</div>
+        <div style="font-variant-numeric:tabular-nums">
+          Raw: ${totals.math.correct} / ${totals.math.total}
+          <span style="color:var(--muted)"> · </span>
+          Scaled: <b>${mathScaled===null?'—':mathScaled}</b>
+        </div>
+      </div>`;
+
+    let gridHTML = '';
+    if (mode === 'rw') gridHTML = `<div style="display:grid; grid-template-columns:1fr; gap:12px; margin-top:8px">${rwBlock}</div>`;
+    else if (mode === 'math') gridHTML = `<div style="display:grid; grid-template-columns:1fr; gap:12px; margin-top:8px">${mathBlock}</div>`;
+    else gridHTML = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px">${rwBlock}${mathBlock}</div>`;
+
     sat.innerHTML = `
       <div class="result-title">
         <div><b>SAT Converted Score</b> <span class="muted" style="font-weight:400">preset: ${usedPreset}</span></div>
         <div style="font-variant-numeric:tabular-nums; font-weight:700; font-size:18px">${totalSAT}</div>
       </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px">
-        <div style="border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:#fff">
-          <div style="font-weight:700; margin-bottom:4px">Reading & Writing</div>
-          <div style="font-variant-numeric:tabular-nums">
-            Raw: ${totals.rw.correct} / ${totals.rw.total}
-            <span style="color:var(--muted)"> · </span>
-            Scaled: <b>${rwScaled}</b>
-          </div>
-        </div>
-        <div style="border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:#fff">
-          <div style="font-weight:700; margin-bottom:4px">Math</div>
-          <div style="font-variant-numeric:tabular-nums">
-            Raw: ${totals.math.correct} / ${totals.math.total}
-            <span style="color:var(--muted)"> · </span>
-            Scaled: <b>${mathScaled}</b>
-          </div>
-        </div>
-      </div>
+      ${gridHTML}
       <div style="margin-top:8px; color:var(--muted); font-size:12px">
-        * 커브는 세트의 <code>metadata.curves</code> 또는 <code>metadata.curvePreset</code>로 제어됩니다.
+        * Display depends on mode (${mode}). Total is computed only in Full mode.
       </div>
     `;
     box.appendChild(sat);
   })();
 
-  // 진행도 카드
   const baseIdForCompare = SET.__isReviewSession
     ? (SET.metadata?.parentId || 'base')
     : (SET.metadata?.id || SET.metadata?.title || 'base');
   box.appendChild( buildProgressCard(baseIdForCompare, 5) );
-
-  // 스킬 요약
   box.appendChild( buildSkillSummaryCard(2) );
 
-  // CSV
   $('#csvBtn').onclick = downloadCSV;
 
-  // 스킬 드롭다운
   const allSkills = new Set();
   (SET.modules||[]).forEach(m => (m.questions||[]).forEach(q => getSkillCodes(q).forEach(s => allSkills.add(s))));
   const $skill = document.getElementById('skillFilter');
@@ -893,7 +1144,6 @@ function showFinalReport(){
     $skill.appendChild(opt);
   });
 
-  // 리뷰 타이머 UI
   const $mode = document.getElementById('reviewTimerMode');
   const $min  = document.getElementById('reviewTimerMin');
   if (window.REVIEW_TIMER_PREF) {
@@ -912,7 +1162,6 @@ function showFinalReport(){
     window.REVIEW_TIMER_PREF = { mode: $mode.value, minutes: Number($min.value)||null };
   });
 
-  // 리뷰 버튼
   document.getElementById('reviewWrongBtn').onclick = ()=> startReviewSession({ mode:'wrong' });
   document.getElementById('reviewFlagBtn').onclick  = ()=> startReviewSession({ mode:'flagged' });
   document.getElementById('reviewSkillBtn').onclick = ()=>{
@@ -920,7 +1169,6 @@ function showFinalReport(){
     if(code) startReviewSession({ mode:'skill', skill:code });
   };
 
-  // 섹션별 정오표
   const groups = {};
   SET.modules.forEach((m,mi)=>{
     const key=(m.section||'misc').toLowerCase();
@@ -971,7 +1219,7 @@ function showFinalReport(){
         return `<button class="result-dot ${cls}${flag}" data-section="${secKey}" data-module="${pm.module}" data-num="${d.number}" title="${secName} · Module ${pm.module} · Q${d.number}">${d.number}</button>`;
       }).join('');
       wrap.innerHTML = `
-        <b>${secName} — Module ${pm.module} · 정오표</b>
+        <b>${secName} — Module ${pm.module} · Answer Sheet</b>
         <div class="result-grid" style="margin-top:10px">${cells}</div>`;
       box.appendChild(wrap);
     });
@@ -1053,7 +1301,7 @@ function openExplain(secName, modNo, idx, q, ok){
               </button>`;
           }).join('')}
         </div>
-      </div>` : `<div class="similar-wrap" style="color:var(--muted); font-size:13px">추천 문항이 아직 없습니다.</div>`;
+      </div>` : `<div class="similar-wrap" style="color:var(--muted); font-size:13px">No recommendations yet.</div>`;
     explainBody.insertAdjacentHTML('beforeend', simGrid);
     explainBody.querySelectorAll('.similar-card').forEach(btn=>{
       btn.addEventListener('click', ()=>{
@@ -1077,10 +1325,11 @@ async function loadSetFromFile(file){
     SET = JSON.parse(text);
     $('#loadError').style.display='none';
     rememberLastSet({ type:'blob', value:text });
-
+    applyRunModeFilter();
+    if (!SET.modules.length) return;
     afterSetLoaded();
   }catch(e){
-    $('#loadError').textContent = `파일 로드 실패: ${e.message}`;
+    $('#loadError').textContent = `Failed to load file: ${e.message}`;
     $('#loadError').style.display='block';
   }
 }
@@ -1185,7 +1434,16 @@ function maybeStartReviewFromQuery(){
 }
 
 /* ===== 부트스트랩 ===== */
+
+
 window.addEventListener('DOMContentLoaded', ()=>{
+  // 실행 모드 확정 및 뱃지 반영
+  RUN_MODE = resolveInitialRunMode();
+  updateModeUIBadges();
+
+  // 로컬 Attempt 레코드 스펙 보정
+  migrateLocalAttemptsOnce();
+
   const qs = new URLSearchParams(location.search);
   const url = qs.get('set');
   const src = qs.get('source');
@@ -1205,16 +1463,15 @@ window.addEventListener('DOMContentLoaded', ()=>{
       if (last.type === 'url' && last.value) {
         loadSet(last.value);
       } else if (last.type === 'blob' && last.value) {
-        // landing 없이 직접 파싱
         try{
           SET = JSON.parse(last.value);
+          applyRunModeFilter();
+          if (!SET.modules.length) return;
           afterSetLoaded();
         }catch(_e){
-          // 실패 시 로더 노출
           document.getElementById('loaderRow').style.display='';
         }
       } else {
-        // 포맷 불명 → 로더 노출
         document.getElementById('loaderRow').style.display='';
       }
     }

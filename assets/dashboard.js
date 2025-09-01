@@ -10,7 +10,7 @@ function savePresetDefaults(obj){ try{ localStorage.setItem(PRESET_DEFAULT_KEY, 
 
 /* ===== Filter Persistence (1-B) ===== */
 const FILTER_KEY = 'dsat_dashboard_filters_v1';
-let FILTERS_READY = false; // 초기 세팅 중 불필요 저장 방지
+let FILTERS_READY = false;
 
 function loadFilters() {
   try { return JSON.parse(localStorage.getItem(FILTER_KEY) || '{}'); } catch { return {}; }
@@ -22,10 +22,14 @@ function saveFilters(filters) {
 function snapshotFiltersFromUI() {
   const from = document.getElementById('fromDate').value || '';
   const to   = document.getElementById('toDate').value || '';
+  // PATCH: mode 선택값도 함께 저장(있을 때만)
+  const modeSel = document.getElementById('modeSelect');
+  const mode = modeSel ? (modeSel.value || 'all') : (window.DASH_MODE || 'all');
   return {
     baseId: document.getElementById('baseSelect').value || '',
     kind:   document.getElementById('kindSelect').value || '',
     preset: document.getElementById('presetSelect').value || '',
+    mode,
     from, to
   };
 }
@@ -44,9 +48,14 @@ function applySavedFiltersToUI() {
   }
   if (f.from) byId('fromDate').value = f.from;
   if (f.to)   byId('toDate').value   = f.to;
+
+  // PATCH: 저장된 모드 복원(있다면)
+  const modeSel = byId('modeSelect');
+  if (modeSel && f.mode) modeSel.value = f.mode;
+  if (f.mode) setDashMode(f.mode); // 버튼 세그먼트와 동기
 }
 
-/* ===== Chart.js 공통 옵션 (툴팁/호버 강화, 1-C) ===== */
+/* ===== Chart.js 공통 옵션 ===== */
 const chartCommonOptions = {
   responsive: true,
   interaction: { mode: 'nearest', intersect: false },
@@ -76,11 +85,7 @@ const chartCommonOptions = {
   scales: {
     x: {
       type: 'linear',
-      ticks: {
-        autoSkip: true,
-        maxRotation: 0,
-        callback: (val) => formatDateTick(val)
-      },
+      ticks: { autoSkip: true, maxRotation: 0, callback: (val) => formatDateTick(val) },
       grid: { display: false }
     }
   },
@@ -105,8 +110,9 @@ function interp(points,x){
   return Math.round(pts[pts.length-1][1]);
 }
 function scaledFromCurve(points, correct, total){
+  if (!total || total <= 0) return null; // PATCH: 원점수 없으면 스케일드는 null
   const maxX=Math.max(...points.map(p=>p[0]));
-  const x=(maxX<=100)?(total? correct/total*100 : 0):correct;
+  const x=(maxX<=100)?(correct/total*100):correct;
   return interp(points,x);
 }
 function chooseCurves(presetName, attempt){
@@ -117,18 +123,67 @@ function chooseCurves(presetName, attempt){
 }
 function ensureScaled(attempt, viewPreset){
   const curves = chooseCurves(viewPreset, attempt);
-  let rw = {correct:0,total:0,scaled:0};
-  let math = {correct:0,total:0,scaled:0};
-  if(attempt.sections){
-    rw.correct   = attempt.sections.rw?.correct ?? 0;
-    rw.total     = attempt.sections.rw?.total ?? 0;
-    math.correct = attempt.sections.math?.correct ?? 0;
-    math.total   = attempt.sections.math?.total ?? 0;
+  // 원본 보존 + 계산
+  const rwRaw   = attempt.sections?.rw ? { correct: attempt.sections.rw.correct ?? 0, total: attempt.sections.rw.total ?? 0 } : { correct:0, total:0 };
+  const mathRaw = attempt.sections?.math ? { correct: attempt.sections.math.correct ?? 0, total: attempt.sections.math.total ?? 0 } : { correct:0, total:0 };
+
+  const rwScaled   = scaledFromCurve(curves.rw,   rwRaw.correct,   rwRaw.total);
+  const mathScaled = scaledFromCurve(curves.math, mathRaw.correct, mathRaw.total);
+
+  const sections = {
+    rw:   { correct: rwRaw.correct,   total: rwRaw.total,   scaled: rwScaled },
+    math: { correct: mathRaw.correct, total: mathRaw.total, scaled: mathScaled }
+  };
+
+  // PATCH: 시도 모드에 맞춰 총점 산출
+  const mode = attempt.mode || 'full';
+  let sat_total = null;
+  if (mode === 'full') {
+    if (typeof rwScaled === 'number' && typeof mathScaled === 'number') sat_total = rwScaled + mathScaled;
+  } else if (mode === 'rw') {
+    if (typeof rwScaled === 'number') sat_total = rwScaled;
+  } else if (mode === 'math') {
+    if (typeof mathScaled === 'number') sat_total = mathScaled;
   }
-  rw.scaled   = scaledFromCurve(curves.rw,   rw.correct,   rw.total);
-  math.scaled = scaledFromCurve(curves.math, math.correct, math.total);
-  const sat_total = rw.scaled + math.scaled;
-  return { ...attempt, sections:{ rw, math }, sat_total };
+
+  return { ...attempt, sections, sat_total };
+}
+
+/* ===== Attempt 스키마 마이그레이션 ===== */
+function uuid4(){
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c=>{
+    const r = Math.random()*16|0, v = c === 'x' ? r : (r&0x3|0x8);
+    return v.toString(16);
+  });
+}
+function migrateLocalAttemptsOnce(){
+  const arr = loadAttempts();
+  let changed = false;
+  for(const a of arr){
+    if(!a.id){ a.id = uuid4(); changed = true; }
+    if(!a.updatedAt){ a.updatedAt = a.ts || Date.now(); changed = true; }
+    if(a._dirty === undefined){ a._dirty = false; changed = true; }
+    if(!a.version){ a.version = 1; changed = true; }
+    if(!a.sections){
+      a.sections = { rw:{correct:0,total:0}, math:{correct:0,total:0} };
+      changed = true;
+    }
+  }
+  if(changed) saveAttempts(arr);
+}
+
+/* ===== 모드 필터 (대시보드 전용) ===== */
+let DASH_MODE = 'all'; // 'all' | 'full' | 'rw' | 'math'
+function setDashMode(m){
+  DASH_MODE = (m==='full'||m==='rw'||m==='math'||m==='all') ? m : 'all';
+  const sel = document.getElementById('modeSelect');
+  if (sel) sel.value = DASH_MODE;
+  document.querySelectorAll('.mode-btn[data-mode]').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.mode === DASH_MODE);
+  });
+  saveFilters({ ...loadFilters(), mode: DASH_MODE });
+  renderAll();
 }
 
 /* ===== UI 요소 ===== */
@@ -156,7 +211,7 @@ function groupBaseOptions(list){
     if(!map.has(a.baseId)) map.set(a.baseId,{ baseId:a.baseId, titleSet:new Set(), lastTs:0 });
     const rec=map.get(a.baseId);
     if(a.title) rec.titleSet.add(a.title);
-    rec.lastTs = Math.max(rec.lastTs,a.ts);
+    rec.lastTs = Math.max(rec.lastTs, a.ts || 0);
   });
   return [...map.values()].sort((a,b)=> b.lastTs-a.lastTs).map(rec=>{
     const label = rec.titleSet.size? [...rec.titleSet].pop() : rec.baseId;
@@ -168,14 +223,10 @@ function fillBase(list){
   groupBaseOptions(list).forEach(opt=>{
     const o=document.createElement('option'); o.value=opt.value; o.textContent=opt.label; $base.appendChild(o);
   });
-
-  // 저장된 baseId가 있으면 우선 적용
   const saved = loadFilters();
   if (saved.baseId && $base.querySelector(`option[value="${CSS.escape(saved.baseId)}"]`)) {
     $base.value = saved.baseId;
   }
-
-  // 세트별 기본 프리셋 자동 선택(단, 저장된 preset이 있으면 저장값 우선)
   const def=loadPresetDefaults(); const baseId=$base.value;
   if(def[baseId] && ($preset.querySelector(`option[value="${def[baseId]}"]`))){
     if (!saved.preset) $preset.value=def[baseId];
@@ -188,8 +239,6 @@ function fillPreset(){
     const o=document.createElement('option'); o.value=name; o.textContent=name; $preset.appendChild(o);
   });
   if(PRESETS.default) $preset.value='default';
-
-  // 저장된 preset 복원
   const saved = loadFilters();
   if (saved.preset && $preset.querySelector(`option[value="${CSS.escape(saved.preset)}"]`)) {
     $preset.value = saved.preset;
@@ -200,7 +249,7 @@ function fmtDate(ts){
   return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`;
 }
 
-/* ===== 날짜/필터 유틸 ===== */
+/* ===== 날짜/필터 ===== */
 function parseDateInput(v){
   if(!v) return null;
   const t = Date.parse(v + 'T00:00:00');
@@ -208,48 +257,122 @@ function parseDateInput(v){
 }
 function endOfDay(ts){ return ts + 24*60*60*1000 - 1; }
 
+/* ─────────────────────────────────────────────────────────
+   [PATCH-BEGIN] 서버 연동 (DSAT_SYNC → REST → localStorage 폴백)
+   - normalizeServerAttempt: 서버 레코드를 대시보드 스키마로 정규화
+   - fetchAttemptsViaDSATSYNC / fetchAttemptsViaREST
+   - refreshAttempts(): 서버에서 가져와 캐시에 저장
+   - allAttempts(): 캐시 있으면 캐시, 없으면 로컬
+   ───────────────────────────────────────────────────────── */
+let ATTEMPTS_CACHE = [];
+
+async function getAuthToken(){ 
+  try{ const u=firebase?.auth?.().currentUser; if(!u) return null; return await u.getIdToken(); }catch{ return null; } 
+}
+function normalizeServerAttempt(x){
+  const ts = x.finishedAt?.seconds ? x.finishedAt.seconds*1000
+           : x.createdAt?.seconds  ? x.createdAt.seconds*1000
+           : (typeof x.ts==='number'? x.ts : Date.now());
+  const rwRaw = x.rawScore?.rw || x.raw?.rw || {};
+  const mRaw  = x.rawScore?.math || x.raw?.math || {};
+  return {
+    id: x.id || x.attemptId || String(ts),
+    ts,
+    baseId: x.setId || x.baseId || x.set || '-',
+    title: x.title || x.setTitle || x.baseTitle || x.setId || '-',
+    kind: x.kind || 'base',
+    mode: x.runMode || x.mode || 'full',
+    curvePreset: x.curvePreset || null,
+    sections: {
+      rw:   { correct: Number(rwRaw.correct||0), total: Number(rwRaw.total||0) },
+      math: { correct: Number(mRaw.correct||0),  total: Number(mRaw.total||0) }
+    },
+    skills: x.skills || {},
+    _from: 'server'
+  };
+}
+async function fetchAttemptsViaDSATSYNC(){
+  try{
+    if(!window.DSAT_SYNC || !DSAT_SYNC.listAttempts) return null;
+    const out = await DSAT_SYNC.listAttempts();
+    if(!out || !Array.isArray(out.attempts)) return null;
+    return out.attempts.map(normalizeServerAttempt);
+  }catch{ return null; }
+}
+async function fetchAttemptsViaREST(){
+  try{
+    const token = await getAuthToken();
+    const base  = window.SYNC_API_BASE || (window.DSAT_SYNC && DSAT_SYNC.API_BASE) || '';
+    const url   = (base? base.replace(/\/$/,'') : '') + '/api/attempts';
+    const res   = await fetch(url, { headers: token? { 'Authorization': 'Bearer '+token } : {} });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const json  = await res.json();
+    if(!json || !Array.isArray(json.attempts)) throw new Error('Invalid payload');
+    return json.attempts.map(normalizeServerAttempt);
+  }catch{ return null; }
+}
+async function refreshAttempts(){
+  let server = await fetchAttemptsViaDSATSYNC();
+  if(!server) server = await fetchAttemptsViaREST();
+  if(!server) server = loadAttempts(); // 마지막 폴백: 로컬
+  ATTEMPTS_CACHE = (server||[]).sort((a,b)=> (b.ts||0)-(a.ts||0));
+}
+function allAttempts(){
+  return (ATTEMPTS_CACHE && ATTEMPTS_CACHE.length)? ATTEMPTS_CACHE : loadAttempts();
+}
+/* ─────────────────────────────────────────────────────────
+   [PATCH-END] 서버 연동
+   ───────────────────────────────────────────────────────── */
+
 /* ===== 데이터 현재 뷰 ===== */
 function currentRows(){
-  const all = loadAttempts().sort((a,b)=> b.ts-a.ts);
+  // PATCH: 서버 캐시 우선 사용
+  const all = allAttempts().sort((a,b)=> (b.ts||0)-(a.ts||0));
+
   if(!$base.options.length) fillBase(all);
   if(!$preset.options.length) fillPreset();
 
   const baseId = $base.value || (all[0]?.baseId ?? '');
   const kind = $kind.value;
 
-  // 날짜 필터
   const fromTs = parseDateInput($from.value);
   const toTsRaw = parseDateInput($to.value);
   const toTs = toTsRaw!==null ? endOfDay(toTsRaw) : null;
 
-  // 세트별 기본 프리셋 우선 → 없으면 선택값 → (저장값은 fillPreset에서 적용됨)
   const def=loadPresetDefaults(); const basePreset = def[baseId];
   const presetName = ($preset.value || basePreset || null);
 
-  const filtered = all.filter(a=>{
+  const filtered0 = all.filter(a=>{
     if(a.baseId!==baseId) return false;
     if(kind && a.kind!==kind) return false;
-    if(fromTs!==null && a.ts < fromTs) return false;
-    if(toTs!==null && a.ts > toTs) return false;
+    if(fromTs!==null && (a.ts||0) < fromTs) return false;
+    if(toTs!==null && (a.ts||0) > toTs) return false;
     return true;
   });
 
-  $count.textContent = `${filtered.length} attempts`;
-  return { rows: filtered.map(a=> ensureScaled(a, presetName)), presetName, baseId, fromTs, toTs };
+  // PATCH: 모드 필터링
+  const fm = (DASH_MODE==='all') ? filtered0 : filtered0.filter(a => (a.mode || 'full') === DASH_MODE);
+
+  // 스케일드/총점 계산 반영
+  const rowsEnsured = fm.map(a=> ensureScaled(a, presetName));
+
+  $count.textContent = `${rowsEnsured.length} attempts`;
+  return { rows: rowsEnsured, presetName, baseId, fromTs, toTs };
 }
 
 /* ===== 표/차트 ===== */
 function renderTable(rows){
+  const numOrDash = (v)=> (typeof v==='number' && isFinite(v)) ? v : '—';
   $tbody.innerHTML='';
   rows.forEach(a=>{
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td>${fmtDate(a.ts)}</td>
       <td>${a.title||a.baseId||''}</td>
-      <td>${a.kind}</td>
-      <td class="right">${a.sections.rw.correct}/${a.sections.rw.total} · <b>${a.sections.rw.scaled}</b></td>
-      <td class="right">${a.sections.math.correct}/${a.sections.math.total} · <b>${a.sections.math.scaled}</b></td>
-      <td class="right"><b>${a.sat_total}</b></td>
+      <td>${a.kind}${a.mode? ` · <span class="badge" style="background:#eef">${a.mode.toUpperCase()}</span>`:''}</td>
+      <td class="right">${a.sections.rw.correct}/${a.sections.rw.total} · <b>${numOrDash(a.sections.rw.scaled)}</b></td>
+      <td class="right">${a.sections.math.correct}/${a.sections.math.total} · <b>${numOrDash(a.sections.math.scaled)}</b></td>
+      <td class="right"><b>${numOrDash(a.sat_total)}</b></td>
       <td class="right">${a.curvePreset||'—'}</td>`;
     tr.style.cursor='pointer';
     tr.addEventListener('click', ()=> openAttemptDetail(a));
@@ -257,66 +380,37 @@ function renderTable(rows){
   });
 }
 
-/* === 1-C 적용: 모든 시계열 차트에 공통 옵션 + __att 바인딩 === */
 function renderCharts(rows){
-  const chronological = [...rows].sort((a,b)=> a.ts-b.ts);
+  // PATCH: null-safe 포인트 생성
+  const toPoint = (a, v) => (typeof v==='number' && isFinite(v)) ? { x:a.ts, y:v, __att:a } : { x:a.ts, y:null, __att:a };
+  const chronological = [...rows].sort((a,b)=> (a.ts||0)-(b.ts||0));
 
-  // 포인트 생성 (툴팁에서 원본 시도 접근 가능하도록 __att 포함)
-  const pointsTotal = chronological.map(a => ({ x: a.ts, y: a.sat_total, __att: a }));
-  const pointsRW    = chronological.map(a => ({ x: a.ts, y: a.sections.rw.scaled, __att: a }));
-  const pointsMath  = chronological.map(a => ({ x: a.ts, y: a.sections.math.scaled, __att: a }));
+  const pointsTotal = chronological.map(a => toPoint(a, a.sat_total));
+  const pointsRW    = chronological.map(a => toPoint(a, a.sections.rw.scaled));
+  const pointsMath  = chronological.map(a => toPoint(a, a.sections.math.scaled));
 
-  // Line: Total SAT
   const c1=document.getElementById('satLine'); if(LINE) LINE.destroy();
   LINE = new Chart(c1, {
     type:'line',
-    data:{ datasets:[{ label:'Total SAT', data:pointsTotal, tension:.25, pointRadius:3 }]},
+    data:{ datasets:[{ label:'Total SAT (by mode)', data:pointsTotal, tension:.25, pointRadius:3, spanGaps:true }]},
     options:{
       ...chartCommonOptions,
-      plugins:{
-        ...chartCommonOptions.plugins,
-        tooltip:{
-          ...chartCommonOptions.plugins.tooltip,
-          callbacks:{
-            ...chartCommonOptions.plugins.tooltip.callbacks,
-            label:(item)=> `Total: ${item.formattedValue}`
-          }
-        }
-      },
-      scales:{
-        ...chartCommonOptions.scales,
-        y:{ suggestedMin:400, suggestedMax:1600, grid:{ color:'#eee' } }
-      }
+      plugins:{ ...chartCommonOptions.plugins, tooltip:{ ...chartCommonOptions.plugins.tooltip, callbacks:{ ...chartCommonOptions.plugins.tooltip.callbacks, label:(i)=> `Total: ${i.parsed.y ?? '—'}` } } },
+      scales:{ ...chartCommonOptions.scales, y:{ suggestedMin:400, suggestedMax:1600, grid:{ color:'#eee' } } }
     }
   });
 
-  // Stacked Bar: RW/Math Scaled over time
   const c2=document.getElementById('sectionBar'); if(BAR) BAR.destroy();
   BAR = new Chart(c2, {
     type:'bar',
-    data:{
-      datasets:[
-        { label:'RW',   data:pointsRW,   stack:'sat' },
-        { label:'Math', data:pointsMath, stack:'sat' }
-      ]
-    },
+    data:{ datasets:[
+      { label:'RW',   data:pointsRW,   stack:'sat' },
+      { label:'Math', data:pointsMath, stack:'sat' }
+    ]},
     options:{
       ...chartCommonOptions,
-      plugins:{
-        ...chartCommonOptions.plugins,
-        tooltip:{
-          ...chartCommonOptions.plugins.tooltip,
-          callbacks:{
-            ...chartCommonOptions.plugins.tooltip.callbacks,
-            label:(item)=> `${item.dataset.label}: ${item.formattedValue}`
-          }
-        }
-      },
-      scales:{
-        ...chartCommonOptions.scales,
-        y:{ suggestedMin:200, suggestedMax:1600, stacked:true, grid:{ color:'#eee' } },
-        x:{ ...chartCommonOptions.scales.x, stacked:true }
-      }
+      plugins:{ ...chartCommonOptions.plugins, tooltip:{ ...chartCommonOptions.plugins.tooltip, callbacks:{ ...chartCommonOptions.plugins.tooltip.callbacks, label:(i)=> `${i.dataset.label}: ${i.parsed.y ?? '—'}` } } },
+      scales:{ ...chartCommonOptions.scales, y:{ suggestedMin:200, suggestedMax:1600, stacked:true, grid:{ color:'#eee' } }, x:{ ...chartCommonOptions.scales.x, stacked:true } }
     }
   });
 }
@@ -329,17 +423,19 @@ function allSkillNames(rows){
 }
 function fillSkillSelect(rows){
   const skills = allSkillNames(rows);
-  $skillSel.innerHTML='';
-  skills.forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=k; $skillSel.appendChild(o); });
+  const sel = document.getElementById('skillSelect');
+  if(!sel) return;
+  sel.innerHTML='';
+  skills.forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=k; sel.appendChild(o); });
 }
 function classForPct(p){ if(p>=95) return 'c-95'; if(p>=85) return 'c-85'; if(p>=70) return 'c-70'; if(p>=50) return 'c-50'; return 'c-0'; }
 function renderHeatmap(rows){
   const heatHdr=document.getElementById('heatHdr');
   const heatBody=document.getElementById('heatBody');
+  if(!heatHdr || !heatBody) return;
   heatHdr.innerHTML=''; heatBody.innerHTML='';
 
   const skills = allSkillNames(rows);
-  // 헤더
   const hdrRow=document.createElement('div'); hdrRow.className='heat-row';
   const left=document.createElement('div'); left.className='skill-name'; left.style.fontWeight='700'; left.textContent='Skill';
   hdrRow.appendChild(left);
@@ -350,7 +446,6 @@ function renderHeatmap(rows){
   });
   heatHdr.appendChild(hdrRow);
 
-  // 바디
   skills.forEach(sk=>{
     const row=document.createElement('div'); row.className='heat-row';
     const name=document.createElement('div'); name.className='skill-name'; name.textContent=sk;
@@ -360,139 +455,113 @@ function renderHeatmap(rows){
       const acc = s && s.total ? Math.round((s.correct/s.total)*100) : null;
       const cell=document.createElement('div'); cell.className='cell ' + (acc===null?'':classForPct(acc));
       cell.textContent = acc===null ? '—' : String(acc);
-      cell.title = acc===null ? `${sk}: data none` : `${sk}: ${s.correct}/${s.total} (${acc}%)`;
+      cell.title = acc===null ? `${sk}: no data` : `${sk}: ${s.correct}/${s.total} (${acc}%)`;
       row.appendChild(cell);
     });
     heatBody.appendChild(row);
   });
 }
-
-/* === 1-C 적용: 스킬 트렌드도 {x,y,__att} + 공통옵션 사용 === */
 function renderSkillTrend(rows){
   const key=$skillSel.value;
-  const chronological = [...rows].sort((a,b)=> a.ts-b.ts);
+  const chronological = [...rows].sort((a,b)=> (a.ts||0)-(b.ts||0));
   const points = chronological.map(a=>{
     const s=a.skills?.[key];
     const val = (s && s.total)? Math.round((s.correct/s.total)*100) : null;
     return val===null ? { x:a.ts, y:null, __att:a } : { x:a.ts, y:val, __att:a };
   });
 
-  const c=document.getElementById('skillLine'); if(SKILL_LINE) SKILL_LINE.destroy();
-  SKILL_LINE = new Chart(c,{
-    type:'line',
-    data:{ datasets:[{ label:key||'Skill', data:points, spanGaps:true, tension:.2 }]},
-    options:{
+  const c=document.getElementById('skillLine'); if(!c) return;
+  if(SKILL_LINE) SKILL_LINE.destroy();
+  SKILL_LINE = new Chart(c, {
+    type: 'line',
+    data: { datasets: [{ label: key || 'Skill', data: points, spanGaps: true, tension: 0.2 }] },
+    options: {
       ...chartCommonOptions,
-      plugins:{
+      plugins: {
         ...chartCommonOptions.plugins,
-        tooltip:{
-          ...chartCommonOptions.plugins.tooltip,
-          callbacks:{
-            ...chartCommonOptions.plugins.tooltip.callbacks,
-            label:(item)=> `Acc: ${item.formattedValue}%`
-          }
-        }
+        tooltip: { ...chartCommonOptions.plugins.tooltip, callbacks: { ...chartCommonOptions.plugins.tooltip.callbacks, label: (item) => `Acc: ${item.formattedValue ?? '—'}%` } }
       },
-      scales:{
-        ...chartCommonOptions.scales,
-        y:{ suggestedMin:0, suggestedMax:100, grid:{ color:'#eee' } }
-      }
+      scales: { ...chartCommonOptions.scales, y: { suggestedMin: 0, suggestedMax: 100, grid: { color: '#eee' } } }
     }
   });
 }
 
-/* ===== 비교/상세 ===== */
+/* ===== 비교/상세/집계 ===== */
 function fillCompare(rows){
-  const opts = rows.map((a,i)=>({ key:String(a.ts), label:`#${i+1} • ${fmtDate(a.ts)} • ${a.kind} • ${a.sat_total}` }));
+  const opts = rows.map((a,i)=>({ key:String(a.ts), label:`#${i+1} • ${fmtDate(a.ts)} • ${a.kind} • ${a.sat_total ?? '—'}` }));
   [$cmpA,$cmpB].forEach(sel=>{
+    if(!sel) return;
     sel.innerHTML=''; opts.forEach(o=>{ const op=document.createElement('option'); op.value=o.key; op.textContent=o.label; sel.appendChild(op); });
   });
-  if(opts.length>=2){ $cmpA.selectedIndex=0; $cmpB.selectedIndex=1; }
+  if(opts.length>=2){ if($cmpA) $cmpA.selectedIndex=0; if($cmpB) $cmpB.selectedIndex=1; }
 }
 function renderCompare(rows){
+  if(!$cmpOut) return;
   $cmpOut.innerHTML = '';
-
-  const keyA = $cmpA.value, keyB = $cmpB.value;
+  const keyA = $cmpA?.value, keyB = $cmpB?.value;
   const A = rows.find(a => String(a.ts) === keyA);
   const B = rows.find(a => String(a.ts) === keyB);
+  if (!A || !B) { $cmpOut.innerHTML = '<div class="muted">Select two attempts to compare.</div>'; return; }
 
-  if (!A || !B) {
-    $cmpOut.innerHTML = '<div class="muted">비교하려면 두 시도를 선택하세요.</div>';
-    return;
-  }
-
-  // 공통 카드 템플릿
-  function card(title, aVal, bVal, fmt = (v)=>v, extraClass=''){
-    const bothNum = (typeof aVal === 'number') && (typeof bVal === 'number');
-    const delta = bothNum ? (bVal - aVal) : null;
-    const sign = delta === null ? '' : (delta > 0 ? '+' : '');
-    const color = delta === null ? '' : (delta >= 0 ? 'ok' : 'bad');
+  const asNumOrNull = v => (typeof v==='number' && isFinite(v)) ? v : null;
+  function card(title, aVal, bVal, fmt = (v)=> (v==null ? '—' : v), extraClass=''){
+    const aN = asNumOrNull(aVal), bN = asNumOrNull(bVal);
+    const delta = (aN!=null && bN!=null) ? (bN - aN) : null;
+    const sign = delta == null ? '' : (delta > 0 ? '+' : '');
+    const color = delta == null ? '' : (delta >= 0 ? 'ok' : 'bad');
     return `
       <div class="card ${extraClass}">
         <div class="head"><div class="title">${title}</div></div>
         <div style="display:flex; justify-content:space-between; gap:8px">
-          <div><div class="muted">A</div><div><b>${fmt(aVal)}</b></div></div>
-          <div><div class="muted">B</div><div><b>${fmt(bVal)}</b></div></div>
+          <div><div class="muted">A</div><div><b>${fmt(aN)}</b></div></div>
+          <div><div class="muted">B</div><div><b>${fmt(bN)}</b></div></div>
           <div><div class="muted">Δ</div><div><span class="badge ${color}">${delta===null?'—': (sign + delta)}</span></div></div>
         </div>
       </div>`;
   }
-
-  // 1행: Total SAT (전체폭)
-  const row1 = card('Total SAT', A.sat_total, B.sat_total, v => v, 'cmp-span-all');
-
-  // 2행: Scaled 2장
-  const row2 = [
-    card('RW (Scaled)',   A.sections.rw.scaled,   B.sections.rw.scaled),
-    card('Math (Scaled)', A.sections.math.scaled, B.sections.math.scaled)
-  ].join('');
-
-  // 3행: Raw 2장
-  const row3 = [
-    card('RW Raw',   A.sections.rw.correct,   B.sections.rw.correct),
-    card('Math Raw', B.sections.math.correct, B.sections.math.correct)
-  ].join('');
-
+  const row1 = card('Total (by mode)', A.sat_total, B.sat_total, v=>v, 'cmp-span-all');
+  const row2 = [ card('RW (Scaled)', A.sections.rw.scaled, B.sections.rw.scaled), card('Math (Scaled)', A.sections.math.scaled, B.sections.math.scaled) ].join('');
+  const row3 = [ card('RW Raw', A.sections.rw.correct, B.sections.rw.correct), card('Math Raw', A.sections.math.correct, B.sections.math.correct) ].join('');
   $cmpOut.innerHTML = row1 + row2 + row3;
 }
-
-/* ===== 집계 렌더러 ===== */
 function renderAggregations(rows){
+  if(!$agg) return;
   const mode = $agg.value;
-  if(!mode){
-    $aggCard.style.display='none';
-    $aggOut.innerHTML='';
-    return;
-  }
-
+  if(!mode){ if($aggCard) $aggCard.style.display='none'; if($aggOut) $aggOut.innerHTML=''; return; }
   const keyFn = (a)=> mode==='byPreset' ? (a.curvePreset || '—') : a.baseId;
-
   const groups = new Map();
-  rows.forEach(a=>{
-    const k = keyFn(a);
-    if(!groups.has(k)) groups.set(k, []);
-    groups.get(k).push(a);
-  });
+  rows.forEach(a=>{ const k = keyFn(a); if(!groups.has(k)) groups.set(k, []); groups.get(k).push(a); });
 
   const stats = [...groups.entries()].map(([k,arr])=>{
-    const n = arr.length;
-    const avg = (list, pick)=> Math.round(list.reduce((s,x)=> s + pick(x), 0) / n);
-    const rwScaledAvg   = avg(arr, x=> x.sections.rw.scaled);
-    const mathScaledAvg = avg(arr, x=> x.sections.math.scaled);
-    const satAvg        = avg(arr, x=> x.sat_total);
-    const rwRawAvg   = Math.round(arr.reduce((s,x)=> s + (x.sections.rw.correct / (x.sections.rw.total||1)), 0) / n * 100);
-    const mathRawAvg = Math.round(arr.reduce((s,x)=> s + (x.sections.math.correct / (x.sections.math.total||1)), 0) / n * 100);
-    const latestTs = Math.max(...arr.map(x=> x.ts));
-    return { key:k, n, satAvg, rwScaledAvg, mathScaledAvg, rwRawAvg, mathRawAvg, latestTs };
+    const nAll = arr.length;
+
+    const numAvg = (list, pick)=>{
+      const vals = list.map(pick).filter(v=> typeof v==='number' && isFinite(v));
+      const n = vals.length || 1;
+      return Math.round(vals.reduce((s,x)=>s+x,0)/n);
+    };
+
+    const rwScaledAvg   = numAvg(arr, x=> x.sections.rw.scaled);
+    const mathScaledAvg   = numAvg(arr, x=> x.sections.math.scaled);
+    const satAvg        = numAvg(arr, x=> x.sat_total);
+
+    const rwRawAvgPct = (()=> {
+      const vals = arr.map(x=> (x.sections.rw.total? (x.sections.rw.correct/x.sections.rw.total*100) : null)).filter(v=> v!=null);
+      const n = vals.length || 1;
+      return Math.round(vals.reduce((s,x)=>s+x,0)/n);
+    })();
+    const mathRawAvgPct = (()=> {
+      const vals = arr.map(x=> (x.sections.math.total? (x.sections.math.correct/x.sections.math.total*100) : null)).filter(v=> v!=null);
+      const n = vals.length || 1;
+      return Math.round(vals.reduce((s,x)=>s+x,0)/n);
+    })();
+
+    const latestTs = Math.max(...arr.map(x=> x.ts||0));
+    return { key:k, n:nAll, satAvg, rwScaledAvg, mathScaledAvg, rwRawAvg: rwRawAvgPct, mathRawAvg: mathRawAvgPct, latestTs };
   });
 
-  stats.sort((a,b)=>{
-    if(b.n!==a.n) return b.n - a.n;
-    if(b.satAvg!==a.satAvg) return b.satAvg - a.satAvg;
-    return String(a.key).localeCompare(String(b.key));
-  });
-
-  const thMode = (mode==='byPreset') ? '프리셋' : '세트';
+  stats.sort((a,b)=> (b.n-a.n) || (b.satAvg-a.satAvg) || String(a.key).localeCompare(String(b.key)));
+  const thMode = (mode==='byPreset') ? 'Preset' : 'Set';
   const rowsHTML = stats.map(s=>`
     <tr>
       <td>${s.key}</td>
@@ -505,66 +574,59 @@ function renderAggregations(rows){
       <td>${new Date(s.latestTs).toLocaleDateString()}</td>
     </tr>
   `).join('');
-
-  $aggOut.innerHTML = `
-    <div class="muted" style="font-size:13px; margin-bottom:6px">
-      평균은 위의 모든 필터(세트/보기/날짜/프리셋 재계산) 적용 후 남은 시도만 포함됩니다.
-    </div>
-    <table style="width:100%; border-collapse:collapse; font-size:14px">
-      <thead>
-        <tr>
-          <th style="text-align:left">${thMode}</th>
-          <th class="right">시도수</th>
-          <th class="right">총점 평균</th>
-          <th class="right">RW Scaled 평균</th>
-          <th class="right">Math Scaled 평균</th>
-          <th class="right">RW 정답률</th>
-          <th class="right">Math 정답률</th>
-          <th style="text-align:left">최근 일자</th>
-        </tr>
-      </thead>
-      <tbody>${rowsHTML}</tbody>
-    </table>
-  `;
-
-  $aggCaption.textContent = (mode==='byPreset') ? '프리셋별 집계' : '세트별 집계';
-  $aggCard.style.display = 'block';
+  if($aggOut) {
+    $aggOut.innerHTML = `
+      <div class="muted" style="font-size:13px; margin-bottom:6px">Averages are computed after current filters (set/view/date/preset/mode).</div>
+      <table style="width:100%; border-collapse:collapse; font-size:14px">
+        <thead>
+          <tr>
+            <th style="text-align:left">${thMode}</th>
+            <th class="right">#Attempts</th>
+            <th class="right">Total Avg</th>
+            <th class="right">RW Scaled Avg</th>
+            <th class="right">Math Scaled Avg</th>
+            <th class="right">RW Accuracy</th>
+            <th class="right">Math Accuracy</th>
+            <th style="text-align:left">Latest</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHTML}</tbody>
+      </table>`;
+  }
+  if($aggCaption) $aggCaption.textContent = (mode==='byPreset') ? 'Aggregate by Preset' : 'Aggregate by Set';
+  if($aggCard) $aggCard.style.display = 'block';
 }
 
-/* ===== 시도 상세 모달 ===== */
+/* ===== 상세 모달 ===== */
 const detailBack=document.getElementById('detailBack');
 const detailBody=document.getElementById('detailBody');
 document.getElementById('detailClose').onclick=()=>{ detailBack.style.display='none'; detailBody.innerHTML=''; };
-
 function openAttemptDetail(a){
-  const skills = Object.entries(a.skills||{}).map(([k,v])=>{
-    const acc = v.total? Math.round((v.correct/v.total)*100) : 0;
-    return { k, correct:v.correct, total:v.total, acc };
-  }).sort((x,y)=> y.acc - x.acc);
+  const numOrDash = (v)=> (typeof v==='number' && isFinite(v)) ? v : '—';
+  const skills = Object.entries(a.skills||{}).map(([k,v])=>({ k, correct:v.correct, total:v.total, acc: v.total? Math.round((v.correct/v.total)*100) : 0 })).sort((x,y)=> y.acc - x.acc);
   const top = skills.slice(0,5), bottom = skills.slice(-5);
-
   detailBody.innerHTML = `
-    <div class="head"><div class="title">시도 상세 — ${fmtDate(a.ts)}</div></div>
+    <div class="head"><div class="title">Attempt Detail — ${fmtDate(a.ts)}</div></div>
     <div class="grid" style="grid-template-columns:1fr 1fr; gap:12px">
       <div class="card">
-        <div class="head"><div class="title">요약</div></div>
-        <div>세트: <b>${a.title||a.baseId||''}</b></div>
-        <div>종류: <b>${a.kind}</b></div>
-        <div style="margin-top:6px">RW: <b>${a.sections.rw.correct}/${a.sections.rw.total}</b> → <b>${a.sections.rw.scaled}</b></div>
-        <div>Math: <b>${a.sections.math.correct}/${a.sections.math.total}</b> → <b>${a.sections.math.scaled}</b></div>
-        <div style="margin-top:6px">총점: <b>${a.sat_total}</b></div>
-        <div class="muted" style="margin-top:6px">프리셋(실제 기록): ${a.curvePreset||'—'}</div>
+        <div class="head"><div class="title">Summary</div></div>
+        <div>Set: <b>${a.title||a.baseId||''}</b></div>
+        <div>Type: <b>${a.kind}</b> ${a.mode? ` · <span class="badge" style="background:#eef">${a.mode.toUpperCase()}</span>`:''}</div>
+        <div style="margin-top:6px">RW: <b>${a.sections.rw.correct}/${a.sections.rw.total}</b> → <b>${numOrDash(a.sections.rw.scaled)}</b></div>
+        <div>Math: <b>${a.sections.math.correct}/${a.sections.math.total}</b> → <b>${numOrDash(a.sections.math.scaled)}</b></div>
+        <div style="margin-top:6px">Total: <b>${numOrDash(a.sat_total)}</b></div>
+        <div class="muted" style="margin-top:6px">Preset (recorded): ${a.curvePreset||'—'}</div>
       </div>
       <div class="card">
-        <div class="head"><div class="title">스킬 Top/Bottom</div></div>
+        <div class="head"><div class="title">Skills — Top / Bottom</div></div>
         <div class="grid" style="grid-template-columns:1fr 1fr; gap:10px">
           <div>
             <div class="muted" style="margin-bottom:6px">Top 5</div>
-            ${top.map(s=>`<div>${s.k} — <b>${s.acc}%</b> <span class="muted">(${s.correct}/${s.total})</span></div>`).join('') || '<div class="muted">데이터 없음</div>'}
+            ${top.map(s=>`<div>${s.k} — <b>${s.acc}%</b> <span class="muted">(${s.correct}/${s.total})</span></div>`).join('') || '<div class="muted">No data</div>'}
           </div>
           <div>
             <div class="muted" style="margin-bottom:6px">Bottom 5</div>
-            ${bottom.map(s=>`<div>${s.k} — <b>${s.acc}%</b> <span class="muted">(${s.correct}/${s.total})</span></div>`).join('') || '<div class="muted">데이터 없음</div>'}
+            ${bottom.map(s=>`<div>${s.k} — <b>${s.acc}%</b> <span class="muted">(${s.correct}/${s.total})</span></div>`).join('') || '<div class="muted">No data</div>'}
           </div>
         </div>
       </div>
@@ -579,15 +641,11 @@ const editPreset=document.getElementById('editPreset');
 const newPresetName=document.getElementById('newPresetName');
 const rwPoints=document.getElementById('rwPoints');
 const mathPoints=document.getElementById('mathPoints');
-
 curveClose.onclick=()=>{ curveBack.style.display='none'; };
-
 function openCurveEditor(){
   const PRESETS = window.CURVE_PRESETS||{};
   editPreset.innerHTML='';
-  Object.keys(PRESETS).forEach(name=>{
-    const o=document.createElement('option'); o.value=name; o.textContent=name; editPreset.appendChild(o);
-  });
+  Object.keys(PRESETS).forEach(name=>{ const o=document.createElement('option'); o.value=name; o.textContent=name; editPreset.appendChild(o); });
   editPreset.value = $preset.value || 'default';
   loadPresetToForm(editPreset.value);
   curveBack.style.display='block';
@@ -600,25 +658,20 @@ function loadPresetToForm(name){
 }
 document.getElementById('openCurveEditor').onclick=openCurveEditor;
 editPreset.addEventListener('change', ()=> loadPresetToForm(editPreset.value));
-
 document.getElementById('dupBtn').onclick=()=>{
   const name = (newPresetName.value||'').trim();
-  if(!name){ alert('새 프리셋 이름을 입력하세요.'); return; }
+  if(!name){ alert('새 프리셋 이름을 입력하세요.'); return; } // 관리자/개발자: 한글 허용
   const PRESETS=window.CURVE_PRESETS||{};
   try{
-    PRESETS[name] = {
-      rw: JSON.parse(rwPoints.value||'[]'),
-      math: JSON.parse(mathPoints.value||'[]')
-    };
-    alert(`프리셋 "${name}" 추가됨`);
-    fillPreset(); $preset.value=name;
-    openCurveEditor();
-  }catch(e){ alert('JSON 파싱 실패: '+e.message); }
+    PRESETS[name] = { rw: JSON.parse(rwPoints.value||'[]'), math: JSON.parse(mathPoints.value||'[]') };
+    alert(`프리셋 "${name}" 추가됨`); // 관리자/개발자: 한글 허용
+    fillPreset(); $preset.value=name; openCurveEditor();
+  }catch(e){ alert('JSON 파싱 실패: '+e.message); } // 관리자/개발자: 한글 허용
 };
 document.getElementById('delBtn').onclick=()=>{
   const name = editPreset.value;
-  if(!name || name==='default'){ alert('default는 삭제할 수 없습니다.'); return; }
-  if(confirm(`프리셋 "${name}"을(를) 삭제할까요?`)){
+  if(!name || name==='default'){ alert('default는 삭제할 수 없습니다.'); return; } // 관리자/개발자: 한글 허용
+  if(confirm(`프리셋 "${name}"을(를) 삭제할까요?`)){ // 관리자/개발자: 한글 허용
     delete window.CURVE_PRESETS[name];
     fillPreset(); openCurveEditor();
   }
@@ -629,89 +682,60 @@ document.getElementById('saveCurveBtn').onclick=()=>{
     const rw=JSON.parse(rwPoints.value||'[]');
     const mh=JSON.parse(mathPoints.value||'[]');
     window.CURVE_PRESETS[name] = { rw, math: mh };
-    alert(`"${name}" 저장됨`);
+    alert(`"${name}" 저장됨`); // 관리자/개발자: 한글 허용
     fillPreset();
-  }catch(e){ alert('JSON 파싱 실패: '+e.message); }
+  }catch(e){ alert('JSON 파싱 실패: '+e.message); } // 관리자/개발자: 한글 허용
 };
 
-/* ===== Export/Import/Print ===== */
-/* ▼▼▼ 3-1 패치: 버전 래핑 Export + 구/신 포맷 Import 지원 ▼▼▼ */
+/* ===== Export/Import/Print (3-1) ===== */
 document.getElementById('exportBtn').onclick = ()=>{
-  const all = loadAttempts().sort((a,b)=> b.ts-a.ts);
-  const payload = {
-    format: 'dsat_attempts',
-    version: '1.0.0',
-    app: 'dsat-dashboard',
-    createdAt: new Date().toISOString(),
-    attempts: all
-  };
+  // PATCH: 서버 캐시 포함해 내보내기
+  const all = allAttempts().sort((a,b)=> (b.ts||0)-(a.ts||0));
+  const payload = { format:'dsat_attempts', version:'1.0.0', app:'dsat-dashboard', createdAt:new Date().toISOString(), attempts: all };
   const blob = new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download=`dsat_attempts_${new Date().toISOString().slice(0,10)}.json`;
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download=`dsat_attempts_${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 };
-
 document.getElementById('importBtn').onclick=()=>{
   const inp=document.createElement('input'); inp.type='file'; inp.accept='application/json';
   inp.onchange=async (e)=>{
     const f=e.target.files?.[0]; if(!f) return;
     try{
-      const text=await f.text(); 
-      const parsed=JSON.parse(text);
-
+      const text=await f.text(); const parsed=JSON.parse(text);
       let attempts = null;
-      // 신포맷: { format, version, attempts }
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        if (parsed.format !== 'dsat_attempts') {
-          throw new Error('알 수 없는 파일 형식입니다 (format 필드 불일치).');
-        }
-        if (!Array.isArray(parsed.attempts)) {
-          throw new Error('파일에 attempts 배열이 없습니다.');
-        }
-        const ver = String(parsed.version||'1.0.0');
-        if (!/^1\./.test(ver)) {
-          console.warn('미검증 버전 감지:', ver);
-        }
+        if (parsed.format !== 'dsat_attempts') throw new Error('알 수 없는 파일 형식입니다 (format 필드 불일치).'); // 관리자/개발자: 한글 허용
+        if (!Array.isArray(parsed.attempts)) throw new Error('파일에 attempts 배열이 없습니다.'); // 관리자/개발자: 한글 허용
         attempts = parsed.attempts;
-      }
-      // 구포맷: 배열 단독
-      else if (Array.isArray(parsed)) {
+      } else if (Array.isArray(parsed)) {
         attempts = parsed;
+      } else {
+        throw new Error('지원하지 않는 JSON 구조입니다.'); // 관리자/개발자: 한글 허용
       }
-      else{
-        throw new Error('지원하지 않는 JSON 구조입니다.');
-      }
-
-      // 가벼운 스키마 체크
       const ok = attempts.every(a => typeof a.ts === 'number' && a.baseId && a.kind && a.sections);
-      if (!ok) throw new Error('시도 레코드 스키마가 올바르지 않습니다.');
-
+      if (!ok) throw new Error('시도 레코드 스키마가 올바르지 않습니다.'); // 관리자/개발자: 한글 허용
       saveAttempts(attempts);
+      migrateLocalAttemptsOnce();
+      // PATCH: 가져온 뒤 서버 캐시도 갱신
+      await refreshAttempts();
       renderAll();
-      alert('가져오기 완료');
-    }catch(err){ alert('가져오기 실패: '+(err?.message||err)); }
+      alert('가져오기 완료'); // 관리자/개발자: 한글 허용
+    }catch(err){ alert('가져오기 실패: '+(err?.message||err)); } // 관리자/개발자: 한글 허용
   };
   inp.click();
 };
-/* ▲▲▲ 3-1 패치 끝 ▲▲▲ */
-
 document.getElementById('printBtn').onclick=()=> window.print();
 
-/* ===== 딥링크: 연습페이지에서 리뷰 자동 시작 ===== */
+/* ===== 연습 페이지로 딥링크 ===== */
 function goPractice(url){ location.href = url; }
-document.getElementById('startSkillReviewBtn').addEventListener('click', ()=>{
+document.getElementById('startSkillReviewBtn')?.addEventListener('click', ()=>{
   const key = document.getElementById('skillSelect').value;
-  if(!key){ alert('스킬을 먼저 선택하세요.'); return; }
+  if(!key){ alert('스킬을 먼저 선택하세요.'); return; } // 설명/가이드: 한글 허용
   goPractice(`./index.html?review=skill&value=${encodeURIComponent(key)}`);
 });
-document.getElementById('startWrongReviewBtn').addEventListener('click', ()=>{
-  goPractice('./index.html?review=wrong');
-});
-document.getElementById('startFlaggedReviewBtn').addEventListener('click', ()=>{
-  goPractice('./index.html?review=flagged');
-});
+document.getElementById('startWrongReviewBtn')?.addEventListener('click', ()=>{ goPractice('./index.html?review=wrong'); });
+document.getElementById('startFlaggedReviewBtn')?.addEventListener('click', ()=>{ goPractice('./index.html?review=flagged'); });
 
 /* ===== 렌더 & 이벤트 ===== */
 function renderAll(){
@@ -723,11 +747,18 @@ function renderAll(){
   renderCompare(rows);
   fillSkillSelect(rows);
   renderSkillTrend(rows);
-  renderAggregations(rows); // ★ 집계 추가
+  renderAggregations(rows);
+  renderSyncBadge(); // ← 동기화 배지 갱신
 }
 
-/* — 이벤트에 '저장' 연결 (1-B) — */
+/* — 필터 변경 — */
 function onFilterChanged() {
+  const baseId = $base.value || '';
+  const preset = $preset.value || '';
+  if (baseId && preset) {
+    const def = loadPresetDefaults();
+    if (def[baseId] !== preset) { def[baseId] = preset; savePresetDefaults(def); }
+  }
   saveFilters(snapshotFiltersFromUI());
   renderAll();
 }
@@ -737,36 +768,27 @@ $preset.addEventListener('change', onFilterChanged);
 document.getElementById('fromDate').addEventListener('change', onFilterChanged);
 document.getElementById('toDate').addEventListener('change', onFilterChanged);
 
+// PATCH: 모드 UI 자동 연결 (select 또는 세그 버튼)
+(function wireModeUI(){
+  const sel = document.getElementById('modeSelect');
+  if (sel) sel.addEventListener('change', ()=> setDashMode(sel.value));
+  document.querySelectorAll('.mode-btn[data-mode]').forEach(btn=>{
+    btn.addEventListener('click', ()=> setDashMode(btn.dataset.mode));
+  });
+})();
+
 document.getElementById('cmpBtn').addEventListener('click', ()=> renderAll());
-document.getElementById('openDetailA').addEventListener('click', ()=>{
-  const { rows } = currentRows(); const A=rows.find(r=> String(r.ts)===$cmpA.value); if(A) openAttemptDetail(A);
-});
-document.getElementById('openDetailB').addEventListener('click', ()=>{
-  const { rows } = currentRows(); const B=rows.find(r=> String(r.ts)===$cmpB.value); if(B) openAttemptDetail(B);
-});
+document.getElementById('openDetailA').addEventListener('click', ()=>{ const { rows } = currentRows(); const A=rows.find(r=> String(r.ts)===$cmpA.value); if(A) openAttemptDetail(A); });
+document.getElementById('openDetailB').addEventListener('click', ()=>{ const { rows } = currentRows(); const B=rows.find(r=> String(r.ts)===$cmpB.value); if(B) openAttemptDetail(B); });
 $skillSel.addEventListener('change', ()=>{ const { rows } = currentRows(); renderSkillTrend(rows); });
-
-// 집계 모드 변경
 document.getElementById('aggMode').addEventListener('change', ()=> renderAll());
-
-// 전체 로그 삭제(안전 확인)
-document.getElementById('clearBtn').addEventListener('click', ()=>{
-  if(confirm('로컬에 저장된 모든 시도 로그를 삭제할까요?')){
-    saveAttempts([]);
-    renderAll();
-  }
-});
-
-/* 추천: 변동 큰 스킬 자동 선택 */
+document.getElementById('clearBtn').addEventListener('click', ()=>{ if(confirm('Delete all local attempt logs?')){ saveAttempts([]); /* 서버는 보존, 로컬만 초기화 */ renderAll(); }});
 document.getElementById('skillAllBtn').onclick=()=>{
   const { rows } = currentRows();
-  const last = rows.slice(0,5).reverse(); // 과거→현재
+  const last = rows.slice(0,5).reverse();
   const accs = {};
   last.forEach(a=>{
-    Object.entries(a.skills||{}).forEach(([k,v])=>{
-      if(!accs[k]) accs[k]=[];
-      accs[k].push(v.total? (v.correct/v.total*100) : null);
-    });
+    Object.entries(a.skills||{}).forEach(([k,v])=>{ if(!accs[k]) accs[k]=[]; accs[k].push(v.total? (v.correct/v.total*100) : null); });
   });
   const varList = Object.entries(accs).map(([k,arr])=>{
     const vals = arr.filter(x=> x!==null);
@@ -775,29 +797,136 @@ document.getElementById('skillAllBtn').onclick=()=>{
     const v = vals.reduce((s,x)=>s+(x-avg)**2,0)/vals.length;
     return [k,v];
   }).filter(([,v])=> v>=0).sort((a,b)=> b[1]-a[1]);
-  if(!varList.length){ alert('변동을 계산할 데이터가 부족합니다.'); return; }
+  if(!varList.length){ alert('변동을 계산할 데이터가 부족합니다.'); return; } // 설명: 한글 허용
   $skillSel.value = varList[0][0];
   renderSkillTrend(rows);
 };
 
-/* ===== Bootstrap: 옵션 채우고 필터 복원 후 렌더 ===== */
-(function bootstrapDashboard(){
-  // 옵션 박스가 비어 있을 수 있어 먼저 채움
-  const all = loadAttempts().sort((a,b)=> b.ts-a.ts);
+/* ===== (Sync) — DSAT_SYNC에 일원화 ===== */
+/* 필요 HTML id:
+   - 버튼: #btnPush, #btnPull, #btnSyncNow
+   - 배지: #syncBadge (선택)
+   - 상태: #syncStatus (선택)
+   - 토스트: #toast (선택; .toast, .toast.ok, .toast.err 클래스) */
+
+function showToast(msg, kind='info'){
+  const el = document.getElementById('toast');
+  if(!el){ console[kind==='error'?'error':'log']('[TOAST]', msg); return; }
+  el.textContent = msg;
+  el.className = 'toast ' + (kind==='error'?'err':(kind==='ok'?'ok':'')); 
+  setTimeout(()=> el.className='toast', 1600);
+}
+function renderSyncBadge(){
+  const el = document.getElementById('syncBadge');
+  if(!el) return;
+  const n = (loadAttempts().filter(a=>a._dirty)).length;
+  el.textContent = n>0 ? String(n) : '';
+  el.style.display = n>0 ? 'inline-flex' : 'none';
+}
+
+(function wireSync(){
+  if (!window.DSAT_SYNC) {
+    console.warn('[SYNC] DSAT_SYNC not found. Load sync.js before dashboard.js.');
+    return;
+  }
+
+  // 버튼 바인딩
+  DSAT_SYNC.attachButtons({
+    pushId: 'btnPush',
+    pullId: 'btnPull',
+    syncId: 'btnSyncNow',
+    toast: (m)=> showToast(m,'ok')
+  });
+
+  // 연결 체크
+  DSAT_SYNC.testConnection()
+    .then(r => {
+      const ok = r && r.ok;
+      const el = document.getElementById('syncStatus');
+      if (el) el.textContent = ok ? 'Connected' : ('Error: '+(r?.error||'')); 
+      showToast(ok ? 'Connected' : 'Auth required', ok ? 'ok' : 'error');
+    })
+    .catch(e => {
+      const el = document.getElementById('syncStatus');
+      if (el) el.textContent = 'Error: ' + (e.message||e);
+      showToast('Connection error', 'error');
+    });
+
+  // 자동/수동 동기화 시 서버 데이터 반영
+  const run = async ()=>{
+    try{
+      const r = await DSAT_SYNC.syncNow();
+      await refreshAttempts();           // [PATCH] pull 결과 반영
+      renderAll();
+      showToast(`Sync ✔ push ${r.push.pushed}, pull +${r.pull.added}/~${r.pull.replaced}`, 'ok');
+    }catch(e){
+      console.warn('[SYNC] auto fail', e?.message||e);
+      showToast('Auto sync failed', 'error');
+    }finally{
+      renderSyncBadge();
+    }
+  };
+  window.addEventListener('DOMContentLoaded', run);
+  setInterval(run, 180000);
+
+  // 수동 버튼도 동일 동작 보장
+  document.getElementById('btnSyncNow')?.addEventListener('click', run);
+})();
+
+/* ===== Bootstrap ===== */
+(async function bootstrapDashboard(){
+  migrateLocalAttemptsOnce();
+
+  // [PATCH] 최초 진입 시 서버 → 캐시 로드 (실패 시 로컬 폴백)
+  try { await refreshAttempts(); } catch(e){ console.warn('refreshAttempts fail', e); }
+
+  const all = allAttempts().sort((a,b)=> (b.ts||0)-(a.ts||0));
   if(!$base.options.length) fillBase(all);
   if(!$preset.options.length) fillPreset();
 
-  // 저장된 필터를 UI에 반영
+  // PATCH: 모드 UI 프리셋 초기화(저장값 복원)
+  const saved = loadFilters();
+  DASH_MODE = saved.mode || 'all';
+  const modeSel = document.getElementById('modeSelect');
+  if (modeSel) modeSel.value = DASH_MODE;
+  document.querySelectorAll('.mode-btn[data-mode]').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.mode === DASH_MODE);
+  });
+
   applySavedFiltersToUI();
-
-  // 이제부터 변경 저장 허용
   FILTERS_READY = true;
-
-  // 최초 렌더
   renderAll();
 })();
 
 /* 모달 외부 클릭 닫기 */
 [document.getElementById('detailBack'), document.getElementById('curveBack')].forEach(back=>{
+  if(!back) return;
   back.addEventListener('click', (e)=>{ if(e.target===back) back.style.display='none'; });
 });
+
+// 버튼 클릭 시 모드 변경 (UI 시각 표시 보조)
+document.addEventListener('DOMContentLoaded', () => {
+  const buttons = document.querySelectorAll('.mode-btn');
+  let currentMode = DASH_MODE || 'all';
+  const updateSel = ()=> buttons.forEach(btn=> btn.classList.toggle('selected', btn.getAttribute('data-mode')===currentMode));
+  buttons.forEach(button => {
+    button.addEventListener('click', () => {
+      currentMode = button.getAttribute('data-mode');
+      updateSel();
+      handleModeChange(currentMode);
+    });
+  });
+  updateSel();
+  handleModeChange(currentMode);
+});
+
+// 모드 변경 시 동작할 함수 (기본 처리 예시)
+function handleModeChange(mode) {
+  switch (mode) {
+    case 'all':  console.log("All mode selected"); break;
+    case 'full': console.log("Full mode selected"); break;
+    case 'rw':   console.log("RW mode selected"); break;
+    case 'math': console.log("Math mode selected"); break;
+    default:     console.log("Unknown mode");
+  }
+}

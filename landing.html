@@ -3,68 +3,161 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>디지털 SAT 연습 — 세트 선택</title>
-
-<!-- 공통 스타일 -->
+<title>Digital SAT Practice - Set Selection</title>
 <link rel="stylesheet" href="./assets/style.css">
+<style>
+  /* 최소 가시성 보조 (style.css 없을 때 대비) */
+  .hidden{display:none}
+  .tabs{display:flex;gap:8px;margin:10px 0}
+  .tab{padding:8px 12px;border:1px solid #ddd;border-radius:8px;background:#f8f9fb;cursor:pointer}
+  .tab.active{background:#e7f0ff;border-color:#c6d4ff}
+  .tabview{display:none}
+  .tabview.active{display:block}
+  .grid{display:grid;gap:14px}
+  .grid.grid-3{grid-template-columns:repeat(3,1fr)}
+  .grid.grid-2{grid-template-columns:repeat(2,1fr)}
+  .grid.list{grid-template-columns:1fr}
+  .card{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:12px}
+  .item .thumb{height:120px;background:#f3f4f6;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .item .thumb img{width:100%;height:100%;object-fit:cover}
+  .item .body{padding:10px 4px}
+  .item .title{font-weight:700}
+  .item .sub{color:#666;margin-top:4px}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .tag{font-size:12px;background:#f1f5f9;border-radius:999px;padding:4px 8px}
+  .foot{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:10px}
+  .btn{padding:8px 12px;border:1px solid #ddd;border-radius:10px;background:#fff;cursor:pointer}
+  .btn.primary{background:#2563eb;color:#fff;border-color:#2563eb}
+  .seg{display:inline-flex;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden}
+  .seg-btn{padding:8px 12px;border:0;background:#fff;cursor:pointer}
+  .seg-btn.active{background:#111827;color:#fff}
+  .badge{background:#eef2ff;color:#334155;border:1px solid #c7d2fe;border-radius:999px;padding:2px 8px;margin-left:8px;font-size:12px}
+  .muted{color:#6b7280}
+  .row{display:flex}
+  .grow{flex:1}
+  .price{font-weight:700}
+  .toprow{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .wrap{max-width:1080px;margin:0 auto;padding:14px}
+</style>
 </head>
 <body>
 <div class="wrap">
+
+  <!-- 헤더 -->
   <header class="toprow">
-    <h1 style="margin:0; font-size:22px">디지털 SAT 연습 — 세트 선택</h1>
+    <div class="brand">
+      <h1 class="title" style="margin:0; font-size:22px">Digital SAT Practice</h1>
+      <span class="badge" id="ownedCount">Owned 0</span>
+      <span class="badge" id="modeBadge">Mode: Full</span>
+      <span class="badge hidden" id="roleBadge">ROLE</span>
+    </div>
     <div class="controls">
-      <button class="btn" id="toGrid">그리드</button>
-      <button class="btn" id="toList">목록</button>
+      <button class="btn" id="gridBtn" aria-pressed="true">Grid</button>
+      <button class="btn" id="listBtn" aria-pressed="false">List</button>
     </div>
   </header>
 
-  <!-- 검색/필터 -->
-  <div class="search card" style="margin-bottom:14px">
-    <input id="q" type="text" placeholder="세트 이름, 태그 검색 (예: math, rw, official)" style="flex:1; border:none; outline:none; font-size:14px"/>
-    <button class="btn" id="clearQ">지우기</button>
-  </div>
-
-  <!-- 추천 세트(카탈로그) -->
-  <section style="margin-bottom:18px">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 2px 10px">
-      <div style="font-weight:800">추천 세트</div>
-      <div class="muted" style="font-size:12px">카드 목록은 아래 <code>CATALOG</code>에서 자유롭게 수정</div>
+  <!-- 모드 선택 (Full / RW만 / Math만) -->
+  <section class="card" style="margin:10px 0; padding:10px">
+    <div id="modeSeg" class="seg" role="tablist" aria-label="Mode selection">
+      <button class="seg-btn" data-only="" role="tab" aria-selected="true">Full</button>
+      <button class="seg-btn" data-only="rw" role="tab" aria-selected="false">RW only</button>
+      <button class="seg-btn" data-only="math" role="tab" aria-selected="false">Math only</button>
     </div>
-    <div class="grid" id="grid" style="grid-template-columns:repeat(3,1fr); gap:14px"></div>
   </section>
 
-  <!-- 최근 시작한 세트 -->
-  <section style="margin-bottom:18px">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 2px 10px">
-      <div style="font-weight:800">최근 사용</div>
-      <div class="muted" style="font-size:12px">클릭하면 바로 시작</div>
+  <!-- 검색/필터 섹션 (영어로 변경) -->
+  <section class="card" style="margin-bottom:14px">
+    <div class="row" style="gap:10px; align-items:center">
+      <input id="q" class="grow" type="text" placeholder="Set Name, Tags (e.g. math, rw, official)"/>
+      <select id="tag">
+        <option value="">All</option>
+        <option value="math">Math</option>
+        <option value="rw">Reading & Writing</option>
+        <option value="official">Official</option>
+        <option value="sample">Sample</option>
+        <option value="practice">Practice</option>
+        <option value="demo">Demo</option>
+      </select>
+      <select id="sort">
+        <option value="recommended">Recommended</option>
+        <option value="new">Newest</option>
+        <option value="popular">Most Popular</option>
+        <option value="title">By Title</option>
+      </select>
+      <button class="btn" id="clearQ">Clear</button>
     </div>
-    <div class="recents" id="recents"></div>
   </section>
 
-  <!-- 직접 불러오기 -->
-  <section class="card" style="padding:14px">
-    <div style="font-weight:800; margin-bottom:10px">직접 불러오기</div>
+  <!-- 탭 섹션 (영어로 변경) -->
+  <nav class="tabs" role="tablist" aria-label="Set View">
+    <button class="tab active" data-tab="catalog" role="tab" aria-selected="true">Catalog</button>
+    <button class="tab" data-tab="owned" role="tab" aria-selected="false">My Sets</button>
+    <button class="tab" data-tab="recents" role="tab" aria-selected="false">Recent</button>
+    <button class="tab admin hidden" data-tab="admin" role="tab" aria-selected="false">Admin</button>
+  </nav>
+
+  <!-- 카탈로그 -->
+  <section id="view-catalog" class="tabview active">
+    <div id="catalogGrid" class="grid grid-3"></div>
+    <div id="catalogEmpty" class="muted hidden" style="padding:24px">No sets matching your criteria.</div>
+  </section>
+
+  <!-- 내 세트 -->
+  <section id="view-owned" class="tabview">
+    <div id="ownedGrid" class="grid grid-3"></div>
+    <div id="ownedEmpty" class="muted hidden" style="padding:24px">You don't have any sets yet.</div>
+  </section>
+
+  <!-- 최근 -->
+  <section id="view-recents" class="tabview">
+    <div id="recentsGrid" class="grid grid-2"></div>
+    <div id="recentsEmpty" class="muted hidden" style="padding:24px">No recent records.</div>
+  </section>
+
+  <!-- 관리자(임시 이용권 부여) -->
+  <section id="view-admin" class="tabview">
+    <div class="card" style="padding:16px; max-width:720px">
+      <h3 style="margin:0 0 12px">Temporary Access Grant</h3>
+      <div class="grid" style="grid-template-columns:160px 1fr; gap:12px">
+        <label>User Email/UID</label><input id="grantUser" placeholder="email@domain.com or UID"/>
+        <label>Set</label><select id="grantSet"></select>
+        <label>Duration (days)</label><input id="grantDays" type="number" min="1" value="30"/>
+      </div>
+      <div class="row" style="justify-content:flex-end; margin-top:12px; gap:8px">
+        <button class="btn" id="grantBtn">Grant</button>
+      </div>
+      <p class="muted" style="margin-top:8px">Access will be activated immediately and deactivated after the expiration date.</p>
+    </div>
+  </section>
+
+  <!-- (개발자 모드) 직접 불러오기 → ?dev=1에서만 표시 -->
+  <section id="devLoader" class="card hidden" style="padding:14px; margin-top:18px">
+    <div style="font-weight:800; margin-bottom:10px">Developer: Load Directly</div>
     <div class="grid" style="grid-template-columns:140px 1fr; gap:12px; align-items:center">
       <label>JSON URL</label>
-      <input id="jsonUrl" type="text" placeholder="예: https://example.com/questions.json"/>
-      <label>로컬 파일</label>
+      <input id="jsonUrl" type="text" placeholder="https://.../questions.json"/>
+      <label>Local File</label>
       <input id="jsonFile" class="uploader" type="file" accept=".json,application/json"/>
-      <div></div>
-      <div class="muted" style="font-size:12px">둘 중 하나만 사용하세요. URL이 있으면 파일은 무시됩니다.</div>
     </div>
-    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px">
-      <button class="btn" id="resetBtn">초기화</button>
-      <button class="btn primary" id="startBtn">시험 시작</button>
+    <div class="row" style="justify-content:flex-end; gap:8px; margin-top:12px">
+      <button class="btn" id="resetBtn">Reset</button>
+      <button class="btn" id="startBtn">Start Test</button>
     </div>
+    <p class="muted" style="margin-top:8px">※ This is only visible when ?dev=1 is appended to the URL.</p>
   </section>
 
-  <p class="muted" style="margin-top:14px; font-size:12px">
-    팁: 외부 URL은 CORS 정책에 따라 차단될 수 있어요. 되도록 같은 도메인에 JSON을 올리거나 Netlify/GitHub Pages에서 함께 배포하세요.
-  </p>
 </div>
 
-<!-- 분리 스크립트 -->
+<!-- ▼▼▼ [PATCH] 동기화 설정 & 모듈: 랜딩에서도 반드시 필요 ▼▼▼ -->
+<script>
+  // 목 서버 주소를 전역에 주입 (sync.js가 자동으로 config 저장)
+  window.SYNC_API_BASE = "http://localhost:4311";
+</script>
+<script src="./sync.js"></script>
+<!-- ▲▲▲ [PATCH END] ▲▲▲ -->
+
+<!-- 랜딩 전용 로직은 마지막에 로드 -->
 <script src="./assets/landing.js"></script>
 </body>
 </html>
